@@ -3634,6 +3634,38 @@ REMOTE_TUYA_TS004F:
   info: Should work, measured battery drain is ~5uA, but wasn't battle tested.
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/171
   store: null
+SOCKET_MOES_ZK_EU16M:
+  human_name: Moes ZK-EU16M power monitoring wall socket
+  category: socket
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3000_ss98ec5d
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS011F_plug_1
+  override_z2m_device: null
+
+  tuya_module: ZT2S
+  mcu_family: Telink
+  mcu: TLSR8258
+
+  config_str: ss98ec5d;TS011F-MOES;SB7d;RD2;IB1;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 45681
+
+  build: yes
+  status: in_progress
+  info: Initial port. Power monitoring not implemented in romasku firmware.
+  threads: null
+  store: https://zigbee.blakadder.com/Moes_ZK-EU16M.html
 SWITCH_AVATTO_TOUCH_TS0001:
   human_name: AVATTO ZTS02RD-US-W1
   category: switch
