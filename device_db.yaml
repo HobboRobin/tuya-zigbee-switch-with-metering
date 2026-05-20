@@ -4452,7 +4452,7 @@ SWITCH_BSEED_TS0726_L_3GANG:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: vsom92pp;TS0726-3-BS;LC3;SB5u;RC1;ID2;M;  null
+  config_str: vsom92pp;TS0726-3-BS1;LC3;SB5u;RC1;ID2;M;  null
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4467,7 +4467,7 @@ SWITCH_BSEED_TS0726_L_3GANG:
   - https://www.aliexpress.com/item/1005010747186290.html
   - https://www.aliexpress.com/item/1005010805195317.html
   - https://www.bseed.com/products/click-series-diy-part-customized-free-combinations-smart-zigbee-switch-socket-insert-white-color-crystal-glass-panel-copy?variant=47882814292123
-SWITCH_BSEED_TS0726_L_3GANG_B:
+SWITCH_BSEED_TS0726_L_3GANG_2:
   human_name: BSEED Echo Click 3-gang L-only 🅱
   category: switch
   power: mains
@@ -4492,12 +4492,8 @@ SWITCH_BSEED_TS0726_L_3GANG_B:
   build: yes
   status: fully_supported
   info: Supported
-  threads: null
-  store:
-  - https://www.aliexpress.com/item/1005008635350349.html
-  - https://www.aliexpress.com/item/1005008749674564.html
-  - https://www.bseed.com/products/bseed-smart-zigbee-light-switch-with-neutral-hub-required-switch-work-with-tuya-alexa?variant=46312889090203
-  - https://www.bseed.com/products/bseed-scale-series-smart-zigbee-light-switch-3-gang-with-neutral-copy
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/423
+  store: null
 SWITCH_BSEED_TS0726_L_4GANG:
   human_name: BSEED Echo Click 4-gang L-only
   category: switch
