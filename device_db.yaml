@@ -4467,6 +4467,37 @@ SWITCH_BSEED_TS0726_L_3GANG:
   - https://www.aliexpress.com/item/1005010747186290.html
   - https://www.aliexpress.com/item/1005010805195317.html
   - https://www.bseed.com/products/click-series-diy-part-customized-free-combinations-smart-zigbee-switch-socket-insert-white-color-crystal-glass-panel-copy?variant=47882814292123
+SWITCH_BSEED_TS0726_L_3GANG_B:
+  human_name: BSEED Echo Click 3-gang L-only 🅱
+  category: switch
+  power: mains
+  neutral: optional
+  output: relay
+  device_type: end_device
+  stock_model_name: TS0726
+  stock_manufacturer_name: _TZ3000_r2fgo9ks
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0726_3_gang_scene_switch
+  override_z2m_device: EC-SL-FK86ZPCS31
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: r2fgo9ks;TS0726-3-BS;LD4;SA1u;RB4;IC1;SC2u;RD2;IB5;SA0u;RC3;IB6;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47007
+  build: yes
+  status: fully_supported
+  info: Supported
+  threads: null
+  store:
+  - https://www.aliexpress.com/item/1005008635350349.html
+  - https://www.aliexpress.com/item/1005008749674564.html
+  - https://www.bseed.com/products/bseed-smart-zigbee-light-switch-with-neutral-hub-required-switch-work-with-tuya-alexa?variant=46312889090203
+  - https://www.bseed.com/products/bseed-scale-series-smart-zigbee-light-switch-3-gang-with-neutral-copy
 SWITCH_BSEED_TS0726_L_4GANG:
   human_name: BSEED Echo Click 4-gang L-only
   category: switch
