@@ -254,7 +254,7 @@ DIN_RELAY_TUYA_TS011F_PM:
   build: yes
   status: in_progress
   info: Power monitoring not implemented
-  threads: null
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/428
   store: https://www.aliexpress.com/item/1005008782778996.html
 MODULE_AUBESS_TS0001:
   human_name: Aubess WHD02
