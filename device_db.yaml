@@ -244,7 +244,7 @@ DIN_RELAY_TUYA_TS011F_PM:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR825x
-  config_str: vbfp8eyv;TS011F-TD;LC4;SC0u;RD7;IB6;M;
+  config_str: vbfp8eyv;TS011F-TD;LC4i;SC1u;RD4;IB6i;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -252,7 +252,7 @@ DIN_RELAY_TUYA_TS011F_PM:
   stock_image_type: 54179
   firmware_image_type: 45599
   build: yes
-  status: in_progress
+  status: mostly_supported
   info: Power monitoring not implemented
   threads: null
   store: https://www.aliexpress.com/item/1005008782778996.html
