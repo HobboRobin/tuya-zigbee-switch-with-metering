@@ -252,7 +252,7 @@ DIN_RELAY_TUYA_TS011F_PM:
   stock_image_type: 54179
   firmware_image_type: 45599
   build: yes
-  status: mostly_supported
+  status: in_progress
   info: Power monitoring not implemented
   threads: null
   store: https://www.aliexpress.com/item/1005008782778996.html
