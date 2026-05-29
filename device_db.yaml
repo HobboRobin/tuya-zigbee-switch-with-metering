@@ -3304,6 +3304,35 @@ REMOTE_LIDL_BUTTON_TS004F:
   info: Lower battery life
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/388
   store: null
+REMOTE_MOES_SWITCH_A_TS0041:
+  human_name: Moes 1-gang scene switch (multiple variants)
+  category: remote
+  power: CR2032
+  neutral: without
+  output: nothing
+  device_type: end_device
+  stock_model_name: TS0041
+  stock_manufacturer_name: _TZ3000_axpdxqgu
+  stock_converter_manufacturer: Moes
+  stock_converter_model: ZT-B-EU1
+  override_z2m_device: null
+  tuya_module: ZS3L
+  mcu_family: Silabs
+  mcu: EFR32MG21A020F768IM32
+  config_str: axpdxqgu;TS0041-MA;SA4u;IC1i;BTA0;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 45638
+  build: yes
+  status: fully_supported
+  info: Supported
+  threads: null
+  store:
+  - https://item.taobao.com/item.htm?id=702822677502
+  - https://www.aliexpress.com/item/1005004775774974.html
 REMOTE_MOES_SWITCH_A_TS0042:
   human_name: Moes 2-gang scene switch (multiple variants)
   category: remote
