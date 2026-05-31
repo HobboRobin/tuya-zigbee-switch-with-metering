@@ -3329,7 +3329,7 @@ REMOTE_MOES_SWITCH_A_TS0041:
   build: yes
   status: fully_supported
   info: Supported
-  threads: null
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/429
   store:
   - https://item.taobao.com/item.htm?id=702822677502
   - https://www.aliexpress.com/item/1005004775774974.html
