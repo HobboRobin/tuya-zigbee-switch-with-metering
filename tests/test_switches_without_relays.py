@@ -12,7 +12,13 @@ from zcl_consts import (
     ZCL_CLUSTER_ON_OFF,
     ZCL_CLUSTER_ON_OFF_SWITCH_CONFIG,
     ZCL_CMD_ONOFF_TOGGLE,
+    ZCL_ONOFF_CONFIGURATION_BINDED_MODE_LONG,
+    ZCL_ONOFF_CONFIGURATION_BINDED_MODE_RISE,
+    ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT,
     ZCL_ONOFF_CONFIGURATION_RELAY_MODE_DETACHED,
+    ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_OPPOSITE,
+    ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_SYNC,
+    ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY,
 )
 
 
@@ -73,6 +79,50 @@ def test_binding_commands_still_sent(device: Device, button_pins: list[str]):
     device.set_network(1)  # joined
     device.clear_events()
     device.click_button(button_pins[0])
+    device.wait_for_cmd_send(1, ZCL_CLUSTER_ON_OFF, ZCL_CMD_ONOFF_TOGGLE)
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        pytest.param(ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_SYNC, id="sync"),
+        pytest.param(ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_OPPOSITE, id="opposite"),
+    ],
+)
+@pytest.mark.parametrize(
+    "binded_mode,trigger",
+    [
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_BINDED_MODE_RISE,
+            lambda d, pin: d.press_button(pin),
+            id="rise",
+        ),
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT,
+            lambda d, pin: d.click_button(pin),
+            id="short",
+        ),
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_BINDED_MODE_LONG,
+            lambda d, pin: d.long_click_button(pin),
+            id="long",
+        ),
+    ],
+)
+def test_smart_sync_degrades_to_toggle(
+    device: Device,
+    button_pins: list[str],
+    binded_mode: int,
+    trigger,
+    action: int,
+):
+    """Without a valid relay, SmartSync/SmartOpposite falls back to plain Toggle."""
+    device.zcl_switch_mode_set(1, ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY)
+    device.zcl_switch_binding_mode_set(1, binded_mode)
+    device.zcl_switch_actions_set(1, action)
+    device.set_network(1)
+    device.clear_events()
+    trigger(device, button_pins[0])
     device.wait_for_cmd_send(1, ZCL_CLUSTER_ON_OFF, ZCL_CMD_ONOFF_TOGGLE)
 
 
