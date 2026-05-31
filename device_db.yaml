@@ -3319,7 +3319,7 @@ REMOTE_MOES_SWITCH_A_TS0042:
   tuya_module: ZS3L
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: 5e235jpa;TS0042-MA;SA0u;ID0i;SA4u;IC1i;BTA0;M;
+  config_str: 5e235jpa;TS0042-MA;SA0u;ID0i;SA3u;IC0i;BTA0;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
