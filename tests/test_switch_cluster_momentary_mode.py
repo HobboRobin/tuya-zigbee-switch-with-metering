@@ -25,6 +25,7 @@ from tests.zcl_consts import (
     ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_OFFON,
     ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_ONOFF,
     ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SIMPLE,
+    ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_OPPOSITE,
     ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_SYNC,
     ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY,
     ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY_NC,
@@ -297,7 +298,7 @@ def test_momentary_mode_onoff_commands_smart_opposite(
     )
     momentary_device.zcl_switch_actions_set(
         relay_button_pair.switch_endpoint,
-        ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_SYNC,
+        ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_OPPOSITE,
     )
 
     momentary_device.zcl_relay_on(relay_button_pair.relay_endpoint)
@@ -305,7 +306,7 @@ def test_momentary_mode_onoff_commands_smart_opposite(
     momentary_device.press_button(relay_button_pair.button_pin)
     assert momentary_device.zcl_relay_get(relay_button_pair.relay_endpoint) == "0"
     momentary_device.wait_for_cmd_send(
-        relay_button_pair.switch_endpoint, ZCL_CLUSTER_ON_OFF, ZCL_CMD_ONOFF_OFF
+        relay_button_pair.switch_endpoint, ZCL_CLUSTER_ON_OFF, ZCL_CMD_ONOFF_ON
     )
 
     momentary_device.clear_events()
