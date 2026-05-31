@@ -5788,3 +5788,144 @@ SWITCH_ZEMISMART_TS0601_6GANG:
   info: Needs pinout. Secondary MCU. 6-gang!
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/209
   store: https://www.zemismart.com/products/tb26-6
+
+MODULE_YBJQJSUZ_TS0003:
+  human_name: 3-gang switch module (ZTU, _TZ3000_ybjqjsuz)
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0003
+  stock_manufacturer_name: _TZ3000_ybjqjsuz
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0003_switch_module_2
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: ybjqjsuz;TS0003-YBJ;BB6u;LA0i;SB6u;RB4;IA1i;SC0u;RD2;IC4i;SD3u;RC3;ID4i;
+  alt_config_str: null
+  old_manufacturer_names:
+  - _TZ3000_nPGIPl5D
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47100
+  build: yes
+  status: mostly_supported
+  info: 3-gang switch module on Tuya ZTU board (6-button capable PCB). Pin mapping from stock firmware dump analysis. master B6, net LED A0i; ch1 S=B6 R=B4 I=A1i, ch2 S=C0 R=D2 I=C4i, ch3 S=D3 R=C3 I=D4i.
+  threads: null
+  store: null
+
+MODULE_YBJQJSUZ_TS0003_TZ3210:
+  human_name: 3-gang switch module (ZTU, _TZ3210_ybjqjsuz variant)
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0003
+  stock_manufacturer_name: _TZ3210_ybjqjsuz
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0003_switch_module_2
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: ybjqjsuz;TS0003-YBJ;BB6u;LA0i;SB6u;RB4;IA1i;SC0u;RD2;IC4i;SD3u;RC3;ID4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 2050
+  firmware_image_type: 47101
+  build: yes
+  status: mostly_supported
+  info: Same hardware and pinout as MODULE_YBJQJSUZ_TS0003 but stock module is from the _TZ3210_ family (stock image_type 2050 instead of 54179). Same config_str.
+  threads: null
+  store: null
+
+MODULE_MRIGI9IJ_TS0002:
+  human_name: 2-gang switch module (ZTU, _TZ3210_mrigi9ij)
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0002
+  stock_manufacturer_name: _TZ3210_mrigi9ij
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0002_basic
+  override_z2m_device: TS0002_basic_2
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: ybjqjsuz;TS0002-YBJ;BB6u;LA0i;SB6u;RB4;IA1i;SD3u;RD2;ID4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 2050
+  firmware_image_type: 47102
+  build: yes
+  status: mostly_supported
+  info: 2-gang switch on the same 6-button ZTU board as the 3-gang module. Pinout verified on hardware. master B6, net LED A0i; ch1 S=B6 R=B4 I=A1i, ch2 S=D3 R=D2 I=D4i.
+  threads: null
+  store: null
+
+MODULE_GSQXCWQR_TS0001:
+  human_name: 1-gang switch module (ZTU, _TZ3000_gsqxcwqr)
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0001
+  stock_manufacturer_name: _TZ3000_gsqxcwqr
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0001_basic
+  override_z2m_device: TS0001_basic_1
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: gsqxcwqr;TS0001-MIL;BC0u;LA0i;SC0u;RB4;IC4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47103
+  build: yes
+  status: mostly_supported
+  info: 1-gang switch on the same 6-button ZTU board. Pinout verified physically on hardware. Single button is the middle channel (C0, also master), relay B4, indicator C4. Note the relay is B4 (not D2 nor C3).
+  threads: null
+  store: null
+
+MODULE_03VS3KS5_TS0004:
+  human_name: 4-gang switch module (ZTU, Milfra _TZ3210_03vs3ks5)
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0004
+  stock_manufacturer_name: _TZ3210_03vs3ks5
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0004
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: 03vs3ks5;TS0004-MIL;BB6u;LA0i;SB6u;RC2;IA1i;SC0u;RC3;IC4i;SD7u;RD2;IC1i;SD3u;RB4;ID4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 2050
+  firmware_image_type: 47104
+  build: yes
+  status: mostly_supported
+  info: 4-gang switch (Milfra) on the 6-button ZTU board. Pinout traced physically from PCB silkscreen N02B/04B CTRL V0.2. master B6, net LED A0i; ch1 S=B6 R=C2 I=A1i, ch2 S=C0 R=C3 I=C4i, ch3 S=D7 R=D2 I=C1i, ch4 S=D3 R=B4 I=D4i.
+  threads: null
+  store: null
