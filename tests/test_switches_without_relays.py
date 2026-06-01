@@ -11,11 +11,16 @@ from zcl_consts import (
     ZCL_CLUSTER_MULTISTATE_INPUT_BASIC,
     ZCL_CLUSTER_ON_OFF,
     ZCL_CLUSTER_ON_OFF_SWITCH_CONFIG,
+    ZCL_CMD_ONOFF_OFF,
+    ZCL_CMD_ONOFF_ON,
     ZCL_CMD_ONOFF_TOGGLE,
     ZCL_ONOFF_CONFIGURATION_BINDED_MODE_LONG,
     ZCL_ONOFF_CONFIGURATION_BINDED_MODE_RISE,
     ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT,
     ZCL_ONOFF_CONFIGURATION_RELAY_MODE_DETACHED,
+    ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_OFFON,
+    ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_ONOFF,
+    ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SIMPLE,
     ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_OPPOSITE,
     ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SMART_SYNC,
     ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY,
@@ -55,7 +60,7 @@ def test_relay_index_is_zero(device: Device):
         assert idx == 0
 
 
-def test_button_press_no_crash(device: Device, button_pins: list[str]):
+def test_button_press_multistate(device: Device, button_pins: list[str]):
     """Pressing buttons does not crash and multistate value changes."""
     for i, pin in enumerate(button_pins):
         ep = i + 1
@@ -66,20 +71,68 @@ def test_button_press_no_crash(device: Device, button_pins: list[str]):
         assert val is not None
 
 
-def test_long_press_no_crash(device: Device, button_pins: list[str]):
-    """Long-pressing buttons does not crash when no relays are bound."""
-    for pin in button_pins:
+def test_button_press_no_crash(device: Device, button_pins: list[str]):
+    """Short-click and long-press on every button do not crash."""
+    for i, pin in enumerate(button_pins):
+        device.zcl_switch_mode_set(i + 1, ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY)
+        device.click_button(pin) 
         device.long_click_button(pin, duration_ms=1000)
-    # If we got here without crash, the test passes
+    # If we got here without crash, the device is still responsive.
     assert device.read_zigbee_attr(1, ZCL_CLUSTER_BASIC, ZCL_ATTR_BASIC_MFR_NAME) is not None
 
 
-def test_binding_commands_still_sent(device: Device, button_pins: list[str]):
-    """After joining network, button press still emits binding commands."""
-    device.set_network(1)  # joined
+@pytest.mark.parametrize(
+    "action,expected_cmd",
+    [
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_TOGGLE_SIMPLE,
+            ZCL_CMD_ONOFF_TOGGLE,
+            id="toggle",
+        ),
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_ONOFF, ZCL_CMD_ONOFF_ON, id="on"
+        ),
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_SWITCH_ACTION_OFFON, ZCL_CMD_ONOFF_OFF, id="off"
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "binded_mode,trigger",
+    [
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_BINDED_MODE_RISE,
+            lambda d, pin: d.press_button(pin),
+            id="rise",
+        ),
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT,
+            lambda d, pin: d.click_button(pin),
+            id="short",
+        ),
+        pytest.param(
+            ZCL_ONOFF_CONFIGURATION_BINDED_MODE_LONG,
+            lambda d, pin: d.long_click_button(pin, duration_ms=1000),
+            id="long",
+        ),
+    ],
+)
+def test_binding_commands_still_sent(
+    device: Device,
+    button_pins: list[str],
+    binded_mode: int,
+    trigger,
+    action: int,
+    expected_cmd: int,
+):
+    """All binded_modes × SwitchActions emit the right OnOff command on press."""
+    device.zcl_switch_mode_set(1, ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY)
+    device.zcl_switch_binding_mode_set(1, binded_mode)
+    device.zcl_switch_actions_set(1, action)
+    device.set_network(1)
     device.clear_events()
-    device.click_button(button_pins[0])
-    device.wait_for_cmd_send(1, ZCL_CLUSTER_ON_OFF, ZCL_CMD_ONOFF_TOGGLE)
+    trigger(device, button_pins[0])
+    device.wait_for_cmd_send(1, ZCL_CLUSTER_ON_OFF, expected_cmd)
 
 
 @pytest.mark.parametrize(
