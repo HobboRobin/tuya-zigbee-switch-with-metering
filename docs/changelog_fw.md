@@ -50,6 +50,7 @@ Please describe what you are working on, under ## Upcoming
   - AC noise affecting Telink GPIO
   - Changing device type breaks Silabs NVM data
   - Reset needed 11 presses instead of 10
+  - Silabs: bindings to Zigbee groups ignored when emitting commands
 - **New**
   - SONOFF ZBMINIL2 version updates broken?
 
