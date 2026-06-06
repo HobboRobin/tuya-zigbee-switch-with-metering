@@ -5168,6 +5168,141 @@ SWITCH_MANHOT_B_TS0013:
   info: Supported
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/197
   store: https://www.aliexpress.com/item/1005006877282435.html
+SWITCH_MILFRA_TS0001:
+  human_name: Milfra 1-gang switch
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0001
+  stock_manufacturer_name: _TZ3000_gsqxcwqr
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0001
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: gsqxcwqr;TS0001-MIL;BC0u;LA0i;SC0u;RB4;IC4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47103
+  build: yes
+  status: fully_supported
+  info: Supported
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
+  store: https://www.aliexpress.com/item/1005010353623300.html
+SWITCH_MILFRA_TS0002:
+  human_name: Milfra 2-gang switch
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0002
+  stock_manufacturer_name: _TZ3210_mrigi9ij
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0002
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: ybjqjsuz;TS0002-YBJ;LA0i;SB6u;RB4;IA1i;SD3u;RD2;ID4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 2050
+  firmware_image_type: 47102
+  build: yes
+  status: fully_supported
+  info: Supported
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
+  store: https://www.aliexpress.com/item/1005010353623300.html
+SWITCH_MILFRA_TS0003:
+  human_name: Milfra 3-gang switch
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0003
+  stock_manufacturer_name: _TZ3000_ybjqjsuz
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0003
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: ybjqjsuz;TS0003-YBJ;LA0i;SB6u;RB4;IA1i;SC0u;RD2;IC4i;SD3u;RC3;ID4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47100
+  build: yes
+  status: fully_supported
+  info: Supported
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
+  store: https://www.aliexpress.com/item/1005010353623300.html
+SWITCH_MILFRA_TS0003_1:
+  human_name: Milfra 3-gang switch
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0003
+  stock_manufacturer_name: _TZ3210_ybjqjsuz
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0003
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: ybjqjsuz;TS0003-YBJ;LA0i;SB6u;RB4;IA1i;SC0u;RD2;IC4i;SD3u;RC3;ID4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 2050
+  firmware_image_type: 47101
+  build: yes
+  status: fully_supported
+  info: Supported
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
+  store: https://www.aliexpress.com/item/1005010353623300.html
+SWITCH_MILFRA_TS0004:
+  human_name: Milfra 4-gang switch
+  category: switch
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS0004
+  stock_manufacturer_name: _TZ3210_03vs3ks5
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0004
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: 03vs3ks5;TS0004-MIL;LA0i;SB6u;RC2;IA1i;SC0u;RC3;IC4i;SD7u;RD2;IC1i;SD3u;RB4;ID4i;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 2050
+  firmware_image_type: 47104
+  build: yes
+  status: fully_supported
+  info: Supported
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
+  store: https://www.aliexpress.com/item/1005010353623300.html
 SWITCH_MOES_ALL_TS0011:
   human_name: Moes 1-gang switches (all variants)
   category: switch
@@ -5789,142 +5924,3 @@ SWITCH_ZEMISMART_TS0601_6GANG:
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/209
   store: https://www.zemismart.com/products/tb26-6
 
-SWITCH_MILFRA_TS0003:
-  human_name: Milfra 3-gang switch
-  category: switch
-  power: mains
-  neutral: required
-  output: relay
-  device_type: router
-  stock_model_name: TS0003
-  stock_manufacturer_name: _TZ3000_ybjqjsuz
-  stock_converter_manufacturer: Tuya
-  stock_converter_model: TS0003
-  override_z2m_device: null
-  tuya_module: ZTU
-  mcu_family: Telink
-  mcu: TLSR8258
-  config_str: ybjqjsuz;TS0003-YBJ;LA0i;SB6u;RB4;IA1i;SC0u;RD2;IC4i;SD3u;RC3;ID4i;
-  alt_config_str: null
-  old_manufacturer_names: null
-  old_zb_models: null
-  stock_manufacturer_id: 4417
-  stock_image_type: 54179
-  firmware_image_type: 47100
-  build: yes
-  status: fully_supported
-  info: Supported
-  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
-  store: https://www.aliexpress.com/item/1005010353623300.html
-
-SWITCH_MILFRA_TS0003_1:
-  human_name: Milfra 3-gang switch
-  category: switch
-  power: mains
-  neutral: required
-  output: relay
-  device_type: router
-  stock_model_name: TS0003
-  stock_manufacturer_name: _TZ3210_ybjqjsuz
-  stock_converter_manufacturer: Tuya
-  stock_converter_model: TS0003
-  override_z2m_device: null
-  tuya_module: ZTU
-  mcu_family: Telink
-  mcu: TLSR8258
-  config_str: ybjqjsuz;TS0003-YBJ;LA0i;SB6u;RB4;IA1i;SC0u;RD2;IC4i;SD3u;RC3;ID4i;
-  alt_config_str: null
-  old_manufacturer_names: null
-  old_zb_models: null
-  stock_manufacturer_id: 4417
-  stock_image_type: 2050
-  firmware_image_type: 47101
-  build: yes
-  status: fully_supported
-  info: Supported
-  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
-  store: https://www.aliexpress.com/item/1005010353623300.html
-
-SWITCH_MILFRA_TS0002:
-  human_name: Milfra 2-gang switch
-  category: switch
-  power: mains
-  neutral: required
-  output: relay
-  device_type: router
-  stock_model_name: TS0002
-  stock_manufacturer_name: _TZ3210_mrigi9ij
-  stock_converter_manufacturer: Tuya
-  stock_converter_model: TS0002
-  override_z2m_device: null
-  tuya_module: ZTU
-  mcu_family: Telink
-  mcu: TLSR8258
-  config_str: ybjqjsuz;TS0002-YBJ;LA0i;SB6u;RB4;IA1i;SD3u;RD2;ID4i;
-  alt_config_str: null
-  old_manufacturer_names: null
-  old_zb_models: null
-  stock_manufacturer_id: 4417
-  stock_image_type: 2050
-  firmware_image_type: 47102
-  build: yes
-  status: fully_supported
-  info: Supported
-  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
-  store: https://www.aliexpress.com/item/1005010353623300.html
-
-SWITCH_MILFRA_TS0001:
-  human_name: Milfra 1-gang switch
-  category: switch
-  power: mains
-  neutral: required
-  output: relay
-  device_type: router
-  stock_model_name: TS0001
-  stock_manufacturer_name: _TZ3000_gsqxcwqr
-  stock_converter_manufacturer: Tuya
-  stock_converter_model: TS0001
-  override_z2m_device: null
-  tuya_module: ZTU
-  mcu_family: Telink
-  mcu: TLSR8258
-  config_str: gsqxcwqr;TS0001-MIL;BC0u;LA0i;SC0u;RB4;IC4i;
-  alt_config_str: null
-  old_manufacturer_names: null
-  old_zb_models: null
-  stock_manufacturer_id: 4417
-  stock_image_type: 54179
-  firmware_image_type: 47103
-  build: yes
-  status: fully_supported
-  info: Supported
-  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
-  store: https://www.aliexpress.com/item/1005010353623300.html
-
-SWITCH_MILFRA_TS0004:
-  human_name: Milfra 4-gang switch
-  category: switch
-  power: mains
-  neutral: required
-  output: relay
-  device_type: router
-  stock_model_name: TS0004
-  stock_manufacturer_name: _TZ3210_03vs3ks5
-  stock_converter_manufacturer: Tuya
-  stock_converter_model: TS0004
-  override_z2m_device: null
-  tuya_module: ZTU
-  mcu_family: Telink
-  mcu: TLSR8258
-  config_str: 03vs3ks5;TS0004-MIL;LA0i;SB6u;RC2;IA1i;SC0u;RC3;IC4i;SD7u;RD2;IC1i;SD3u;RB4;ID4i;
-  alt_config_str: null
-  old_manufacturer_names: null
-  old_zb_models: null
-  stock_manufacturer_id: 4417
-  stock_image_type: 2050
-  firmware_image_type: 47104
-  build: yes
-  status: fully_supported
-  info: Supported
-  threads: https://github.com/romasku/tuya-zigbee-switch/pull/431
-  store: https://www.aliexpress.com/item/1005010353623300.html
