@@ -414,6 +414,10 @@ const definitions = [
                 {%- for coverName in device.coverNames -%}
                     "{{coverName}}": {{loop.index + (device.switchNames | length) + (device.relayNames | length) + (device.coverSwitchNames | length)}},{{" "}}
                 {%- endfor -%}
+                {# Long-press companion endpoints, appended after everything to keep existing endpoint IDs stable. #}
+                {%- for switchName in device.switchNames -%}
+                    "{{switchName}}_long_press": {{loop.index + (device.switchNames | length) + (device.relayNames | length) + (device.coverSwitchNames | length) + (device.coverNames | length)}},{{" "}}
+                {%- endfor -%}
             } }),
             {% set first_endpoint = device.switchNames[0] if device.switchNames else (device.relayNames[0] if device.relayNames else (device.coverSwitchNames[0] if device.coverSwitchNames else device.coverNames[0])) %}
             romasku.deviceConfig("device_config", "{{first_endpoint}}"),
