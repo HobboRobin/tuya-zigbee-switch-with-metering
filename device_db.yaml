@@ -3003,6 +3003,33 @@ OUTLET_BSEED_TS011F:
   info: Supported
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store: https://www.aliexpress.com/item/1005004402438527.html
+OUTLET_MAKEGOOD_MG_GPO01:
+  human_name: MakeGood MG-GPO01 double GPO
+  category: outlet
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3210_bep7ccew
+  stock_converter_manufacturer: MakeGood
+  stock_converter_model: MG-GPO01
+  override_z2m_device: null
+  tuya_module: ZT3L
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: bep7ccew;TS011F-MG;LB4;SC3u;RD7;IC4;SD4u;RD2;IC0;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47009
+  build: yes
+  status: in_progress
+  info: "2-gang outlet. UART flash required — OTA leaves NV state breaking state reporting. Confirmed across 6 units."
+  threads: null
+  store: null
 OUTLET_MOES_PM_TS011F:
   human_name: Moes PM wall socket
   category: outlet
