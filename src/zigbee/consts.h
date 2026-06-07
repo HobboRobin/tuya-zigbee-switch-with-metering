@@ -104,8 +104,8 @@
 #define ZCL_ATTR_COVER_SWITCH_CONFIG_LONG_PRESS_DUR                  0x0005
 
 // Dimmer Key Configuration cluster (manufacturer-specific)
-#define ZCL_ATTR_DIMMER_KEY_CONFIG_LONG_PRESS_DUR     0x0000
-#define ZCL_ATTR_DIMMER_KEY_CONFIG_LEVEL_MOVE_RATE    0x0001
+#define ZCL_ATTR_DIMMER_KEY_CONFIG_LONG_PRESS_DUR                    0x0000
+#define ZCL_ATTR_DIMMER_KEY_CONFIG_LEVEL_MOVE_RATE                   0x0001
 
 // Poll Control cluster
 #define ZCL_CLUSTER_POLL_CONTROL                                     0x0020

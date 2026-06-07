@@ -11,11 +11,11 @@
 // Constants
 // ============================================================================
 
-#define MULTISTATE_RELEASED     0
-#define MULTISTATE_UP_PRESS     1
-#define MULTISTATE_DOWN_PRESS   2
-#define MULTISTATE_UP_LONG      3
-#define MULTISTATE_DOWN_LONG    4
+#define MULTISTATE_RELEASED      0
+#define MULTISTATE_UP_PRESS      1
+#define MULTISTATE_DOWN_PRESS    2
+#define MULTISTATE_UP_LONG       3
+#define MULTISTATE_DOWN_LONG     4
 
 static const uint8_t  multistate_out_of_service = 0;
 static const uint8_t  multistate_flags          = 0;
@@ -50,7 +50,7 @@ static void dimmer_key_cluster_load_attrs_from_nv(zigbee_dimmer_key_cluster *clu
 
     cluster->up_button->long_press_duration_ms   = nv_config_buffer.button_long_press_duration;
     cluster->down_button->long_press_duration_ms = nv_config_buffer.button_long_press_duration;
-    cluster->level_move_rate                     = nv_config_buffer.level_move_rate;
+    cluster->level_move_rate = nv_config_buffer.level_move_rate;
 }
 
 // ============================================================================
@@ -157,7 +157,7 @@ static void dimmer_key_cluster_on_down_release(zigbee_dimmer_key_cluster *cluste
 void dimmer_key_cluster_add_to_endpoint(zigbee_dimmer_key_cluster *cluster,
                                         hal_zigbee_endpoint *endpoint) {
     dimmer_key_cluster_by_endpoint[endpoint->endpoint] = cluster;
-    cluster->endpoint      = endpoint->endpoint;
+    cluster->endpoint        = endpoint->endpoint;
     cluster->level_move_rate = 50;
     cluster->present_value   = MULTISTATE_RELEASED;
 
@@ -227,7 +227,8 @@ void dimmer_key_cluster_add_to_endpoint(zigbee_dimmer_key_cluster *cluster,
                          ZCL_DATA_TYPE_BITMAP8, ATTR_READONLY,
                          multistate_flags);
 
-    endpoint->clusters[endpoint->cluster_count].cluster_id      = ZCL_CLUSTER_MULTISTATE_INPUT_BASIC;
+    endpoint->clusters[endpoint->cluster_count].cluster_id =
+        ZCL_CLUSTER_MULTISTATE_INPUT_BASIC;
     endpoint->clusters[endpoint->cluster_count].attribute_count = 4;
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->multistate_attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;

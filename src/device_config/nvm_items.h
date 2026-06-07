@@ -22,8 +22,9 @@
         (NV_ITEM_BASIC_CLUSTER_DATA + MAX_SWITCHES + MAX_RELAYS + MAX_COVER_SWITCHES + 1 + \
          cover_idx)
 
-#define NV_ITEM_DIMMER_KEY_CONFIG(dimmer_key_idx)                                                          \
-        (NV_ITEM_BASIC_CLUSTER_DATA + MAX_SWITCHES + MAX_RELAYS + MAX_COVER_SWITCHES + MAX_COVERS + 1 +    \
+#define NV_ITEM_DIMMER_KEY_CONFIG(dimmer_key_idx)                                                   \
+        (NV_ITEM_BASIC_CLUSTER_DATA + MAX_SWITCHES + MAX_RELAYS + MAX_COVER_SWITCHES + MAX_COVERS + \
+         1 +                                                                                        \
          dimmer_key_idx)
 
 // 3 + 5 (switches) + 5 (relays) + 3 (cover switches) + 3 (covers) + 2 (dimmer keys) = 21

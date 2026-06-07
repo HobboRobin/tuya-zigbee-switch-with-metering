@@ -12,10 +12,10 @@ typedef struct {
 
 typedef struct {
     // Parameters
-    uint8_t    dimmer_key_idx;
-    uint8_t    endpoint;
-    button_t * up_button;
-    button_t * down_button;
+    uint8_t              dimmer_key_idx;
+    uint8_t              endpoint;
+    button_t *           up_button;
+    button_t *           down_button;
 
     // Attributes
     uint8_t              level_move_rate;
