@@ -3004,7 +3004,7 @@ OUTLET_BSEED_TS011F:
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store: https://www.aliexpress.com/item/1005004402438527.html
 OUTLET_MAKEGOOD_MG_GPO01:
-  human_name: MakeGood MG-GPO01 double GPO
+  human_name: MakeGood MG-GPO01 double socket
   category: outlet
   power: mains
   neutral: required
@@ -3029,7 +3029,7 @@ OUTLET_MAKEGOOD_MG_GPO01:
   status: in_progress
   info: "2-gang outlet. Power monitoring not implemented. UART flash required — OTA leaves NV state breaking state reporting."
   threads: null
-  store: null
+  store: https://www.aliexpress.com/item/1005007951942511.html
 OUTLET_MOES_PM_TS011F:
   human_name: Moes PM wall socket
   category: outlet
