@@ -3027,7 +3027,7 @@ OUTLET_MAKEGOOD_MG_GPO01:
   firmware_image_type: 47009
   build: yes
   status: in_progress
-  info: "2-gang outlet. UART flash required — OTA leaves NV state breaking state reporting. Confirmed across 6 units."
+  info: "2-gang outlet. Power monitoring not implemented. UART flash required — OTA leaves NV state breaking state reporting."
   threads: null
   store: null
 OUTLET_MOES_PM_TS011F:
