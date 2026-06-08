@@ -94,15 +94,17 @@ $(TOOLS_DIR)/sdk: | $(DOWNLOAD_DIR)
 		exit 1; \
 	fi
 	@rm -rf $(TOOLS_DIR)/sdk_temp
-	@# Raise MAX_ACTIVE_EP_NUMBER (Z-stack endpoint pool) from 8 to 16 to fit
-	@# 3-gang switches with long_press_ep companions (3 switches + 3 relays +
-	@# 3 long_press = 9 endpoints, exceeds the default cap of 8).
-	@sed -E -i.bak 's/^#define[[:space:]]+MAX_ACTIVE_EP_NUMBER[[:space:]]+8[[:space:]]*$$/#define\tMAX_ACTIVE_EP_NUMBER                    16/' \
-		$(TOOLS_DIR)/sdk/zigbee/af/zb_af.h
-	@rm -f $(TOOLS_DIR)/sdk/zigbee/af/zb_af.h.bak
-	@grep -q "MAX_ACTIVE_EP_NUMBER                    16" $(TOOLS_DIR)/sdk/zigbee/af/zb_af.h || \
-		{ echo "ERROR: MAX_ACTIVE_EP_NUMBER patch did not apply to $(TOOLS_DIR)/sdk/zigbee/af/zb_af.h"; exit 1; }
-	@echo "Patched MAX_ACTIVE_EP_NUMBER to 16 in zb_af.h"
+
+	@# Wrap MAX_ACTIVE_EP_NUMBER in an #ifndef guard so the value can be
+	@# overridden via -DMAX_ACTIVE_EP_NUMBER=... from CFLAGS (the override
+	@# itself lives in DEVICE_DEFS in src/telink/Makefile).
+	@# TODO: drop this patch once upstream merges
+	@# https://github.com/telink-semi/telink_zigbee_sdk/pull/8
+	@if grep -q '^#ifndef MAX_ACTIVE_EP_NUMBER$$' $(TOOLS_DIR)/sdk/zigbee/af/zb_af.h; then \
+		echo "MAX_ACTIVE_EP_NUMBER #ifndef guard already present, skipping patch"; \
+	else \
+		patch -d $(TOOLS_DIR)/sdk -p1 < zb_af-ifndef-max-active-ep.patch; \
+	fi
 
 # TC32 GCC Toolchain
 toolchain: $(TOOLS_DIR)/toolchain
