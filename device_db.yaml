@@ -3003,7 +3003,7 @@ OUTLET_BSEED_TS011F:
   info: Supported
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store: https://www.aliexpress.com/item/1005004402438527.html
-OUTLET_MAKEGOOD_MG_GPO01:
+OUTLET_MAKEGOOD_PM_TS011F_2GANG:
   human_name: MakeGood MG-GPO01 double socket
   category: outlet
   power: mains
@@ -3027,8 +3027,8 @@ OUTLET_MAKEGOOD_MG_GPO01:
   firmware_image_type: 47009
   build: yes
   status: in_progress
-  info: "2-gang outlet. Power monitoring not implemented. UART flash required — OTA leaves NV state breaking state reporting."
-  threads: null
+  info: Power monitoring not implemented
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/440
   store: https://www.aliexpress.com/item/1005007951942511.html
 OUTLET_MOES_PM_TS011F:
   human_name: Moes PM wall socket
