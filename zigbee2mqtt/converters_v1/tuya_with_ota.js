@@ -47,6 +47,7 @@ const tuyaModels = [
     "TS0004",
     "TS0004_switch_module",
     "TS0004_switch_module_2",
+    "TS0004_switch_module_2_temp",
     "TS0011",
     "TS0011_switch_module",
     "TS0012",
@@ -85,6 +86,7 @@ for (let definition of tuyaDefinitions) {
 }
 
 const moesModels = [
+    "ERS-10TZBVB-AA",
     "SR-ZS",
     "ZG-101ZL",
     "ZS-EUB_1gang",
@@ -134,6 +136,7 @@ for (let definition of girierDefinitions) {
 }
 
 const lonsonhoModels = [
+    "TS0001",
     "TS130F_dual",
 ];
 
