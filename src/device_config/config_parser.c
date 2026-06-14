@@ -313,6 +313,9 @@ void parse_config() {
             encoders[encoders_cnt].pin_sw = sw_pin;
             hal_gpio_init(sw_pin, 1, sw_pull);
 
+            encoders[encoders_cnt].multi_press_duration_ms = 800;
+            encoders[encoders_cnt].on_multi_press          = on_multi_press_reset;
+
             encoder_clusters[encoder_clusters_cnt].switch_idx = encoder_clusters_cnt;
             encoder_clusters[encoder_clusters_cnt].encoder    = &encoders[encoders_cnt];
 

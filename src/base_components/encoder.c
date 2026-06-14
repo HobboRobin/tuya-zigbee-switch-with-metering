@@ -83,8 +83,20 @@ static void sw_callback(hal_gpio_pin_t pin, encoder_t *encoder) {
             printf("Encoder Pressed\r\n");
 
             encoder->rotate_since_pressed = false;
+
+            if (now - encoder->released_at_ms < encoder->multi_press_duration_ms) {
+              encoder->multi_press_cnt += 1;
+              printf("Multi press detected: %d\r\n", encoder->multi_press_cnt);
+              if (encoder->on_multi_press != NULL) {
+                encoder->on_multi_press(encoder->callback_param, encoder->multi_press_cnt);
+              }
+            } else {
+              encoder->multi_press_cnt = 1;
+            }
+
         } else {
             printf("Encoder Released\r\n");
+            encoder->released_at_ms = now;
 
             if (!encoder->rotate_since_pressed && encoder->on_press != NULL)
                 encoder->on_press(encoder->callback_param);
