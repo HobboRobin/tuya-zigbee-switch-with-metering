@@ -7,6 +7,7 @@ const {
     binary,
     windowCovering,
     deviceAddCustomCluster,
+    setupConfigureForBinding,
 } = require("zigbee-herdsman-converters/lib/modernExtend");
 const {presets: e, access: ea} = require("zigbee-herdsman-converters/lib/exposes");
 const {assertString} = require("zigbee-herdsman-converters/lib/utils");
@@ -119,12 +120,12 @@ const romasku = {
     encoderAction: (endpointName) =>{
         const exposes = [];
         exposes.push(e.enum(`${endpointName}_action`, ea.STATE, [])
-          .withDescription("Triggered action (e.g. a button click)")
+          .withDescription("Last triggered action")
           .withCategory("diagnostic"))
         exposes.push(e.numeric(`${endpointName}_step_size`, ea.STATE, [])
           .withValueMin(0)
           .withValueMax(5000)
-          .withDescription("Triggered action (e.g. a button click)")
+          .withDescription("Step size for last triggered action")
           .withCategory("diagnostic"))
 
         const fromZigbee = [
@@ -166,7 +167,13 @@ const romasku = {
         }
       ];
 
-        return {exposes, fromZigbee, isModernExtend: true};
+        const configure = [
+          setupConfigureForBinding("genLevelCtrl", "output", [endpointName]),
+          setupConfigureForBinding("lightingColorCtrl", "output", [endpointName]),
+          setupConfigureForBinding("genOnOff", "output", [endpointName]),
+        ]
+
+        return {exposes, fromZigbee, configure, isModernExtend: true};
       },
     relayIndicatorMode: (name, endpointName) =>
         enumLookup({
@@ -3627,24 +3634,6 @@ const definitions = [
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
-            // encoder
-            const endpoint3 = device.getEndpoint(3);
-            await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
-            // encoder action:
-            await endpoint3.configureReporting("genMultistateInput", [
-                {
-                    attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
-                    minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
-                    reportableChange: 0,
-                },
-                {
-                    attribute: {ID: 0x0099, type: 0x21}, // uint16
-                    minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
-                    reportableChange: 0,
-                },
-            ]);
         },
         ota: true,
     },
