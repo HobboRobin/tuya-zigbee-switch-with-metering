@@ -26,6 +26,11 @@ const Zcl = require('zigbee-herdsman').Zcl;
   Generate with: `make tools/update_converters`
 ********************************************************************/
 
+const genEncoderPayload = (endpoint, action, stepSize) => ({
+  [`${endpoint}_action`]: action,
+  [`${endpoint}_step_size`]: stepSize,
+})
+
 const romasku = {
     switchAction: (name, endpointName) =>
         enumLookup({
@@ -134,10 +139,13 @@ const romasku = {
             type: ["commandStep"],
             convert:
                 ((model, msg, publish, options, meta) => {
-                    const payload = {};
-                    payload[`${endpointName}_action`] = `brightness_${msg.data.stepmode === 0 ? 'up' : 'down'}`;
-                    payload[`${endpointName}_step_size`] = msg.data.stepsize;
-                    return payload;
+                  publish(genEncoderPayload(endpointName, `brightness_${msg.data.stepmode === 0 ? 'up' : 'down'}`, msg.data.stepsize));
+                   
+                  setTimeout(() => {
+                    publish(genEncoderPayload(endpointName, '', 0));
+                  }, 20);
+
+                  return;
                 }),
             // biome-ignore lint/suspicious/noExplicitAny: generic
         },
@@ -146,10 +154,13 @@ const romasku = {
             type: ["commandStepColorTemp"],
             convert:
                 ((model, msg, publish, options, meta) => {
-                    const payload = {};
-                    payload[`${endpointName}_action`] = `color_temp_${msg.data.stepmode === 1 ? 'up' : 'down'}`;
-                    payload[`${endpointName}_step_size`] = msg.data.stepsize;
-                    return payload;
+                    publish(genEncoderPayload(endpointName, `color_temp_${msg.data.stepmode === 1 ? 'up' : 'down'}`, msg.data.stepsize));
+
+                    setTimeout(() => {
+                      publish(genEncoderPayload(endpointName, '', 0));
+                    }, 20); 
+
+                    return;
                 }),
             // biome-ignore lint/suspicious/noExplicitAny: generic
         },
@@ -158,10 +169,13 @@ const romasku = {
             type: ["commandToggle"],
             convert:
                 ((model, msg, publish, options, meta) => {
-                    const payload = {};
-                    payload[`${endpointName}_action`] = `toggle_on_off`;
-                    payload[`${endpointName}_step_size`] = 0;
-                    return payload;
+                    publish(genEncoderPayload(endpointName, 'toggle_on_off', 0));
+
+                    setTimeout(() => {
+                      publish(genEncoderPayload(endpointName, '', 0));
+                    }, 20); 
+
+                    return;
                 }),
             // biome-ignore lint/suspicious/noExplicitAny: generic
         }
