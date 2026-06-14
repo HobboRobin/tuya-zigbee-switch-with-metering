@@ -13276,9 +13276,9 @@ const definitions = [
     },
     {
         zigbeeModel: [
-            "DUN-002",
+            "E1",
         ],
-        model: "_TZ3000_knoj8lpk_temp_2",
+        model: "E1",
         vendor: "Tuya-custom",
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [

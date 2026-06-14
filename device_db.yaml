@@ -5353,22 +5353,22 @@ SWITCH_ZEMISMART_TS0601_6GANG:
   info: Needs pinout. Secondary MCU. 6-gang!
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/209
   store: https://www.zemismart.com/products/tb26-6
-CUSTOM_DUNNICLIFFE_ENCODER:
-  human_name: Custom Encoder
+ZABBY_ENCODER:
+  human_name: Zabby Encoder
   category: module
   power: mains
   neutral: required
   output: relay
   device_type: router
-  stock_model_name: TS0004_temp
-  stock_manufacturer_name: _TZ3000_knoj8lpk_temp
+  stock_model_name: TS0004
+  stock_manufacturer_name: _TZ3000_knoj8lpk
   stock_converter_manufacturer: Tuya
-  stock_converter_model: TS0004_switch_module_2_temp
-  override_z2m_device: _TZ3000_knoj8lpk_temp_2
+  stock_converter_model: TS0004_switch_module_2
+  override_z2m_device: E1
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: DUN-001;DUN-002;BC3u;LC2i;RD2;EB4uD7uD4u;
+  config_str: Zabby;E1;BC3u;LC2i;RD2;EB4uD7uD4u;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
