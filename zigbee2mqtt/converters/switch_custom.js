@@ -13278,8 +13278,8 @@ const definitions = [
             "E1",
         ],
         model: "E1",
-        vendor: "Tuya-custom",
-        description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
+        vendor: "Zabby",
+        description: "Main powered Encoder for Light Control",
         extend: [
             deviceEndpoints({ endpoints: {"relay": 1, "encoder_0": 2, } }),
             romasku.deviceConfig("device_config", "relay"),
