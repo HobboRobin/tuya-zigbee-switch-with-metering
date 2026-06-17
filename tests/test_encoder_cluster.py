@@ -4,7 +4,10 @@ from client import StubProc
 from conftest import Device
 from tests.zcl_consts import (
   ZCL_CLUSTER_ON_OFF,
-  ZCL_CMD_ONOFF_TOGGLE
+  ZCL_CMD_ONOFF_TOGGLE,
+  ZCL_CLUSTER_LEVEL_CONTROL,
+  ZCL_CMD_LEVEL_STEP,
+  ZCL_LEVEL_MOVE_UP
 )
 
 @pytest.fixture
@@ -14,7 +17,7 @@ def encoder_device() -> Device:
     d = Device(p)
     yield d  
 
-def test_encoder_cluster_switch_pressing_causes_on_of_command(encoder_device: Device) -> None:
+def test_encoder_cluster_switch_pressing_causes_on_off_command(encoder_device: Device) -> None:
   
     # Test setup
     encoder_device.step_time(100)
@@ -27,3 +30,22 @@ def test_encoder_cluster_switch_pressing_causes_on_of_command(encoder_device: De
     encoder_device.wait_for_cmd_send(
         1, ZCL_CLUSTER_ON_OFF, ZCL_CMD_ONOFF_TOGGLE
     )
+
+def test_encoder_cluster_rotating_clockwise_causes_step_up_command(encoder_device: Device) -> None:
+  
+    # Test setup
+    encoder_device.step_time(100)
+
+    # When Rotating clockwise Pin A changes before Pin B
+    result = encoder_device.set_gpio("A0", 0)
+    encoder_device.step_time(100)
+    result = encoder_device.set_gpio("A1", 0) 
+    encoder_device.step_time(100)
+
+    # Assertions
+    cmd = encoder_device.wait_for_cmd_send(
+        1, ZCL_CLUSTER_LEVEL_CONTROL, ZCL_CMD_LEVEL_STEP
+    )
+    assert cmd.data == b'\x00\x0D\x01\x00' # x00 Move Up, StepSize x0D, Transistion Time \x01\x00 (1 x 1/10th Sec)
+
+    
