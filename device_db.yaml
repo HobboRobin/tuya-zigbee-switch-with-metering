@@ -6085,8 +6085,8 @@ SWITCH_ZEMISMART_TS0601_6GANG:
   info: Needs pinout. Secondary MCU. 6-gang!
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/209
   store: https://www.zemismart.com/products/tb26-6
-MODULE_TUYA_MINI_TS0002:
-  human_name: Tuya 2CH Mini Smart Switch
+MODULE_TUYA_A_TS0002:
+  human_name: Tuya 2-gang
   category: module
   power: mains
   neutral: required
@@ -6096,7 +6096,7 @@ MODULE_TUYA_MINI_TS0002:
   stock_manufacturer_name: _TZ3000_n1j44rth
   stock_converter_manufacturer: Tuya
   stock_converter_model: TS0002
-  override_z2m_device: TS0002_basic_2
+  override_z2m_device: null
   tuya_module: ZT2S_real
   mcu_family: Telink
   mcu: TLSR8258
@@ -6110,10 +6110,10 @@ MODULE_TUYA_MINI_TS0002:
   build: yes
   status: fully_supported
   info: Supported
-  threads: null
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/448
   store: https://aliexpress.com/item/1005009640676478.html
-MODULE_TUYA_MINI_TS0003:
-  human_name: Tuya 3CH Mini Smart Switch
+MODULE_TUYA_A_TS0003:
+  human_name: Tuya 3-gang
   category: module
   power: mains
   neutral: required
@@ -6123,7 +6123,7 @@ MODULE_TUYA_MINI_TS0003:
   stock_manufacturer_name: _TZ3000_uwhjgngj
   stock_converter_manufacturer: Tuya
   stock_converter_model: TS0003
-  override_z2m_device: TS0003_switch_module_1
+  override_z2m_device: null
   tuya_module: ZT2S_real
   mcu_family: Telink
   mcu: TLSR8258
@@ -6137,5 +6137,5 @@ MODULE_TUYA_MINI_TS0003:
   build: yes
   status: fully_supported
   info: Supported
-  threads: null
+  threads: https://github.com/romasku/tuya-zigbee-switch/pull/448
   store: https://aliexpress.com/item/1005009640676478.html
