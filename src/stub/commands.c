@@ -377,6 +377,31 @@ static int cmd_set_battery_voltage(int argc, char **argv) {
     return 0;
 }
 
+static int cmd_set_counter(int argc, char **argv) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: set_counter <pin> <value>\n");
+        io_res_err("usage");
+        return -1;
+    }
+    char *e   = NULL;
+    long  pin = strtol(argv[1], &e, 10);
+    if (*argv[1] == '\0' || *e) {
+        fprintf(stderr, "Bad pin: %s\n", argv[1]);
+        io_res_err("bad_pin=%s", argv[1]);
+        return -1;
+    }
+    long val = strtol(argv[2], &e, 10);
+    if (*argv[2] == '\0' || *e || val < 0) {
+        fprintf(stderr, "Bad counter value: %s\n", argv[2]);
+        io_res_err("bad_value=%s", argv[2]);
+        return -1;
+    }
+    stub_set_pulse_counter((hal_gpio_pin_t)pin, (uint32_t)val);
+    printf("Counter on pin %ld set to %ld\n", pin, val);
+    io_res_ok("pin=%ld value=%ld", pin, val);
+    return 0;
+}
+
 /* Command table */
 static const SimpleReplCommand kCmds[] = {
     { "machine",             cmd_machine             },
@@ -394,6 +419,7 @@ static const SimpleReplCommand kCmds[] = {
     { "freeze_time",         cmd_freeze_time         },
     { "step_time",           cmd_step_time           },
     { "set_battery_voltage", cmd_set_battery_voltage },
+    { "set_counter",         cmd_set_counter         },
     { "q",                   cmd_quit                },
     { "quit",                cmd_quit                },
 };

@@ -129,6 +129,7 @@ TELINK_SOURCES := \
 	hal/timer.c \
 	hal/tasks.c \
 	hal/gpio.c \
+	hal/gpio_counter.c \
 	hal/gpio_interrupts.c \
 	hal/nvm.c \
 	hal/zigbee.c \
