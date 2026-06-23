@@ -94,4 +94,77 @@ hal_gpio_pin_t hal_gpio_parse_pin(const char *s);
  */
 hal_gpio_pull_t hal_gpio_parse_pull(const char *pull_str);
 
+/**
+ * Hardware GPIO pulse counter API
+ *
+ * Some platforms support hardware-based pulse counting on GPIO pins,
+ * allowing accurate counting without CPU intervention.
+ */
+
+#define HAL_GPIO_COUNTER_INVALID    -1
+
+typedef int8_t hal_gpio_counter_t;
+
+typedef enum {
+    HAL_GPIO_COUNTER_RISING  = 0,
+    HAL_GPIO_COUNTER_FALLING = 1,
+} hal_gpio_counter_edge_t;
+
+/**
+ * Initialize a hardware pulse counter on a GPIO pin
+ * @param gpio_pin GPIO pin identifier
+ * @param edge Edge type to count (rising or falling)
+ * @param pull Pull resistor configuration
+ * @return Counter handle or HAL_GPIO_COUNTER_INVALID on failure
+ */
+hal_gpio_counter_t hal_gpio_counter_init(hal_gpio_pin_t gpio_pin,
+                                         hal_gpio_counter_edge_t edge,
+                                         hal_gpio_pull_t pull);
+
+/**
+ * Deinitialize a pulse counter and release its resources
+ * @param counter Counter handle
+ */
+void hal_gpio_counter_deinit(hal_gpio_counter_t counter);
+
+/**
+ * Read the current pulse count
+ * @param counter Counter handle
+ * @return Current pulse count
+ */
+uint32_t hal_gpio_counter_read(hal_gpio_counter_t counter);
+
+/**
+ * Reset the pulse count to zero
+ * @param counter Counter handle
+ */
+void hal_gpio_counter_reset(hal_gpio_counter_t counter);
+
+/**
+ * Start counting pulses
+ * @param counter Counter handle
+ */
+void hal_gpio_counter_start(hal_gpio_counter_t counter);
+
+/**
+ * Stop counting pulses (does not release resources)
+ * @param counter Counter handle
+ */
+void hal_gpio_counter_stop(hal_gpio_counter_t counter);
+
+/**
+ * Atomically read and reset the pulse counter
+ * Note: pulses during the brief stop/reset window may be lost
+ * @param counter Counter handle
+ * @return Pulse count before reset
+ */
+static inline uint32_t hal_gpio_counter_read_and_reset(
+    hal_gpio_counter_t counter) {
+    hal_gpio_counter_stop(counter);
+    uint32_t count = hal_gpio_counter_read(counter);
+    hal_gpio_counter_reset(counter);
+    hal_gpio_counter_start(counter);
+    return count;
+}
+
 #endif

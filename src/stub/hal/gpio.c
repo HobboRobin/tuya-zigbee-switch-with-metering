@@ -178,3 +178,82 @@ void ensure_valid_output_pin(hal_gpio_pin_t gpio_pin) {
         exit(1);
     }
 }
+
+// GPIO pulse counter stub implementation
+
+#define MAX_GPIO_COUNTERS    2
+
+typedef struct {
+    uint8_t        initialized;
+    uint32_t       value;
+    hal_gpio_pin_t gpio_pin;
+} stub_gpio_counter_t;
+
+static stub_gpio_counter_t gpio_counter[MAX_GPIO_COUNTERS];
+
+hal_gpio_counter_t hal_gpio_counter_init(hal_gpio_pin_t gpio_pin,
+                                         hal_gpio_counter_edge_t edge,
+                                         hal_gpio_pull_t pull) {
+    for (int i = 0; i < MAX_GPIO_COUNTERS; i++) {
+        if (!gpio_counter[i].initialized) {
+            gpio_counter[i].initialized = 1;
+            gpio_counter[i].value       = 0;
+            gpio_counter[i].gpio_pin    = gpio_pin;
+            io_log("GPIO", "Initialized GPIO counter %d on pin %d", i, gpio_pin);
+            return (hal_gpio_counter_t)i;
+        }
+    }
+    io_log("GPIO", "Error: No free GPIO counters available");
+    return HAL_GPIO_COUNTER_INVALID;
+}
+
+void hal_gpio_counter_deinit(hal_gpio_counter_t counter) {
+    if (counter < 0 || counter >= MAX_GPIO_COUNTERS) {
+        return;
+    }
+    gpio_counter[counter].initialized = 0;
+    gpio_counter[counter].value       = 0;
+    gpio_counter[counter].gpio_pin    = HAL_INVALID_PIN;
+    io_log("GPIO", "Deinitialized GPIO counter %d", counter);
+}
+
+uint32_t hal_gpio_counter_read(hal_gpio_counter_t counter) {
+    if (counter < 0 || counter >= MAX_GPIO_COUNTERS ||
+        !gpio_counter[counter].initialized) {
+        io_log("GPIO", "Error: Invalid GPIO counter %d read", counter);
+        return 0;
+    }
+    io_log("GPIO", "Read GPIO counter %d = %u", counter,
+           gpio_counter[counter].value);
+    return gpio_counter[counter].value;
+}
+
+void hal_gpio_counter_reset(hal_gpio_counter_t counter) {
+    if (counter < 0 || counter >= MAX_GPIO_COUNTERS ||
+        !gpio_counter[counter].initialized) {
+        return;
+    }
+    gpio_counter[counter].value = 0;
+}
+
+void hal_gpio_counter_start(hal_gpio_counter_t counter) {
+    // No-op in stub
+    (void)counter;
+}
+
+void hal_gpio_counter_stop(hal_gpio_counter_t counter) {
+    // No-op in stub
+    (void)counter;
+}
+
+void stub_set_pulse_counter(hal_gpio_pin_t gpio_pin, uint32_t value) {
+    io_log("GPIO", "Stub: set pulse counter on pin %d to %u", gpio_pin, value);
+    for (int i = 0; i < MAX_GPIO_COUNTERS; i++) {
+        if (gpio_counter[i].initialized && gpio_counter[i].gpio_pin == gpio_pin) {
+            gpio_counter[i].value = value;
+            return;
+        }
+    }
+    io_log("GPIO", "Stub: no pulse counter found on pin %d to set value",
+           gpio_pin);
+}
