@@ -34,11 +34,14 @@ source:
 - {path: ../../base_components/led.c}
 - {path: ../../base_components/network_indicator.c}
 - {path: ../../base_components/relay.c}
+- {path: ../../base_components/energy_measurement/hlw8012.c}
 - {path: ../../base_components/battery.h}
 - {path: ../../base_components/button.h}
 - {path: ../../base_components/led.h}
 - {path: ../../base_components/network_indicator.h}
 - {path: ../../base_components/relay.h}
+- {path: ../../base_components/energy_meter.h}
+- {path: ../../base_components/energy_measurement/hlw8012.h}
 - {path: ../../device_config/config_nv.c}
 - {path: ../../device_config/config_nv.h}
 - {path: ../../device_config/config_parser.c}
@@ -57,6 +60,8 @@ source:
 - {path: ../../zigbee/switch_cluster.c}
 - {path: ../../zigbee/cover_switch_cluster.c}
 - {path: ../../zigbee/cover_cluster.c}
+- {path: ../../zigbee/electrical_measurement_cluster.c}
+- {path: ../../zigbee/metering_cluster.c}
 - {path: ../../zigbee/battery_cluster.h}
 - {path: ../../zigbee/basic_cluster.h}
 - {path: ../../zigbee/cluster_common.h}

@@ -152,6 +152,7 @@ COMMON_SOURCES := \
 	$(SRC_DIR)/base_components/network_indicator.c \
 	$(SRC_DIR)/base_components/relay.c \
 	$(SRC_DIR)/base_components/battery.c \
+	$(SRC_DIR)/base_components/energy_measurement/hlw8012.c \
 	$(SRC_DIR)/device_config/config_nv.c \
 	$(SRC_DIR)/device_config/device_params_nv.c \
 	$(SRC_DIR)/device_config/reset.c \
@@ -164,7 +165,9 @@ COMMON_SOURCES := \
 	$(SRC_DIR)/zigbee/switch_cluster.c \
 	$(SRC_DIR)/zigbee/cover_switch_cluster.c \
 	$(SRC_DIR)/zigbee/cover_cluster.c \
-	$(SRC_DIR)/zigbee/battery_cluster.c 
+	$(SRC_DIR)/zigbee/battery_cluster.c \
+	$(SRC_DIR)/zigbee/electrical_measurement_cluster.c \
+	$(SRC_DIR)/zigbee/metering_cluster.c
 
 # All application sources
 ALL_TELINK_SOURCES := $(TELINK_SOURCES) $(COMMON_SOURCES)

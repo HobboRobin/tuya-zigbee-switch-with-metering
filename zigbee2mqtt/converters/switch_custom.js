@@ -6983,6 +6983,45 @@ const definitions = [
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.relayIndicatorMode("relay_indicator_mode", "relay"),
             romasku.relayIndicator("relay_indicator", "relay"),
+            numeric({
+                name: "voltage",
+                endpointNames: ["relay"],
+                cluster: "haElectricalMeasurement",
+                attribute: "rmsVoltage",
+                description: "Measured RMS voltage",
+                unit: "V",
+                divisor: 100,
+                access: "STATE",
+            }),
+            numeric({
+                name: "current",
+                endpointNames: ["relay"],
+                cluster: "haElectricalMeasurement",
+                attribute: "rmsCurrent",
+                description: "Measured RMS current",
+                unit: "A",
+                divisor: 1000,
+                access: "STATE",
+            }),
+            numeric({
+                name: "power",
+                endpointNames: ["relay"],
+                cluster: "haElectricalMeasurement",
+                attribute: "activePower",
+                description: "Measured active power",
+                unit: "W",
+                access: "STATE",
+            }),
+            numeric({
+                name: "energy",
+                endpointNames: ["relay"],
+                cluster: "seMetering",
+                attribute: "currentSummDelivered",
+                description: "Accumulated energy consumption",
+                unit: "kWh",
+                divisor: 1000,
+                access: "STATE",
+            }),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -7010,6 +7049,36 @@ const definitions = [
                     minimumReportInterval: 0,
                     maximumReportInterval: constants.repInterval.MAX,
                     reportableChange: 1,
+                },
+            ]);
+
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
+            await endpoint2.configureReporting("haElectricalMeasurement", [
+                {
+                    attribute: "rmsVoltage",
+                    minimumReportInterval: 1,
+                    maximumReportInterval: constants.repInterval.MINUTES_5,
+                    reportableChange: 5,
+                },
+                {
+                    attribute: "rmsCurrent",
+                    minimumReportInterval: 1,
+                    maximumReportInterval: constants.repInterval.MINUTES_5,
+                    reportableChange: 50,
+                },
+                {
+                    attribute: "activePower",
+                    minimumReportInterval: 1,
+                    maximumReportInterval: constants.repInterval.MINUTES_5,
+                    reportableChange: 5,
+                },
+            ]);
+            await endpoint2.configureReporting("seMetering", [
+                {
+                    attribute: "currentSummDelivered",
+                    minimumReportInterval: 10,
+                    maximumReportInterval: constants.repInterval.MINUTES_5,
+                    reportableChange: [0, 10],
                 },
             ]);
 

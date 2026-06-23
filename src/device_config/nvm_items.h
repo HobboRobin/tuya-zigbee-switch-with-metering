@@ -28,4 +28,8 @@
 #define NV_ITEM_MULTI_PRESS_RESET_COUNT    33
 #define NV_ITEM_POLL_CONTROL_CONFIG        34
 
+// Energy monitoring NVM items (starting from 40)
+// endpoint is 1-based (1-4)
+#define NV_ITEM_ENERGY_ACCUMULATION(endpoint)    (40 + (endpoint) - 1)
+
 #endif /* DEVICE_CONFIG_NVM_ITEMS_H_ */
