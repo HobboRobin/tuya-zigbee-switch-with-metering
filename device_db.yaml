@@ -3024,7 +3024,7 @@ OUTLET_BSEED_PM_TS011F_2:
   firmware_image_type: 47004
   build: yes
   status: in_progress
-  info: Power monitoring implemented (HLW8012, pins: CF=A0 CF1=A1 SEL=A2 - verify hardware)
+  info: "Power monitoring implemented (HLW8012, pins: CF=A0 CF1=A1 SEL=A2 - verify hardware)"
   threads: 
   - https://github.com/romasku/tuya-zigbee-switch/issues/145
   - https://github.com/romasku/tuya-zigbee-switch/pull/397
