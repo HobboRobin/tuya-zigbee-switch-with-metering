@@ -64,7 +64,10 @@ SOURCES := \
 	$(SRC_DIR)/zigbee/general_commands.c \
 	$(SRC_DIR)/zigbee/cover_switch_cluster.c \
 	$(SRC_DIR)/zigbee/cover_cluster.c \
-	$(SRC_DIR)/zigbee/battery_cluster.c
+	$(SRC_DIR)/zigbee/battery_cluster.c \
+	$(SRC_DIR)/base_components/energy_measurement/hlw8012.c \
+	$(SRC_DIR)/zigbee/electrical_measurement_cluster.c \
+	$(SRC_DIR)/zigbee/metering_cluster.c
 
 INCLUDES := \
 	-I$(SRC_DIR) \
