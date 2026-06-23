@@ -16,7 +16,8 @@ static const energy_meter_ops_t hlw8012_energy_meter_ops = {
 };
 
 static uint32_t pulses_to_frequency(uint32_t pulse_count) {
-    return (uint32_t)((uint64_t)pulse_count * 1000000 / HLW8012_SAMPLE_INTERVAL_MS);
+    /* Avoid 64-bit division: 1000000 / HLW8012_SAMPLE_INTERVAL_MS is exact at compile time */
+    return pulse_count * (1000000u / HLW8012_SAMPLE_INTERVAL_MS);
 }
 
 int hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin, hal_gpio_pin_t cf1_pin,
