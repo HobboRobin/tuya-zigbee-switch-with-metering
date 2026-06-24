@@ -18,5 +18,8 @@ extern battery_t battery;
 void parse_config();
 void init_reporting();
 void handle_version_changes();
+void    init_energy_reporting(void);
+uint8_t get_energy_monitoring_enabled(void);
+void    energy_monitoring_tick(void);
 
 #endif

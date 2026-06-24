@@ -10,6 +10,9 @@
 #include "zigbee/relay_cluster.h"
 #include "zigbee/poll_control_cluster.h"
 #include "zigbee/switch_cluster.h"
+#include "base_components/energy_measurement/hlw8012.h"
+#include "zigbee/electrical_measurement_cluster.h"
+#include "zigbee/metering_cluster.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -76,6 +79,13 @@ battery_t battery = {
 uint32_t parse_int(const char *s);
 char *seek_until(char *cursor, char needle);
 char *extract_next_entry(char **cursor);
+
+static hlw8012_t       hlw8012_device;
+static energy_meter_t *energy_meter = NULL;
+static electrical_measurement_cluster_t elec_meas_cluster;
+static metering_cluster_t metering_cluster_inst;
+static uint8_t            energy_monitoring_enabled  = 0;
+static uint8_t            energy_monitoring_endpoint = 1;
 
 void on_reset_clicked(void *_) {
     hal_factory_reset();
@@ -288,6 +298,24 @@ void parse_config() {
                 switch_clusters[index].mode =
                     ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY;
             }
+        } else if (entry[0] == 'E' && entry[1] == 'P') {
+            // HLW8012/BL0937 energy monitoring: EP<CF_PIN><CF1_PIN><SEL_PIN>
+            printf("Config: Found energy monitoring entry: '%s'\r\n", entry);
+            hal_gpio_pin_t cf_pin  = hal_gpio_parse_pin(entry + 2);
+            hal_gpio_pin_t cf1_pin = hal_gpio_parse_pin(entry + 4);
+            hal_gpio_pin_t sel_pin = hal_gpio_parse_pin(entry + 6);
+            if (cf_pin != HAL_INVALID_PIN && cf1_pin != HAL_INVALID_PIN &&
+                sel_pin != HAL_INVALID_PIN) {
+                if (hlw8012_init(&hlw8012_device, cf_pin, cf1_pin, sel_pin) == 0) {
+                    energy_meter = hlw8012_as_energy_meter(&hlw8012_device);
+                    electrical_measurement_cluster_init(&elec_meas_cluster, energy_meter);
+                    metering_cluster_init(&metering_cluster_inst, energy_meter);
+                    energy_monitoring_enabled  = 1;
+                    energy_monitoring_endpoint = 1;
+                    printf("Config: HLW8012 on CF=%04x CF1=%04x SEL=%04x\r\n",
+                           cf_pin, cf1_pin, sel_pin);
+                }
+            }
         }
     }
 
@@ -384,6 +412,14 @@ void parse_config() {
                                       &endpoints[cover_base + index]);
     }
 
+    // Add energy measurement clusters to endpoint 1 if enabled
+    if (energy_monitoring_enabled) {
+        electrical_measurement_cluster_add_to_endpoint(
+            &elec_meas_cluster, &endpoints[energy_monitoring_endpoint - 1]);
+        metering_cluster_add_to_endpoint(
+            &metering_cluster_inst, &endpoints[energy_monitoring_endpoint - 1]);
+    }
+
     hal_zigbee_init(endpoints, total_endpoints);
     while (cursor != (char *)device_config_str.data) {
         cursor--;
@@ -459,4 +495,25 @@ uint32_t parse_int(const char *s) {
         s++;
     }
     return n;
+}
+
+void init_energy_reporting(void) {
+    if (!energy_monitoring_enabled)
+        return;
+
+    electrical_measurement_cluster_update(&elec_meas_cluster);
+    electrical_measurement_cluster_report(&elec_meas_cluster);
+    metering_cluster_update(&metering_cluster_inst);
+    metering_cluster_report(&metering_cluster_inst);
+}
+
+uint8_t get_energy_monitoring_enabled(void) {
+    return energy_monitoring_enabled;
+}
+
+void energy_monitoring_tick(void) {
+    if (!energy_monitoring_enabled)
+        return;
+
+    hlw8012_tick(&hlw8012_device);
 }

@@ -111,6 +111,32 @@
 #define ZCL_ATTR_POLL_CTRL_SHORT_POLL_INTERVAL                       0x0002
 #define ZCL_ATTR_POLL_CTRL_FAST_POLL_TIMEOUT                         0x0003
 
+// Electrical Measurement cluster (0x0B04)
+#define ZCL_CLUSTER_ELECTRICAL_MEASUREMENT                           0x0B04
+#define ZCL_ATTR_ELEC_MEAS_MEASUREMENT_TYPE                          0x0000
+#define ZCL_ATTR_ELEC_MEAS_RMS_VOLTAGE                               0x0505
+#define ZCL_ATTR_ELEC_MEAS_RMS_CURRENT                               0x0508
+#define ZCL_ATTR_ELEC_MEAS_ACTIVE_POWER                              0x050B
+#define ZCL_ATTR_ELEC_MEAS_AC_VOLTAGE_MULTIPLIER                     0x0600
+#define ZCL_ATTR_ELEC_MEAS_AC_VOLTAGE_DIVISOR                        0x0601
+#define ZCL_ATTR_ELEC_MEAS_AC_CURRENT_MULTIPLIER                     0x0602
+#define ZCL_ATTR_ELEC_MEAS_AC_CURRENT_DIVISOR                        0x0603
+#define ZCL_ATTR_ELEC_MEAS_AC_POWER_MULTIPLIER                       0x0604
+#define ZCL_ATTR_ELEC_MEAS_AC_POWER_DIVISOR                          0x0605
+#define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_CF                         0xFF00
+#define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_CF1                        0xFF01
+#define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_SEL_STATE                  0xFF02
+
+// Metering cluster (0x0702)
+#define ZCL_CLUSTER_METERING                                         0x0702
+#define ZCL_ATTR_METERING_CURRENT_SUMMATION_DELIVERED                0x0000
+#define ZCL_ATTR_METERING_STATUS                                     0x0200
+#define ZCL_ATTR_METERING_UNIT_OF_MEASURE                            0x0300
+#define ZCL_ATTR_METERING_MULTIPLIER                                 0x0301
+#define ZCL_ATTR_METERING_DIVISOR                                    0x0302
+#define ZCL_ATTR_METERING_SUMMATION_FORMATTING                       0x0303
+#define ZCL_ATTR_METERING_METERING_DEVICE_TYPE                       0x0306
+
 // OTA cluster
 
 #define ZCL_ATTR_OTA_UPGRADE_SERVER_ID                  0x0000
