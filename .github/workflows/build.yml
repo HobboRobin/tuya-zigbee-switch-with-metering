@@ -113,4 +113,6 @@ jobs:
         make tools/freeze_ota_links
         git add zigbee2mqtt/*
         git diff --cached --quiet || git commit -m "Freeze links in OTA index files"
+        git fetch origin
+        git rebase origin/$(git rev-parse --abbrev-ref HEAD)
         git push
