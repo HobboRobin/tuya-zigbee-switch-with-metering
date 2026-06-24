@@ -277,6 +277,9 @@ hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
 
         zclAttrInfo_t *pAttrEntry;
         pAttrEntry = zcl_findAttribute(endpoint, cluster_id, attr_id);
+        if (!pAttrEntry) {
+            return HAL_ZIGBEE_OK;
+        }
         zcl_sendReportCmd(endpoint, &dstEpInfo, TRUE, ZCL_FRAME_SERVER_CLIENT_DIR,
                           cluster_id, pAttrEntry->id, pAttrEntry->type,
                           pAttrEntry->data);
