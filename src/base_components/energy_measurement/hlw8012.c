@@ -35,8 +35,8 @@ int hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin, hal_gpio_pin_t cf1_pin,
     hal_gpio_init(sel_pin, 0, HAL_GPIO_PULL_NONE);
     hal_gpio_set(sel_pin);
 
-    dev->data.sel_state          = 1;
-    dev->data.last_sample_time   = hal_millis();
+    dev->data.sel_state            = 1;
+    dev->data.last_sample_time     = hal_millis();
     dev->data.cf_tick_pulse_count  = 0;
     dev->data.cf1_tick_pulse_count = 0;
     dev->data.cf_last_gpio_state   = hal_gpio_read(cf_pin);
@@ -76,7 +76,7 @@ void _update_measurement_handler(void *arg) {
 
     if (dev->data.cf_last_pulse_time > 0 &&
         (now - dev->data.cf_last_pulse_time) > HLW8012_PULSE_TIMEOUT_MS) {
-        dev->data.power  = 0;
+        dev->data.power   = 0;
         dev->data.freq_cf = 0;
     }
 
@@ -111,14 +111,14 @@ void _update_measurement_handler(void *arg) {
         if (dev->data.sel_state)
             dev->data.voltage =
                 (uint16_t)((freq_cf1_mhz * HLW8012_VOLTAGE_MULTIPLIER) /
-                            HLW8012_FIXED_POINT_SCALE);
+                           HLW8012_FIXED_POINT_SCALE);
         else
             dev->data.current =
                 (uint16_t)((freq_cf1_mhz * HLW8012_CURRENT_MULTIPLIER) /
-                            HLW8012_FIXED_POINT_SCALE);
+                           HLW8012_FIXED_POINT_SCALE);
     }
 
-    dev->data.valid          = 1;
+    dev->data.valid            = 1;
     dev->data.last_sample_time = now;
     dev->cycle_count++;
 
@@ -148,17 +148,19 @@ void _cycle_sel_pin(hlw8012_t *dev) {
 hlw8012_data_t *hlw8012_get_data(hlw8012_t *dev) {
     if (!dev)
         return NULL;
+
     return &dev->data;
 }
 
 void hlw8012_reset_energy(hlw8012_t *dev) {
     if (!dev)
         return;
-    dev->data.energy              = 0;
-    dev->data.cf_pulse_count      = 0;
+
+    dev->data.energy                = 0;
+    dev->data.cf_pulse_count        = 0;
     dev->data.cf_total_pulse_count  = 0;
     dev->data.cf_tick_pulse_count   = 0;
-    dev->data.cf1_pulse_count     = 0;
+    dev->data.cf1_pulse_count       = 0;
     dev->data.cf1_total_pulse_count = 0;
     dev->data.cf1_tick_pulse_count  = 0;
 }
@@ -168,6 +170,7 @@ static void hlw8012_meter_get_data(void *ctx, energy_meter_data_t *data) {
 
     if (!dev || !data)
         return;
+
     data->voltage   = dev->data.voltage;
     data->current   = dev->data.current;
     data->power     = dev->data.power;
@@ -189,6 +192,7 @@ static void hlw8012_meter_tick(void *ctx) {
 energy_meter_t *hlw8012_as_energy_meter(hlw8012_t *dev) {
     if (!dev || !dev->initialized)
         return NULL;
+
     return &dev->meter;
 }
 
@@ -196,7 +200,7 @@ void hlw8012_tick(hlw8012_t *dev) {
     if (!dev || !dev->initialized)
         return;
 
-    uint32_t now      = hal_millis();
+    uint32_t now       = hal_millis();
     uint8_t  cf_state  = hal_gpio_read(dev->cf_pin);
     uint8_t  cf1_state = hal_gpio_read(dev->cf1_pin);
 

@@ -6,13 +6,13 @@
 #include "base_components/energy_meter.h"
 #include "hal/tasks.h"
 
-#define HLW8012_FIXED_POINT_SCALE         65536
-#define HLW8012_POWER_MULTIPLIER          132777
-#define HLW8012_VOLTAGE_MULTIPLIER        12190
-#define HLW8012_CURRENT_MULTIPLIER        843
-#define HLW8012_SEL_TOGGLE_CYCLE_INTERVAL 5
-#define HLW8012_PULSE_TIMEOUT_MS          20000
-#define HLW8012_SAMPLE_INTERVAL_MS        5000
+#define HLW8012_FIXED_POINT_SCALE            65536
+#define HLW8012_POWER_MULTIPLIER             132777
+#define HLW8012_VOLTAGE_MULTIPLIER           12190
+#define HLW8012_CURRENT_MULTIPLIER           843
+#define HLW8012_SEL_TOGGLE_CYCLE_INTERVAL    5
+#define HLW8012_PULSE_TIMEOUT_MS             20000
+#define HLW8012_SAMPLE_INTERVAL_MS           5000
 
 typedef struct {
     uint32_t cf_pulse_count;

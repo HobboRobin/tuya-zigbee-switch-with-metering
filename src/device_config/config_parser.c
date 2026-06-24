@@ -80,12 +80,12 @@ uint32_t parse_int(const char *s);
 char *seek_until(char *cursor, char needle);
 char *extract_next_entry(char **cursor);
 
-static hlw8012_t                        hlw8012_device;
-static energy_meter_t *                 energy_meter              = NULL;
+static hlw8012_t       hlw8012_device;
+static energy_meter_t *energy_meter = NULL;
 static electrical_measurement_cluster_t elec_meas_cluster;
-static metering_cluster_t               metering_cluster_inst;
-static uint8_t                          energy_monitoring_enabled = 0;
-static uint8_t                          energy_monitoring_endpoint = 1;
+static metering_cluster_t metering_cluster_inst;
+static uint8_t            energy_monitoring_enabled  = 0;
+static uint8_t            energy_monitoring_endpoint = 1;
 
 void on_reset_clicked(void *_) {
     hal_factory_reset();
@@ -500,6 +500,7 @@ uint32_t parse_int(const char *s) {
 void init_energy_reporting(void) {
     if (!energy_monitoring_enabled)
         return;
+
     electrical_measurement_cluster_update(&elec_meas_cluster);
     electrical_measurement_cluster_report(&elec_meas_cluster);
     metering_cluster_update(&metering_cluster_inst);
@@ -513,5 +514,6 @@ uint8_t get_energy_monitoring_enabled(void) {
 void energy_monitoring_tick(void) {
     if (!energy_monitoring_enabled)
         return;
+
     hlw8012_tick(&hlw8012_device);
 }

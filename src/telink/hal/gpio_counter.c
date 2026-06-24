@@ -17,7 +17,7 @@ typedef struct {
 } gpio_counter_state_t;
 
 static gpio_counter_state_t counter_state[MAX_GPIO_COUNTERS];
-static uint8_t              counters_initialized = 0;
+static uint8_t counters_initialized = 0;
 
 static void init_counter_state(void) {
     if (!counters_initialized) {

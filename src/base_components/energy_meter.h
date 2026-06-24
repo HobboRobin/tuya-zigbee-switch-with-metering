@@ -39,6 +39,7 @@ static inline void energy_meter_init(energy_meter_t *meter,
                                      energy_meter_type_t type) {
     if (!meter)
         return;
+
     meter->ops  = ops;
     meter->ctx  = ctx;
     meter->type = type;
