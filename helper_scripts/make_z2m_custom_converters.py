@@ -45,6 +45,7 @@ if __name__ == "__main__":
         indicators_cnt = 0
         has_dedicated_net_led = False
         has_battery_cluster = False
+        has_energy_meter = False
         for peripheral in peripherals:
             if peripheral == "SLP" or peripheral == "M":
                 continue
@@ -62,6 +63,8 @@ if __name__ == "__main__":
                 has_dedicated_net_led = True
             if peripheral[:2] == "BT":
                 has_battery_cluster = True
+            if peripheral[:2] == "EP":
+                has_energy_meter = True
 
         if switch_cnt == 1:
             switch_names = ["switch"]
@@ -117,6 +120,7 @@ if __name__ == "__main__":
                 "coverNames": cover_names,
                 "has_dedicated_net_led": has_dedicated_net_led,
                 "has_battery_cluster": has_battery_cluster,
+                "has_energy_meter": has_energy_meter,
             }
         )
 
