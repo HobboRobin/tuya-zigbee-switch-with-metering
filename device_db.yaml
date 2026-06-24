@@ -3015,7 +3015,7 @@ OUTLET_BSEED_PM_TS011F_2:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4;SB5u;RD2;IC3;EPA0A1A2;M;
+  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4;SB5u;RD2;IC3;EPC0C1C2;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
