@@ -37,6 +37,7 @@ void metering_cluster_add_to_endpoint(metering_cluster_t *cluster,
     if (!cluster || !endpoint)
         return;
 
+    cluster->endpoint = endpoint->endpoint;
     metering_cluster_load_energy(cluster);
     SETUP_ATTR(0, ZCL_ATTR_METERING_CURRENT_SUMMATION_DELIVERED, ZCL_DATA_TYPE_UINT48,
                ATTR_READONLY, cluster->current_summation_delivered);
@@ -56,7 +57,6 @@ void metering_cluster_add_to_endpoint(metering_cluster_t *cluster,
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->cluster_count++;
-    cluster->endpoint = endpoint->endpoint;
     printf("Metering: Added to endpoint %d, energy=%llu Wh\r\n",
            endpoint->endpoint, (unsigned long long)cluster->current_summation_delivered);
 }
