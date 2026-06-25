@@ -62,6 +62,12 @@ static cluster_registerFunc_t get_register_func_by_cluster_id(u16 cluster_id) {
     if (cluster_id == ZCL_CLUSTER_GEN_POLL_CONTROL) {
         return zcl_pollCtrl_register;
     }
+    if (cluster_id == ZCL_CLUSTER_ELECTRICAL_MEASUREMENT) {
+        return zcl_electricalMeasure_register;
+    }
+    if (cluster_id == ZCL_CLUSTER_METERING) {
+        return zcl_metering_register;
+    }
     return NULL;
 }
 
@@ -271,6 +277,9 @@ hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
 
         zclAttrInfo_t *pAttrEntry;
         pAttrEntry = zcl_findAttribute(endpoint, cluster_id, attr_id);
+        if (!pAttrEntry) {
+            return HAL_ZIGBEE_OK;
+        }
         zcl_sendReportCmd(endpoint, &dstEpInfo, TRUE, ZCL_FRAME_SERVER_CLIENT_DIR,
                           cluster_id, pAttrEntry->id, pAttrEntry->type,
                           pAttrEntry->data);
