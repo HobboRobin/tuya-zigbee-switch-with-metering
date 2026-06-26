@@ -429,6 +429,7 @@ const definitions = [
             onOff({ endpointNames: {{device.relayNames | tojson }} }),
             {% endif %}
             {% if device.has_energy_meter and device.relayNames %}
+            {%- set energy_ep_name = device.switchNames[0] if device.switchNames else device.relayNames[0] %}
             numeric({
                 name: "voltage",
                 cluster: "haElectricalMeasurement",
@@ -436,7 +437,7 @@ const definitions = [
                 description: "Measured electrical RMS voltage",
                 unit: "V",
                 access: "STATE",
-                endpointName: "{{device.relayNames[0]}}",
+                endpointName: "{{energy_ep_name}}",
             }),
             numeric({
                 name: "current",
@@ -445,7 +446,7 @@ const definitions = [
                 description: "Measured electrical RMS current",
                 unit: "A",
                 access: "STATE",
-                endpointName: "{{device.relayNames[0]}}",
+                endpointName: "{{energy_ep_name}}",
             }),
             numeric({
                 name: "power",
@@ -454,7 +455,7 @@ const definitions = [
                 description: "Instantaneous measured power",
                 unit: "W",
                 access: "STATE",
-                endpointName: "{{device.relayNames[0]}}",
+                endpointName: "{{energy_ep_name}}",
             }),
             numeric({
                 name: "energy",
@@ -463,7 +464,7 @@ const definitions = [
                 description: "Accumulated energy consumption",
                 unit: "kWh",
                 access: "STATE",
-                endpointName: "{{device.relayNames[0]}}",
+                endpointName: "{{energy_ep_name}}",
             }),
             {% endif %}
             {% for switchName in device.switchNames %}
@@ -554,7 +555,7 @@ const definitions = [
             {% endfor %}
 
             {% if device.has_energy_meter and device.relayNames %}
-            const emEndpoint = device.getEndpoint({{1 + (device.switchNames | length)}});
+            const emEndpoint = device.getEndpoint(1);
             await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 {attribute: "rmsVoltage", minimumReportInterval: 5, maximumReportInterval: 300, reportableChange: 5},

@@ -7250,7 +7250,7 @@ const definitions = [
                 description: "Measured electrical RMS voltage",
                 unit: "V",
                 access: "STATE",
-                endpointName: "relay",
+                endpointName: "switch",
             }),
             numeric({
                 name: "current",
@@ -7259,7 +7259,7 @@ const definitions = [
                 description: "Measured electrical RMS current",
                 unit: "A",
                 access: "STATE",
-                endpointName: "relay",
+                endpointName: "switch",
             }),
             numeric({
                 name: "power",
@@ -7268,7 +7268,7 @@ const definitions = [
                 description: "Instantaneous measured power",
                 unit: "W",
                 access: "STATE",
-                endpointName: "relay",
+                endpointName: "switch",
             }),
             numeric({
                 name: "energy",
@@ -7277,7 +7277,7 @@ const definitions = [
                 description: "Accumulated energy consumption",
                 unit: "kWh",
                 access: "STATE",
-                endpointName: "relay",
+                endpointName: "switch",
             }),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
@@ -7319,7 +7319,7 @@ const definitions = [
                 },
             ]);
 
-            const emEndpoint = device.getEndpoint(2);
+            const emEndpoint = device.getEndpoint(1);
             await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 {attribute: "rmsVoltage", minimumReportInterval: 5, maximumReportInterval: 300, reportableChange: 5},

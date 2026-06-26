@@ -311,7 +311,7 @@ void parse_config() {
                     electrical_measurement_cluster_init(&elec_meas_cluster, energy_meter);
                     metering_cluster_init(&metering_cluster_inst, energy_meter);
                     energy_monitoring_enabled  = 1;
-                    energy_monitoring_endpoint = switch_clusters_cnt + 1;
+                    energy_monitoring_endpoint = 1;
                     printf("Config: HLW8012 on CF=%04x CF1=%04x SEL=%04x\r\n",
                            cf_pin, cf1_pin, sel_pin);
                 }
@@ -379,6 +379,16 @@ void parse_config() {
         }
         switch_cluster_add_to_endpoint(&switch_clusters[index], &endpoints[index]);
     }
+
+    // Add energy measurement clusters to EP1 before the relay loop so that
+    // the relay loop's cluster_ptr arithmetic sees the final EP1 cluster count.
+    if (energy_monitoring_enabled && energy_monitoring_endpoint == 1) {
+        electrical_measurement_cluster_add_to_endpoint(
+            &elec_meas_cluster, &endpoints[0]);
+        metering_cluster_add_to_endpoint(
+            &metering_cluster_inst, &endpoints[0]);
+    }
+
     for (int index = 0; index < relay_clusters_cnt; index++) {
         if (switch_clusters_cnt + index != 0) {
             cluster_ptr += endpoints[switch_clusters_cnt + index - 1].cluster_count;
@@ -412,8 +422,8 @@ void parse_config() {
                                       &endpoints[cover_base + index]);
     }
 
-    // Add energy measurement clusters to the relay endpoint if enabled
-    if (energy_monitoring_enabled) {
+    // Add energy measurement clusters to endpoints > 1 (EP1 case handled before relay loop)
+    if (energy_monitoring_enabled && energy_monitoring_endpoint > 1) {
         electrical_measurement_cluster_add_to_endpoint(
             &elec_meas_cluster, &endpoints[energy_monitoring_endpoint - 1]);
         metering_cluster_add_to_endpoint(
