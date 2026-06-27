@@ -1,12 +1,12 @@
 [
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/BOARD__MHCOZY_TS0004_1_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/BOARD__MHCOZY_TS0004_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45631,
     "manufacturerCode": 4417,
-    "sha512": "9c99ce32c65526ad79b00da6cba219ae116cbb239e507a5c62df587e41b3bb8887042c993a86ec6a1a6f65a1a259101b0379e5062544d1a3abc4a3fcad095e67",
+    "sha512": "48f862ccb5c507c3cf47bda68b024a83147d6d6b3b294428b572d70a0932919a902196f303311e046efbd1b0563ad56c0346854bb90297ce82bf74160a9343cb",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3210_imaccztn",
@@ -14,13 +14,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/BOARD__MHCOZY_TS0004_1_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/BOARD__MHCOZY_TS0004_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 2050,
     "manufacturerCode": 4417,
-    "sha512": "feb7f53d7e08ca4b4cadbe75aead920842452e1c23d4b7451b60cff18087706c1aada4adf81ec2b3ce81362092db6cf1c0100eefc3a8aed2d19db1d4c94b2ef0",
+    "sha512": "6e47fd0025b792c682c1f01806548a973347736da662cdd3e7462d96e9105d386b61f7e1494dccdebb5d80ae9c2b24a92f0459ab84866e222b91facc3c7b60f4",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3210_imaccztn",
@@ -28,13 +28,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/BOARD__MHCOZY_TS0004_2_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/BOARD__MHCOZY_TS0004_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45594,
     "manufacturerCode": 4417,
-    "sha512": "c37d0c76746ee357101eec6bff460df1fd499c50d4aac4f16be84511566abeff70666d2ed78470c1e1a4e29ff2f161549690933953f62966bb96b395aa9450c7",
+    "sha512": "bdb363b24083a10a262aefb807af43e817846894310d1505601d8af1db17a35172ab11ce598905a3e7505aa623f35dae685204dc62ee75fab87f9b6e4f0bf7ce",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_u3oupgdy",
@@ -42,13 +42,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/BOARD__MHCOZY_TS0004_2_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/BOARD__MHCOZY_TS0004_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "20a4145f39c85df3228b660b52719f99f95bbabc6c21b42262f7f5f02107752daebc4832ad58a8f349a13e0046c8057f620d52c9e58d76af15076e27fb217561",
+    "sha512": "8a652c36523bcec499630c9c54245fcfec1b1f841b2a57cf3cb7ae421689bb8a873cf135190a6f43f85347442f67dfc0e797bcd9ee013b600300787bd5dfc884",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_u3oupgdy",
@@ -56,13 +56,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AUBESS_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AUBESS_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43531,
     "manufacturerCode": 4417,
-    "sha512": "bab9a3cd5f53b852755259acaffcae2572824b5312cdd6fceb47f16b8a91388fd7b5f3521e95b1e2f3bd961ba728cb30a1ad7aa3002f57e7dda835e0853b3ed4",
+    "sha512": "67f3ee997589d85b42ddefa9b42d17084e4363d333a4664dd6f4994886832923766cb3fa7ed540ef26bdf38a8351c5228d37ab63592aea7883cc2a00cbd457ca",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_46t1rvdu",
@@ -71,13 +71,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AUBESS_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AUBESS_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "f63d819cc19c5fe817b5581a659bf680ca30d1fd647c15b539af80503063becdd1778d7779fdda270b42e56203fd9fdcc43b43c90597944aae839c0b2268f3e0",
+    "sha512": "fcd6f04bb234c63eba30ce08c14f6083599faee04c7f4b9bc8b4f7cfc8cafbea5f1497b9378ba5caa7e6b4994090e6479400eb3dffeb20272e0718eafe4d0de6",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_46t1rvdu",
@@ -86,13 +86,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43537,
     "manufacturerCode": 4417,
-    "sha512": "821bb49ee93cfaa67dcc0accbff7b4dbc77ca910e64f6cb6ad109582848bbb77f1b709107a6e2c54772e114a537e2d7a9dd3975f1d98e4de5fdc761e462cee25",
+    "sha512": "9bdf1d9d28ec24b2e84429934f778b2b4863576428d39ff54a82393757657ca44ff2292fba537b10611e2b564f321eee76a08fb25a6a5059501d9ebb8315a3ce",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_hbxsdd6k",
@@ -101,13 +101,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "89d380597ec6b8f18e4183f85117e80bc60355c379e26cdb5b29fc6c4db519f889b53f9dd05569eb0c536673ba8c93ca364c6ebe3cae6ddb3d44f4a3f441fe94",
+    "sha512": "9bd10a9506b0c7f9a758abdb07d754a1303162b74672f9406d87c52884efc823c702e2f0f75b95e4e22614f71671f27fc4f81105ef82d915cad064db2f282fbb",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_hbxsdd6k",
@@ -116,13 +116,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43530,
     "manufacturerCode": 4417,
-    "sha512": "d45b51d5838515dc4e3e26795097ae692ef63b6c85f499f5696f929ab53c013990ffdad5c0570007915122b3eddac95d470b80c1d8ec71fd535dd24e39c7baac",
+    "sha512": "802039eddd360ff4605d52812dbd1e9d65b5a633a86151cc6b514ef2cd2d9d81bb641296dcf06492f960402cb50e2b5bd9c3865f69cc27ff2bd927d1149e6298",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ljhbw1c9",
@@ -131,13 +131,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "d9a820722ea39f75e81f8e8957ec3c179cfd7c570a4dcbf3240166328b4cb61536ec6c6f738c90d68af4f34fcfe619865d63065fe065d4dea95bc46cf90aabf6",
+    "sha512": "9c1672250daf2856ac3629f97f3a0f10bf820a83ce41f58113397b32d304272b7aa8b313f503c9c44ef15f934e29b4dcdbab3e72d0acde01df5585c19eaa3913",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ljhbw1c9",
@@ -146,13 +146,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0012_1_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0012_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43613,
     "manufacturerCode": 4417,
-    "sha512": "81ee483c21968e454301735df154ee6c9775507aa87e02d49e65230aafdc97a8934380709115126c2ae83e5612ce1964a7b0cfe4c50f09dc1242d6524df76fd9",
+    "sha512": "6490eed356c84f6e783378a622c080b2bef8a8099a80c66d59aaf40c481608a5ef2be1e3d656ffde0c351d08c5df74789333f4c4678816d7ddbe277636132094",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_kpatq5pq",
@@ -160,13 +160,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0012_1_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0012_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "a09c9f80169967c104c278f025e496e38d3584d3e0408f61d88182e633fd232cb0941a6c539832d3850f31d1d9006ab96d2f80ce70a21795da4aaa7dc0d85f5a",
+    "sha512": "fbf853faa671e765a7adbfc638f5b18cd0f91aecf5dd1bc4844b8161e11d87abeed396c259308f995fecd575919c203daf0aa1d65de3bd2945ce1ff46d0223e4",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_kpatq5pq",
@@ -174,13 +174,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43552,
     "manufacturerCode": 4417,
-    "sha512": "b79436569c9c5bfffe3567d6d9bc14eba1a78f89630add67cac09c640858ed11a36b99e5fd1176c43cbe960d3d8e69919f54fa62ff35ef8134761d243a8cf6cb",
+    "sha512": "be3a36286ed87854c01c51069ba6aaa884a7b2af1bd45babb7486338c9d315372c848b17474ade3be8b5d89ebd818e70d0a192f37f6f4cfa4c3406614feb8074",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_avotanj3",
@@ -188,13 +188,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_AVATTO_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_AVATTO_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "267c4cae5dae860d2cd1909b846be6a016262c1a8dded211496380032960ca53d63cc966676a8f15ced21e667a083bbf1a1a34224ef9a5811a8c46fed260c50f",
+    "sha512": "f424ce43098d70fbf458aa2d410871452ca9b901d1a80361e58505ab9129ee09befd10ec527e93b81ff8a31085e20ad1a7b3b574fc5bb04b59aac633b65d4f1e",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_avotanj3",
@@ -202,13 +202,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_EKF_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_EKF_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45592,
     "manufacturerCode": 4417,
-    "sha512": "2af29ae019befcffa6629920e800b89d25debc41100153846fd48b90ee98327ce8e2528691ae765c235913e62b1ab9d853f3a1a92dd62ab40c1408b4d52c533e",
+    "sha512": "4123d30acce2c18b2c64b4ca85bac858391f8058ad0228f8ccba6d3fd58e77e67182293c0a1b21cb5d219a4530ad3693bc3bfe2b02e504ac78a5a5c7a8d0cc9c",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_num4zd6s",
@@ -216,13 +216,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_EKF_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_EKF_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "f02f9facfcd219e1906e5150cfd8c55893bdcde4c7edf48be43cbe33b8fcf8b57800a9bc50509c773b54feff505c256943c9049ccb165f5b08ff6b13c69331eb",
+    "sha512": "c2976a4ccc2ab9ac5b93f6f5abaf39b954bd3e1ade4667fd071e37b9b8e293038c30727ad78fa338bf15da8a3fb054e4bf925b4defda309b914ff3b2e4d51d76",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_num4zd6s",
@@ -230,13 +230,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_FARYLINK_L_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_FARYLINK_L_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43617,
     "manufacturerCode": 4417,
-    "sha512": "0866d93ecb0d5b50341c1bfee0e66e5c0dc615e14e19d05d8e01cc556477aa181f3394573c8f8f989d376dcdd797d16c789d40c243892e921cdad8c3965abbea",
+    "sha512": "35baa2d180e352fa3500cc400cfca6bb4488b28096ba4896d370d3422f694167c7b56328e4c698cb65e3dbe097116356ee94e9743620732691da0e4687418c3a",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qlhs2kqr",
@@ -244,13 +244,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_FARYLINK_L_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_FARYLINK_L_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "9c2a95212bf644fcea4aed9571fd54c73cc65f864d33c0fb5169d1c1aa95bae0ae530640a0aa0f41fd636d3f025a5a52df6ec31ff965800799a6654095170a07",
+    "sha512": "8b308be9353c46ab3260c028df42656acac4afa4a3a4972149cbe1508fe772aecd0d6a8d51bc6ceda655f34101ddf01f3f4351dab385b00e58dc8d05e3cc5460",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qlhs2kqr",
@@ -258,13 +258,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_GIRIER_B_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_GIRIER_B_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43615,
     "manufacturerCode": 4417,
-    "sha512": "31acdece4a4e1bc3388e90ceda5f368b22a445e024c044f4cb38a81f06aa00df36dee29edf4101af334c74b0e475d5bdf0b3b0357e213b1cdb8d76364ebb3009",
+    "sha512": "74835f037fe57c4757afeb2e86fecbe0883a7e32b8fc176e753b121e94c6cd18228834d660045084276ee4c1459008abf6a2d26e49b73e4434516b71efdc3bd3",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_5sssic9d",
@@ -272,13 +272,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_GIRIER_B_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_GIRIER_B_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 2050,
     "manufacturerCode": 4417,
-    "sha512": "8fcfe47b7fadb435110836ce10a2c86d131093627edd66860267a855acee7f947efe62b68b35f5749e6b9e58dc2da0b6c0bf96bdd5cf2f1f940843ec0907b3ab",
+    "sha512": "4ae676c712585a4e19380d935ba74b12264fadb2ebafcd59af6edade285c8f17d9718ee27c8419184c5f1166cac7fe0ba9ed2d261d74d0808d0eca123658f919",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_5sssic9d",
@@ -286,13 +286,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_GIRIER_TS0002_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_GIRIER_TS0002_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43526,
     "manufacturerCode": 4417,
-    "sha512": "f9c028cdf17211ed63b43aefa416e021d04b4660892bb20f895baabcc1501123788d55fd04a95745310d7acb29cd9c00bca574a5b6df19f70190907495f3a86f",
+    "sha512": "015fdfce7cbfe07c93abd325d85f156bb21514f98f8c0396e9e8739a71ea43655275fc2e0a53738f348bf0dfc9f5e522f007a430afec2ee5d474d79e974a5b1e",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zmy4lslw",
@@ -301,13 +301,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_GIRIER_TS0002_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_GIRIER_TS0002_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "b9acd2fdae4f83a45dee771f89ce78e9897f67659cae1e5996a968088741499ed746ec7ef5a575122e4ffd281a7ba2076dee612f7863bed220ef1bb484e1a4d3",
+    "sha512": "1ffc25221c463a114af5cf81fb2c8866993068dc01f034d22033eba7ad2dd1215f6dfd76c1e305c829dfbc2cb0356309753350accb4e9d62e225a123b53d1c4f",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zmy4lslw",
@@ -316,13 +316,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_HOMMYN_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_HOMMYN_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45591,
     "manufacturerCode": 4417,
-    "sha512": "ff5286ca4425e210c74d8555d7d4387a5a9b3f61de2b4ff0eead3023b60b67225b0ab814c9fa34ec91a40c3cde2a0c93c83138d900736bc2138555c0e9d8bc64",
+    "sha512": "a607a52a77cd24f21dc9e1c030c0b0c4c8e492507646e5681de88cf1ad2a178cba74d2460157b55be124b9c29b21bcf70b654eab841957edef797a6c23a03b5e",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_tw4ztbp4",
@@ -330,13 +330,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_HOMMYN_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_HOMMYN_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "5701a51f1128511d9d4978a5c2684fedb13b8ad9e06b318b2db9c7fc5951f7b0a2deb955e7872221331c2b84a058166b0c464555ad5913e397ab426abb506240",
+    "sha512": "de6a8b77719927d5c6cc366367750cee956aacf5ba78eee01cf8276badd477bdc8bf3f82a42a141487f03934aa1715c7cbefd1652a57e19125aab40540482671",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_tw4ztbp4",
@@ -344,13 +344,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_MOES_TS0003_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_MOES_TS0003_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43538,
     "manufacturerCode": 4417,
-    "sha512": "6fb7cb94682f06b5bfabbb4c06da4e65589fbc7e9ed7732f584dc79316747733a94a9955ee1b16b5a405151b1ac8b7c2a54f38cf91186d2db64b499501963638",
+    "sha512": "35b752f9d341a210e1447ff5b91a548b326be128326a5aecaf413f879f11e9b365fe95f347bb62d1f139a7e4592e6b56bee23337a04a83182f9208bcb36620d6",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_pfc7i3kt",
@@ -359,13 +359,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_MOES_TS0003_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_MOES_TS0003_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "72f49c4ba1c6b2cc6a70ae13468a58364e2f6953e16490b702b161fbcfc1e5b4b2b070fb150cb13f488b112608ca574bdc213cdde4b608f190b5fb3c0a4ce50c",
+    "sha512": "efa045de35da33de46820ba78fd4fa57f59428c7c71122c0d5ac1065ea094847eed7da5f0e942520fa1e920a8aabf31ba352c7e4c26d5478714e4543694d5c2d",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_pfc7i3kt",
@@ -374,13 +374,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179102,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_MOES_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179242,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_MOES_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43629,
     "manufacturerCode": 4169,
-    "sha512": "23d754d3a3ac1e9cd00d193f0ddb1ff2cdc0f9472b4ad6920253defab35f8f848c6cfd6db1737a72999c5966ac96762178b8be7aa28a3f35eb452c39d6d48d00",
+    "sha512": "24620b2fc0a0c4667493edd20039d90d6d2ed1b535d58386ef5ac9186399c6b3b0172056f2c95ab575950f6fa60704eefc1e6034494d68bb337eaff8e54deb4b",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zzoangmc",
@@ -388,13 +388,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 183578,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_SONOFF_ZBMINIL2_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 183606,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_SONOFF_ZBMINIL2_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45596,
     "manufacturerCode": 4169,
-    "sha512": "ff997b94efd824361d46f3ddb2ec99a6347a053c175bd8a2abca33fc83776fb6881e0786332fb5db20c9c715fbddcba747bb8dda1018a92776885ca5c26c887a",
+    "sha512": "68791325e2a1eac53c286941ae23329439b6dda48b3e5d3242236a8e4c6ace51a4a4888d99a54770114b7aaa9ecf1c016fa9ce104cd86add625062bd1498f159",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "SONOFF",
@@ -402,13 +402,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43524,
     "manufacturerCode": 4417,
-    "sha512": "aff2322f47bd4901a52b6a0c82384d7b073c89403292df6cc36b8eed782e9bff54e9efc076c6bf7aa9ad3c22dc5fd12e061a9075d2961f2ac82f6018f0f861e5",
+    "sha512": "a7a6ea6fa483dbed9f8466e006e4e958a8aae9d477bc845b6df7263a0784648f74c2ff014229fd714b1fb6435752740d954088fb3cce35469f45352071011768",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ji4araar",
@@ -417,13 +417,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "1e8410eab2f037526052e090d202338cd6345150f03d54f1184208cbc0ef297868732603b7c2c07f22711b0edeed16c4102c4c6ad9c4e784e760912dc83afaab",
+    "sha512": "56a50080d1efabe0188dd4c280dc8742c4481bef101c721a1559b6a3321a029b0676bc6f5c0771838b753eb477f8422d6cc475088b65d438e7712688461493ad",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ji4araar",
@@ -432,13 +432,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0011_2_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0011_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45576,
     "manufacturerCode": 4417,
-    "sha512": "82549d621e181f818ae4c3b9cdf862ec55fb92554d6fc4917889a66a5c24fb9e5a1c3d57dcf90fd7bd7b5cbc3519dffe06706419d5f8b2560399e68a51e7d151",
+    "sha512": "23960b7d58a1da09e278407b959562808ff03d6d44bff0783ead7f3192e46554ee72cf4150935884e076e703e77859cccadf57457a692ad5eb81c03c9720e9de",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ji4araar",
@@ -446,13 +446,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0011_2_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0011_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 515,
     "manufacturerCode": 4417,
-    "sha512": "d7ff85a8c94855117387611dc7a685e4a89d757b1ad4485e95a03b4add8f315fdb8e9799b65d0f7c9931728f4c090f78d5b041f82959a1d4b0f0218e65f7df1a",
+    "sha512": "b4112cf6c192a245801ee86dce4501d118756228586a8f2ceb63aede8bb33d9e7b2d6e147a79823dec1576ed2616cdd0b72f1109fed8834d9d2a80385fdba30c",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ji4araar",
@@ -460,13 +460,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43521,
     "manufacturerCode": 4417,
-    "sha512": "615b18f6bfd88ba9fc5eab019c9d1a5196f474fa5fb3e4972e4fd7d5c25d3b683dbb6d5650b1daa5cd3cc61e25af0583e4f774ece7a4901dbeda68d92730898e",
+    "sha512": "dbe30513fe8fa37b0edb8ed544e0c0b3429c579f1768097ad49a9765bb745f85e774eb6d7753770b26f8ca389a22be452509adcb067856f63c7857f9efc1a48c",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_jl7qyupf",
@@ -476,13 +476,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "a9ca5f9a302e3a50a38f29943c00e8ea284093f2fdd2fe09c86804d40e61dfff1893e32dd073b84c54713e89c819ebaac15b23219f999706bedf12c1ac821b4a",
+    "sha512": "d98753d941eee1060a5024f5e67a83dcdedeb7587419c00055a89f5ee6af6edbce2cfa32b449c3f48fa2e23a6e94ec691478aa1c0d37748f73a13127e177f050",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_jl7qyupf",
@@ -492,13 +492,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43539,
     "manufacturerCode": 4417,
-    "sha512": "b1a14ae5afdc638c12186402625ddd911296e5a7eb218034b28e9520db9c081ce6b9eed36060873fae66c4c61e9c942e5d7b205369cda38c60f43bf0819277ff",
+    "sha512": "c924ffb0f6c2418f31174da6fdacfed20f206094186a5cfeb87cb7f3862a585db03022772aadd76da990dc98581d496634230cf3e9127e1e703bedb2ced4d5c1",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ypgri8yz",
@@ -508,13 +508,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_GIRIER_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_GIRIER_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "8cdb2e39cbd452f23a634f88b4c016050cb55e3fc43df8b6d0eed4d1ac62d1ac6e698a38ba9f1670e3ac01c5e5ba1ccf0812a57c825dc7f8f7dfabde401e261a",
+    "sha512": "054cf199f19c8403dbe23f0302ef3d71e6d1b266e412d969e1d672e85d8e68e0c089450f914f4eb294f488ff14cffbe1e9195ac9d34336ba198d0c8b8edb8a3f",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ypgri8yz",
@@ -524,13 +524,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45577,
     "manufacturerCode": 4417,
-    "sha512": "5223833dcc5e731bd27700ae751bdd152ab2383fe053d0794e094320bfd5b850a0743d21cd1a81864c4cd1eba1696ecf7f4d6867eec3bb74d0133a86e0d51e6d",
+    "sha512": "0aac7dd6cd2d42fb6514888ea11a78854ab9a5b180473145b60911df2e72fd435056f84ebf23393021fee5bc1e0102ef341670aa8252377b472328184ca0e917",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_yl3zuyaw",
@@ -538,13 +538,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "3f41319175674ad50717496ed13c2b7aa2e351c9277b58dce9ae9111ca68a3b5307e0dfaeb58911e0187bc9f46bf9db9f2fc506da429d9823fc4f2ea413171ef",
+    "sha512": "c9ca108b9e522e9bdb4ab67035b40f1899eed414eb28400898bf35e26253e50081c2eb478ebed7421984f31fd5884752f4ec9439e8dc8dbe41a604de98a1f6f3",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_yl3zuyaw",
@@ -552,13 +552,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45578,
     "manufacturerCode": 4417,
-    "sha512": "14e9514a19cbe68ad76552e3281ffb69f998a1da3cc7ec8f36067d9e7fcad9af78bddebdcf5eb6d4a562fc8bf581060d24909980f28436e6ec4a88a737de18ec",
+    "sha512": "ee7ac340a95e0535e4334e245d76b6977df9640d4e0a46bcf9254434807de35461990934973920a8015747c651d0452e9ebc594e790b5b0995c1a3766c405df2",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qmi1cfuq",
@@ -566,13 +566,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_NOVATO_QS_S05_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "4c9fe9131070205d8673dc9eba352971a3d271b8c6be8ffe5acfd5e6e9dd9e6a5b3b09f0cc9701153496f5145cb9d85178e9caadde6dbd5d0063660371e9f131",
+    "sha512": "60c728c316f42c84dc87b4541d2a8741c0f8d5d51451ff3da30adad45bc6f6675093187e18d350a4c4178b77d6ba42be1d1cc04cc9b73d63164c8fa7c4e03beb",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qmi1cfuq",
@@ -580,13 +580,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_NOVATO_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_NOVATO_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45593,
     "manufacturerCode": 4417,
-    "sha512": "5462c956331307c7c7ec29af4d397ee6e8428d2b95069aab4e98d1d88495d064c0ae460a9d7d947c1acfd32b94b9da9e71c2627a6b096fe756d0fc8a0f66b65e",
+    "sha512": "1e1f5e18a2ce7d41a03a26e3b0e69337b9f6c2baba025f76bb900c4e4a2f3ee39facd761716103ad24a17756e2a53931416b97fe5b177bd507562111435126a8",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_30jqysvd",
@@ -594,13 +594,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_NOVATO_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_NOVATO_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45590,
     "manufacturerCode": 4417,
-    "sha512": "dfaf1c2542a651f229e138fbdec276e4a72f14a3735a2cb6893c1580ea816976efe9346ac2b16875d3f2a14cff888a638f395540b4c00cab4f2847919039a246",
+    "sha512": "8187a16a61ea9a71e402d45d8e838c6b51287518b7c8867229c8786b1166360ee42140100330f149462b2336459116ef573fd67abee86094c1c424ebf7eb978e",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_c4muk4ys",
@@ -608,13 +608,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/MODULE_TUYA_NOVATO_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/MODULE_TUYA_NOVATO_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "9f5a22277c9bde487b475ec78d050d8f877852d01cb5bce8ba73d014c0727b223facf9a87dbc8b9ce900017f768e7846e7889ed6dc6801bf5ea184b470404b2c",
+    "sha512": "3fd3480e3e4213e4fe88cb438cdb0c45d11f3d386b6c14efaad3629101a90b27d217ffda993b997642801739868f4991df22733689ed956f6ccfca043f4a24d4",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_c4muk4ys",
@@ -622,13 +622,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_HOBEIAN_BUTTON_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_HOBEIAN_BUTTON_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 47002,
     "manufacturerCode": 4417,
-    "sha512": "fbf7ba4129222fede141cfd07c3bda632941cf5421fc7a87795d3a1a4b9e1522381448057ff2efe93df19f5f3bfa47e921f0188284a09634616620bdd2b871ab",
+    "sha512": "791fa614e730ebcff6e30abde2e03a89c7402b0a54295bdcb33600ff57b169ef94f18660f32b837da085e9110bf3b272b65f26761aac6bdd77104565086694a8",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "HOBEIAN",
@@ -636,13 +636,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_HOBEIAN_BUTTON_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_HOBEIAN_BUTTON_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "e6dcc95086a77b8158f1d5f5deb2fad91660ddc021e215b887e587a47f62ede60c53cd24090324d4d6e30b9db63fb149c3edc96bdd529f3543da5530d578c6ba",
+    "sha512": "0cc58914acc71256b5d8b230624a8a4102243bef9bdaf1c743d9117f918fb47931fafe42d3e34028183e375029af4ce60b3d6238dad9a3b8a3afc24cc37ef663",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "HOBEIAN",
@@ -650,13 +650,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_HOBEIAN_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_HOBEIAN_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43628,
     "manufacturerCode": 4417,
-    "sha512": "9b67cc74aaa56e3c6b34019cc83d6371650e58432038b522abeb9581ec6eacf4493253deee0d9248dbdd9730e6806de5b3e8da5ea96d970dbc3b4126850dedf7",
+    "sha512": "cba94b51fe4f8978f70e72da5a55b45e30cd66832b875ffbf9a98f1adc4a506cfac3aa571bb5d3d60e02408ba9d0b7d8ffb53a2ba1f322d0626e44146dfbc12f",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_bgtzm4ny",
@@ -664,13 +664,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_HOBEIAN_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_HOBEIAN_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "f956ecc0f261e1175f33465504eb4656315ef519fed41f700cd355babdc89215cda4cd88d6f3c1248bc3dd145a8629b2e4cd86756233c5332aefe8bc48c5ad62",
+    "sha512": "0b9f33a0666d54454d7381026c678f2dc47667f73d2cdfea785e557e9ccdded5cf3e9ee2290945b43626d48319ff418f66688dae1a0cbbe725fea0ff8b273304",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_bgtzm4ny",
@@ -678,13 +678,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_IHSENO_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_IHSENO_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 47002,
     "manufacturerCode": 4417,
-    "sha512": "5029463443a4109902c4eb9b85101fcbe5171801dd4529db8f5c66a70361bd46ef53607ba6c75bea42278ddea11b458c6f2db545b698d8af881f3b516f433e60",
+    "sha512": "5651865a4f840b208068aa7e20eb2f34379100a0b05c0d4b16aabb12ac9d3a6e5e7a823b456e2cf5eb12ae9d7a53824518a20bbb0b1813304cf167cce86802a9",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_fa9mlvja",
@@ -692,13 +692,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_IHSENO_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_IHSENO_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "5c10db510e82396bac9f6e3e003979af6ce8bc832d2cc02174a86f52a3acdfd984dbfad890ed1ae6c5b1839a29a95d6785e7f70c04db59907ccf96217cbb621f",
+    "sha512": "be9a9648442e2e7e5c7844d730a89b4c364e67939ee4b67a0b7dc75eb8b2551e741cb8f41eee0eed6ce79d77ba70022ee863a5f8184a6008ded03e8ab4d9ad58",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_fa9mlvja",
@@ -706,13 +706,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_IHSENO_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_IHSENO_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43563,
     "manufacturerCode": 4417,
-    "sha512": "2da48d276dd03af816bf7473acba94b6f41ad206ddd03dc5a3dd4f25556e1a5129ab2148c55e9e3b9b408e900d21eb8745aee22e480a1dace3f8dcbca75a14d2",
+    "sha512": "576904ab9e3bf8b9f04c92fa3eae75044e43e6e8d05293b81d99ed780747fb2562df230134059eea36ba0b93bff4095c316982d91f1013b08e29d4408415ea30",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_mh9px7cq",
@@ -720,13 +720,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_IHSENO_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_IHSENO_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "dd6319af5265e625d1f77b2da1d0e3c985208f1ccf6acf0cbbd3b505a36d80d165881525583926aa184c37881714d311c52df0c5e158b67c2edab2ad3e80c3f4",
+    "sha512": "9e8f2dff279345715e504f5208e1056dd5c96802b6dee3a3c6bd35c6ec5c2dea8f271c7c8a946a059c28d0fde31c750b7d7f276664e494e42f447f207e5a20bb",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_mh9px7cq",
@@ -734,13 +734,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_IHSENO_TS0046_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_IHSENO_TS0046_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43563,
     "manufacturerCode": 4417,
-    "sha512": "98de1214eba5a33f92d7ec1935ade1283d605057de1cf6b0400de21a406254cfbd1318816b4e4376320d0e5c88e4323d415020fb2600b4bf52cb0a0b6d99fef1",
+    "sha512": "4b5c360ffca40ef4852fab4cb5c8334ba187ad3303172185e57df7564b91c51d22c2118304b56cfb58370c04ba815d361fc5816a50195428b2cbb99cb69dd960",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_nrfkrgf4",
@@ -748,13 +748,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_IHSENO_TS0046_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_IHSENO_TS0046_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "49d45b873185abfcff599cf2aeddab6bb87a276a5b575a6d0f934785ab6616ee3f2af985f3db912ba45c0ab69ac0ab05bc7afe0a9f30bcb3fbaae24a7b2987c7",
+    "sha512": "8ce3f0012009f860d0e93d8e2c0bdd92fd5e7efebd9061b542e3936b9096ef7482d7a75b129eabfea88c1571af07616a6c1db20bf7f3f5e0eb885e43fba64f4f",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_nrfkrgf4",
@@ -762,13 +762,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_LIDL_BUTTON_TS004F_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179270,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_LIDL_BUTTON_TS004F_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45635,
     "manufacturerCode": 4169,
-    "sha512": "482a76eaa4ba7a1724bca77f7a1d90faca974b6760b54b01abe54972f31a882cbae7d3647d644ff179ad6122031c2ed1c0a648f5086929733a65b958953a1689",
+    "sha512": "60273b24c2a7eb2c4191ce8ab1d5e29b5cb46bbeab20473dd065ca0bd772a21ae10f6fb2dd2493a390af7fff116ed5e12c583d42edaa21e08182a8b033fd46b3",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_rco1yzb1",
@@ -776,13 +776,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179138,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_MOES_SWITCH_A_TS0041_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179202,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_MOES_SWITCH_A_TS0041_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45638,
     "manufacturerCode": 4169,
-    "sha512": "6420318cf92b21bca4dff8f9454d82b68864eb875ef41eefaae10222d597a0b7655e941d47357a0913ca0f915f1f17ad2756a169de9e662b6daf83a2d9c24466",
+    "sha512": "93e0fd515e03a33674d945b5146f5bd5d1587bb92a0639a89a812e77846266c9755dab519d9f44b3ffe07a29a9fd5e50e21ab118576f2ef4f6aded1f0d69a699",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_axpdxqgu",
@@ -790,13 +790,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179126,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_MOES_SWITCH_A_TS0042_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179286,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_MOES_SWITCH_A_TS0042_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45635,
     "manufacturerCode": 4169,
-    "sha512": "c543241ae63657c41a399a4ba576ef665a48054f2bc16fc341a966c66533f02407ff03b03e3aa3077b4d4ed544b1a2189af85fd081fbcc75da0d7b631e3e6f78",
+    "sha512": "e3285df94df2846a32b8b1dc97d57afec806d314689b408114e0564408c93152623794b7de8e21860c1d622351ce34c22e3b9d9a3f1c01076f374975c0d969e2",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_5e235jpa",
@@ -804,13 +804,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179150,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_MOES_SWITCH_A_TS0043_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179254,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_MOES_SWITCH_A_TS0043_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45633,
     "manufacturerCode": 4169,
-    "sha512": "92fc2e280b39af27c650a104686618ca64a298307d1a26d3d75911f4c51761115c2eec95fb1816c60b2fe43feba8b4e22210a00f20f37f6ddc89f6d76ec730e7",
+    "sha512": "00594e19d9dc6b239d02525ccc8a525bfc79a8344bae00fc7fb59f42071b16fc219722cef8e12245923b2b25b511769e19dcc288b79224d3b36374c2a78fd1bd",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_gbm10jnj",
@@ -818,13 +818,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179130,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_MOES_SWITCH_A_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179214,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_MOES_SWITCH_A_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45634,
     "manufacturerCode": 4169,
-    "sha512": "10394aedf0d01e7e4acb4f79142ca5f6c38610a52effba68f61f8c856e9d8486e496ac6cc4670fcbe934ce978f5420987e2f69f3f3986ea173c70fbeaf955eee",
+    "sha512": "831a8310526f26a1234b8c7dd660f565fbb056024c18c4d9595722d05485cf776bca653d5f5d432e559d0c7a25bc62264b8dc47dad01abf3a0a815cca6f1b08a",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_a4xycprs",
@@ -832,13 +832,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_MOES_SWITCH_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_MOES_SWITCH_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43572,
     "manufacturerCode": 4417,
-    "sha512": "eb0ba0b9051bfd66d508f384d260563310c95e335eaf628e0813758456871f810e80480ec491d87f7b05718f950c18aa292638bc8ca92b4f0469a27c92010129",
+    "sha512": "067be337f01a1ee5c87632735086eae162188777bffbff1a152dc7c1f45f7c555191dfa694aa25e166e05af117e59cd59c432cd51004a1740b2bfdf298e98d18",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zgyzgdua",
@@ -846,13 +846,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_MOES_SWITCH_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_MOES_SWITCH_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "53a0b3de0cc3273d520e8fdd792a55675d981aa276aa86b1da337ebc8faa10e1f61e4e0f3504754efa8fb88d569ce118eed93085af085991704605770ffea414",
+    "sha512": "e1be4e6b4a7c214d6e27a726dc78685166b6d73e2bb0189419312ae62305493cfb9d37dd15d77b80211b006ee05ba176d7013eb46ba4f55a64b5768ed498e4dc",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zgyzgdua",
@@ -860,13 +860,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45636,
     "manufacturerCode": 4417,
-    "sha512": "d2eb7d526e1f46401cfe57da3bf9b504ab5d26d2ce18aac75c4fc677f71664b4393e0956123c4c72ffce20fc6df1626c3af6ae08f10626fe6708de34059021f9",
+    "sha512": "fbc5198f06b22a07a54596e49e389688aed7b554b03b47097db9ec3a71be765df8898b02648dbb42c77b0f50f7f2a9ed810698efc8466ae3e6f1a7059c4699bf",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_mrpevh8p",
@@ -874,13 +874,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "63eed998fc4e372df0d7e8ad26742a15fd1f18054e1dc3227ad0c291dfcab401c90da6b8eb6b773019a1f68927e6c7aa089b0607569a713c52dca91abff46967",
+    "sha512": "04010dc59ca5b397ea7d817c4607b8a6a971297aa2393885d5bfe5c4b8d194ee26b6a32f1306686034ee7e0b047bb28cd3eb6a71b98d0aba4f930b44660b8bd6",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_mrpevh8p",
@@ -888,13 +888,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_2_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45636,
     "manufacturerCode": 4417,
-    "sha512": "0b8d4554509215ecc407488d176e1f006566cfb7da2ed9400bd32a48ceb06e11d2fe7e075176604cacca7bf83ad38604916a818804081b80011d7dac61752ab2",
+    "sha512": "36ffb7715edc97c758637ee0619cd08148f410d190c19d8a070b564fd07ed5588d9157396c82b06b0737fe080547ae8e3178d7431090fcd28217427a404ed621",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_yj6k7vfo",
@@ -902,13 +902,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_2_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_BUTTON_TS0041_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "46d758c3cb1920cf9a4071cb118c9e2ae14561815e0a353fa332ded9b2c67e1ddb43ffde5771919bbf932dcb7810ce6afe7c04de0bd2742b3f0dcce3053c3e35",
+    "sha512": "08bb13f4056b1617a1dfd1600320e1983014a1c3b4033c3c483ece7501f07f09318d9bb9dd0c458e6a0b610f38df7d7d123dab96fc2c2028c352d4fb19d2987e",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_yj6k7vfo",
@@ -916,13 +916,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0041_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0041_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45636,
     "manufacturerCode": 4417,
-    "sha512": "6eae7c45f3b7771a51e3ab056899f642206debd453ea60f2be6e774d8a152c13c841a81a5653adbea3a5921858db961aa06f6c5dc4b19c9641155bfbf02f3e77",
+    "sha512": "38026d417e7cddf85f91ee839c317268f60c0accda7ebfcf1a88df8719b2770376a9c9c8ad4097efc37753678e97cbef8c6943a6d7e35cd578a83ee67e328fb2",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_itb0omhv",
@@ -930,13 +930,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0041_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0041_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "41017a5c1be87a9a7fadf6806aab41ea63c4e70b99180f6b41fbacebab1321b24832b42e97943e9dab5c5088e5098429a7aa99c5552df0657aef43f5a3ee3bb2",
+    "sha512": "d22323aaf348b0e62cf49c1fc451a724eb9c4072b85053ddc5fb54ecc471d6e81907377645ddb5488f18e2a5c4137b480d167843e80e7d5b1b23d2e441fab9f3",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_itb0omhv",
@@ -944,13 +944,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0042_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0042_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45637,
     "manufacturerCode": 4417,
-    "sha512": "3188d78711fe2c1532c1da14e4933d307670140d673ad2dcc7bd040e86ef0c1853eb2d70cb8a30183b272df9ab1943aa4b8ce19fcad2ff1dfffaa8c988ef9a21",
+    "sha512": "11e96529c713ae70da3dfd69d82584607ed2f60f92810126d84de69bb2527efb01f209c3269d5c59dcb28fde9ad273f7a138f0b8df2321e35a75f45df1bcc463",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_tzvbimpq",
@@ -958,13 +958,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0042_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0042_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "3a177df083db517b616bc0d2ceddcef4de41662bf28ad87affeb9a5c897c59b84e3a07ff447f722390b7b9953f751bed3b9829289c2c02e29c9ee5de12245516",
+    "sha512": "9d553b25b3cad917728201c8379b3fdfc45736da4a461ac4ac958341345aacdd1f9d108a6e167efc99949459cb3165eb7a14e97d1307d878b65316940720fac7",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_tzvbimpq",
@@ -972,13 +972,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45637,
     "manufacturerCode": 4417,
-    "sha512": "db3b10df37ef73839a5240627b90584785f5020e2e0ee6f7b8e562ffffb78d368731618b37dd3a5c7780f79d287f4593ed836e0940df26d18ec1428a6ef3c21c",
+    "sha512": "a594644801e3848b4d499828389a13dd42da9c2bf25586736be01b48474070d02339238f584e6a9a15c0ae6ad025b18c6684a5f953d9a08be79c2f75d0551f47",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_pkeqinnt",
@@ -986,13 +986,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "450729b4cdda2bb8783a54d9058e365e6f4841a3eb1c6b8398d06b61da7fe52f369037a1b6620c12ec475caf7407f3a60c3103f4d38e892b8198347772dcd17c",
+    "sha512": "55769b944824734f315e5f7b53d58a00f967ad23a2b504a8d4fa07dee6abf739ee72badedce5ef8e7b9864ee64b39bdea22e2ffa220905923b1734857f6f8ad1",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_pkeqinnt",
@@ -1000,13 +1000,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_1_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45637,
     "manufacturerCode": 4417,
-    "sha512": "187aca9c5efb58d09d26a17cccd7625e3bba2b9b0935ac505d5ebbf9326529b72ce7a970a438d8cf3f380fc6ee604b527569875c6dcd4750c78a2676215679f6",
+    "sha512": "2ace14f23575031404a99a64bf433696f4080502cc2fe97e9116ea34f5930e8d98a0c015a9f8a69b54477a805a868132830d7b1e0d331462a8bde1837b733c3f",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_sj7jbgks",
@@ -1014,13 +1014,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_1_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_SWITCH_TS0043_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "1636a6cfa45d89830c6778bacaf876f30417001e8418de9ce74c39bfe43f051a27be1059f6d2b270c1d427f7a60823b1bd53f24107d1c3a72527cf51dadcbc0b",
+    "sha512": "654957f69eccf39014890d5161684877e9fd126c6b1f32de00a83d9059895365a24f96a4012164b5ecd264898958b7d6b1598854477a049cc232e6d658e2bed2",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_sj7jbgks",
@@ -1028,13 +1028,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_TLSR82XX_2GANG_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_TLSR82XX_2GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45632,
     "manufacturerCode": 4417,
-    "sha512": "f0d7781dca23fe0fb8b554426cc5a879d30e7304785d6613214cb2c21494f3f0c8e0f3d3221cd9f0a3a3fc426a843d79ef2782eefe73627ac96095978f7548a9",
+    "sha512": "d4ec17288a3f691e78551d61eb40251b670afd0abf36d7fd9c8d9e0858e0957cb9a1e01b53c4df5802a652fcf9d3244c10beacd112b9840228db947b7b2e5f00",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "TELINK",
@@ -1042,13 +1042,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179154,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_TS0044_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179222,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_TS0044_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43577,
     "manufacturerCode": 4169,
-    "sha512": "da81ef8e40948f5a8fa69eab19bee6195469332779f48baa81c3855b88e5a80af7ab919d2ea083a91880d0b19c075f0323b693e25a045edf4dabbc1a5ea482c3",
+    "sha512": "83fd5e9bed56421020a88cb6c057576bec95b71f89dc50529df875342e6fa0c40067b209604b679eab615952430178270e3b9f92dc3429e5e326e03028f2b10d",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_wkai4ga5",
@@ -1056,13 +1056,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179118,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_TS004F_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179226,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_TS004F_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43578,
     "manufacturerCode": 4169,
-    "sha512": "fdb389f754e6859fb55403c920216236dbacaf476dc6d3c6091fdf8e6530f35ca15bde6f3d5e4ddbdd2268f881599aa6cf11f8b6773d9ae0626cfd3951fcf1ee",
+    "sha512": "2d025f3d5b5bf1d4adeea23b43677691b95add3cf944bc59624ea4a9e162a02b5205f92762f8d0237e8b1a5631aca22d9efe1c6bba51eb5df2549485e44dba92",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_xabckq1v",
@@ -1070,13 +1070,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/REMOTE_TUYA_TS004F_2_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/REMOTE_TUYA_TS004F_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 47002,
     "manufacturerCode": 4417,
-    "sha512": "bf275828dd357dea8f91c42d46c0ec5f1a2d3dbf5110b03c0cefddf053d4da447f89f62d0a90c7ce6cbaf2b723501d3c559b15344c3fc5858c44bdb5e8890025",
+    "sha512": "daed92c2bf864647d428f876b1ff567001463003fc426fdb286e876e9305ae875af826b95df6c396a1da2a2cbe35409e4e1e4f10938226a3b86748018360c7d2",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ja5osu5g",
@@ -1084,13 +1084,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43585,
     "manufacturerCode": 4417,
-    "sha512": "13e18546271e1571de311c07c33cc523aff6628d9af9f2cdef2e7659209c2013c0d9a98f551a1b7188adf3ef7011f9a617e2461f59bba06752bc6a88f5481cff",
+    "sha512": "28cbb4c219fe53a7c8f7c4cca85a01fa3550d6a89cef4f44d67926cfc4d0671abf060509475e52a16f25b9fce02f00f2afabfeeda0d7d3073aa061d690eac228",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_aetquff4",
@@ -1098,13 +1098,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "a4766e70a64ab4d902e4f56d038e6f5fddd2f68db5579a0be398fa643c8a3cb5a3f7347450a33b74dd158414c7879f64d702d2aa01b9cfe67cd8927892f9f2cd",
+    "sha512": "a0542553d3acaa7826113575578e92629e24ed76198295ff23781f0d9c456c8e7411910d57d52d434a5b97803cfcdb5ffd45b8592ac9c9c9b473315eca39fe94",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_aetquff4",
@@ -1112,13 +1112,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43544,
     "manufacturerCode": 4417,
-    "sha512": "03270861954dfc764c86d658441e773845366421f2bb95c9f77eee00fd084de5ded7d1ff8bd5176c8c33e516ae799ba4e8601677c1089e89b1ba33c4f6570eb5",
+    "sha512": "c41abfb6612ba71df10e02e400b7dc90b3ae4dca619707370e8389b2888e2c7c663b2efd797ed69f6444f596ec1c5d6d24938823d86ae7f8df261cd0cca68f5f",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_xk5udnd6",
@@ -1127,13 +1127,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "b7b7ffdeb87433baf61318576904a3e14dcd3e70663a377d02013ddf3d54750115750184f09eae8f3b4782dc580fa825192fbc4e534ded2e324bd784157d1c67",
+    "sha512": "3a11e871524002179db86db226c118e2cd7eff110d7886a507ab2ff31812db25ceb076b2eadef00f7104280dc0d35985f8d78b0980ced183444cf066014a2a63",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_xk5udnd6",
@@ -1142,13 +1142,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43580,
     "manufacturerCode": 4417,
-    "sha512": "4e1d173fc00350a87969ecd0c1017af00b5ff08b5aed49cebf2300a020388eeb778cd68f7488f3c768ff812632dc791f356b25dfd4986484bd042ccaaf8b8f3b",
+    "sha512": "43710af9534afd5573c6c8b05c6515e053c995c5ca936528434b1bf6d0e5ce214da50944484ad754a4fff3ee514ec9793ba4e225278e9a7847a8b73d64a0defc",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_kfwhmnvc",
@@ -1156,13 +1156,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_LATCHING_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "2d723deab3f938bac6fc7a72189246cf51ce9b738ffb6cd662bd7a51ddfecd5df18889e20b911203e955d07d01621109f9cf5b528783023c31e3226fbbc9e0b7",
+    "sha512": "143db2d8c66f270d93dd6338352654ef6cd41ce4b56df5385318137ed3df1651eefa9bf46b8e467b239142d7b1b4cb3a42f76a72e9d2b56b70172ca0e740b6c1",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_kfwhmnvc",
@@ -1170,13 +1170,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43564,
     "manufacturerCode": 4417,
-    "sha512": "4ca975012588a74433165c4066689b875e5386de524974c59f6736b6220f39930e0017fd355c9bb75646f18ec4feef51275ed1c898a9010fce198c550ac3b46e",
+    "sha512": "af6178cc8f03c6f4655aab785520eca8a32efa16703223a9fc36a4c3a92b8c6b306b5805b4549c6d81bed3e52ebe44679cd8fe5eb1a1b0e29952180094f41c25",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_hafsqare",
@@ -1184,13 +1184,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "238847a51d88ac70a7b719cf27af6f4bbe437f2a538b5f918d33835d7a677f88856d81e885af99e0fcaff8f0d4618dfeb8bcbb48b1f33ae85a893576599c6001",
+    "sha512": "eaf5ea3691af97c13984e2e44ca499404cfd6731985078baaa73a051c0a770a3c07a088d11a67cded39af98848951821e8f33acbdfc8216acdcf0c6b851cb8eb",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_hafsqare",
@@ -1198,13 +1198,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_1_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43534,
     "manufacturerCode": 4417,
-    "sha512": "848c150602a3d168a38d6a4453394faa1302b6f90194e29d4e9f6bc5e4ca63eaa2134f854d59230fae311583b0fb7af4fb795c496d392ca18fd31279f51ed62d",
+    "sha512": "c05f48014cab896de93fb3773ec03150f335faf030e4d807b22b84dea03070f7f56837af8dbca0ff062636659dd350c227e1abbd8eb0ff18da53aad604a680d3",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_f2slq5pj",
@@ -1213,13 +1213,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_1_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_1_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "782cf3b1b89d4b3738ee6161a625898c5287cea8c4555e8c8db1594c752c8ecd537219d60c52eff5ea05445c4ce201c307ee4797cf76b74fcc570e5ff0f73d46",
+    "sha512": "902026f6fd89be20437c2563c9f512b30bd75b8c6a2f1a7b4222c30340ebe7b98bc5dd7b9e2d3d12e2da5a6361a39650322f8968f6504f2b241d1a15a3c39e01",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_f2slq5pj",
@@ -1228,13 +1228,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_2_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43569,
     "manufacturerCode": 4417,
-    "sha512": "b65ee4f72939bab592f7b0eefad13ffcc550cf97f99c73a983db913aa992b216f815973f2d64c8b671028c05a384886e3d1e7014771368b2aad9be7535569b27",
+    "sha512": "24a79c673844795b11b8d2541c333dd54c5b44c4ca9db794eacee843bdca01e5b9b05fbc15a44baad0c0168f4c28837b8335b261168aae75bde1d90a22a297e4",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_e98krvvk",
@@ -1242,13 +1242,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_2_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0012_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "11f33e101c0ddb8cbeb72d83036782a569afec3b4bb9e044c8370987d2038e7311fdb146cf62d18d7e10f6c35bd8f46aecccfe251551cefb95d83abef963b368",
+    "sha512": "cb39706665dd80619cb2187eff76a4ffa08b94f8aa9bd52430b5c641ba733ff7e9123c7d85e1c392e98aade94f2896e466d94f9d16d6ba62176641075104ece3",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_e98krvvk",
@@ -1256,13 +1256,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43570,
     "manufacturerCode": 4417,
-    "sha512": "464e43bc9ca937268a0e072249f62dde271da343d7138ccd482c2a97a2f8e62247964af50b075bca45e7b1433cad9eab308e666fa8f5831e164a70938c9c2c41",
+    "sha512": "053fb6490cb6b8ee1c4b6741ecda5f55fb61b5503ac41934633e3d79c68bc0f43cdc5970b27d9ce249788cf336b481800ad93219304dc5d3a38ab51c0c357eca",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_5e5ptb24",
@@ -1270,13 +1270,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TOUCH_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TOUCH_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "bc804b9dea0ed4bd7bc22603eeea6d47b3f52da9e883a60420b825a62f9930215b2d5f2009c51d58557ddfa4ae692617adf163eb81592a97e4db59fe1aec3b90",
+    "sha512": "068bfee123cd330c26195b326fe458e6847a83a6588a9dc5547b4bb375f81265299348276d18d1c08e472031e4dced1874bb166c6566215c3d7d3ce3b9ba96ee",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_5e5ptb24",
@@ -1284,13 +1284,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_1GANG_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_1GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45580,
     "manufacturerCode": 4417,
-    "sha512": "d1c39a9095436506267536f58efd6864fe80b5fdde0332747cae4615fc74e245b6ab5b60452108e612d4f4e67ebac605bcc85348e3642ecadfae2503d6c11bbb",
+    "sha512": "ebe3813713c3fa3f18bec99fdb8c0157f62b8bb1d011737b5a5dc095a7b1b79860863ea9885da692926ebfe23e67551fa9bdfe160bd61e96c05c3d3d97bb73fe",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_jn2x20tg",
@@ -1298,13 +1298,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_1GANG_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_1GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "11bab857254850746ed5ecd9da96ec3fe2c19e7597d871a64d9911125bb33bedaf965d61f9e879c4791519307dcee9627fefe3b98c0ddd5c4469c44f3058dd86",
+    "sha512": "a979135f468b35518285766814c6c5884ad734bfa3315d072e0d87580096924498576490ea5c0d4a87c3f63b6e0139b7f90b6d5c642ce6070cdbb6f3a2c963a1",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_jn2x20tg",
@@ -1312,13 +1312,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_2GANG_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_2GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43562,
     "manufacturerCode": 4417,
-    "sha512": "c6fecc3985bfe02af3fd39289b57e05d1b96e6dc34ff41ea8c94ff177ec918e9243834d482124e15002440691cfd5ca00cac0de80a7213cbdfc97519bc4a60ae",
+    "sha512": "1b22fb4d9063092719c28e07939d7f0ce4a96cd407672640880b0a3798466bd2001efd5543cd15c8a33e28e083b9e5f50d3bb403769107ced1c9bd30e7072bb7",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_zjuvw9zf",
@@ -1326,13 +1326,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_2GANG_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_2GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "66f91eaa2223720e253cd0012802e03cc4be5ba105400c333a73f1e06315f90b7708daaad4b75066313df15d487a900efe2112be8d48ef6ac2083882a5fcf9b6",
+    "sha512": "7455ce389c782a6ee9f9f63366b6c07712878ea63406477291645322d17172eccbdc7cc4b63a56348ebcb950cf9c7cc0e00a7c2a17f08a81fecece73e731112f",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_zjuvw9zf",
@@ -1340,13 +1340,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_L_1GANG_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_L_1GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43632,
     "manufacturerCode": 4417,
-    "sha512": "1de02a7668a5885cb9a21083ecaf8a67ae68339e13380b034f6a6d96bf289481ca19645b5a97867934e3d980202257119e6dbe3f1345e71cd68ea47b2a25cd96",
+    "sha512": "c9e11bc1e095951747ab7d230784da512fdbcfdb83b780e7c26b0aca1f297c79b13130f4561383976c5add931a44e25da988c483bf7ec6398aaa42515589d666",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_xkxgfxsg",
@@ -1354,13 +1354,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_L_1GANG_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_L_1GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "f71dc4034b75171e4f5de83cf7ebf8439b0e9482af8a7604ae15da236d5aaf99d7695e47ada241e524016aa240d954bfc133307dcfbf04a582d3f1214e01f340",
+    "sha512": "cdc28cfd4436444874addbe065c1bbb2af1b9b582d6da231f11d0e8629bc06c49a30ff6b47e30163ce29d49548f5569afc34564daef6e88a3cb7c1673c2463b0",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_xkxgfxsg",
@@ -1368,13 +1368,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_L_2GANG_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_L_2GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43633,
     "manufacturerCode": 4417,
-    "sha512": "787884e296a907bce65d6820bef0c3c3a2db067104833f771a92cc570c2406feeed680ae0b07a48fb98fca6cc53c48c75f005a02f6446b1642df735af12fbb6a",
+    "sha512": "94df132033528df87aa56105275d57edca99a2008945596a7b4bf5bb1d01aabb06d2a1bd538870dacd6442ee17ef7f7a49d3a9c91a49145c2479478e4fdc0918",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_tlsvxhxc",
@@ -1382,13 +1382,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_L_2GANG_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_L_2GANG_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "c1e00c7a84d4c75175c723d72b44e1cc33ef682d88f92e9411627f686b02ba615e349e452edcbd5d87bd739fd2431cf858b3a63881fce6675326eb57e1315d50",
+    "sha512": "74413724aad030a0dfe224bc53969be454ae178853ba76f8322c30ae4c8a171110433ff4a8a51a8acb03cdd5d3609874c66159e3fe68129924be93431903c8e9",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3002_tlsvxhxc",
@@ -1396,13 +1396,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_L_3GANG_2_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_L_3GANG_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 47007,
     "manufacturerCode": 4417,
-    "sha512": "9ca8d94e39f6d2ab99d10fbe347c811ea270b8fc864deab7a2dc14436ba7f4ea1a07451d068c36636f0dfefd0b1c26286df0dec06767904d13718196fefaeabb",
+    "sha512": "929196cd8ba42b3bd6dc0877daee70ef507d678ffe54abf281f3e1686615936723672e3c225c33d54202107b75ddeac8d174039e5288750e4f2fa27584e1269d",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_r2fgo9ks",
@@ -1410,13 +1410,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_BSEED_TS0726_L_3GANG_2_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_BSEED_TS0726_L_3GANG_2_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "cec111bcc7134f4a299506cc13e5e54bf45b15544003440b9c91b76782315dde624b49a6bebfd9ce8bb60d69702d46d87be9a14f4d7e0d510c1b34ae1b7da516",
+    "sha512": "ea20f5b313296c9a651b62e03cbd8d6a846933898352adf2fe1c5e7e7daac0b1a960aaa6801738f7ee7dd3edf5bf0fb51070b98b758ce773e8980cc1efc14552",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_r2fgo9ks",
@@ -1424,13 +1424,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_HOBEIAN_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_HOBEIAN_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43622,
     "manufacturerCode": 4417,
-    "sha512": "cd1a8d30bd63b2b65aedcbd90070188dbcee7f45af7d9b7592ac5fef9d2cbc21fedd741970f7d78671d4e9ae7b8474533b6c68ac7dfd1b4bd75bdf7ad5cf66fd",
+    "sha512": "62ce11fd0056c4b57e6a7609114e7e5e6c2a687d1d28f3527db2fee5a7b9708961f9f6177534a927481ba89e8a6fb518e44e71624b7424bc2a8c694748dbe077",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "HOBEIAN",
@@ -1438,13 +1438,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_IHSENO_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_IHSENO_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43557,
     "manufacturerCode": 4417,
-    "sha512": "d0de66f4ffa2b83258d79b77bb0a790c8ec89246bddfbb458e59025ba0097de8dad8e25d89ea80f0638631e4a330a57ab508804433ab7f66b460e895aa0ea1f4",
+    "sha512": "4a9c04400fbb415a4505d652b2281b6565840f4910fc4557be190f67a59e013a367a37ddd72b2a1e0b0d0e2f8f428757ba0c7905cba42d4cea8ee433e105f7ed",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qq9ahj6z",
@@ -1452,13 +1452,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_IHSENO_TS0001_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_IHSENO_TS0001_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "63058c8c3e2c0f9ae4a6d8dde06be1704a0071724d59bfb4f56c38e1096c8d5cb0bd04b3a5536eeb66389e31081921012906e5344914250c9f179dda407bb556",
+    "sha512": "8d52a50ea1763bfeea481a36087f5cf26bba777f0fea13053c5a4ea03b094bb75b4b9b70745e0c43503a44b999e6e772b965f7c18a70392995af686349be7fcd",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qq9ahj6z",
@@ -1466,13 +1466,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_IHSENO_TS0002_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_IHSENO_TS0002_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43558,
     "manufacturerCode": 4417,
-    "sha512": "4ceb4745579c0977436f1f84e5019d42491a6a9e1b1e8598f33e13edae75bd91b97504d0a8b0e5d91209a42292aa749abda9b7da38c6066c9f58cebb9c148157",
+    "sha512": "d9ffc275bd1a7fc994e10db61c14443d0fa434285a8440d5c6b27ed5304d0695d85f642d96782e1627dfd5ef794bdb0fa9ec96346f8cb6d9f1bb31fb6bf753f9",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zxrfobzw",
@@ -1480,13 +1480,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_IHSENO_TS0002_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_IHSENO_TS0002_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "d116524e20fd3cdf31fbec76387b9c88698b69af7acbb5152417c7fddc59aa89e46dfa5030ec6c204736237eab064f5fc24a07d48428513bf552aef510e321a0",
+    "sha512": "2f1e7fe23ccc7ffd5c1e40b62a2012dc3331c912bb62b2e5eafa097125bf3a23951e479c5ec537e59f3147f41a536b0969ec2ebe4c7129123e7ba51ef63cb797",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zxrfobzw",
@@ -1494,13 +1494,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_IHSENO_TS0003_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_IHSENO_TS0003_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45640,
     "manufacturerCode": 4417,
-    "sha512": "0bdac0f05b643fa4f045b4c62eb8dc3c75460b84741992d8e1abd11b8302878eccdc67b37029c2ccb15dcdfccb94b07ff0946ba3874d10aaa0f3b760cc3a98df",
+    "sha512": "42b3051dd40fd03cd444d902a496fd863a8bd626a84a16e6d909ece0cbdf8d76852cf24dc11a367132b3df72632ae12ee7574f2e24e6bff8d6d2cd694db13087",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ju82pu2b",
@@ -1508,13 +1508,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_IHSENO_TS0003_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_IHSENO_TS0003_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "a4b56630e6f6d708f4759bc48c3864318779f6cc07bd8d92d20aea7793184eb6f8c182f9339eb0e221db09a602abd73c31d34bc5e21f5514b320f9e7324b82c7",
+    "sha512": "17b59e54b234b2c43cf52fc07babb82c48da216d9fbbc5c5351bb0a41f42a6a5ed30f2324f67f800efda22beedb45a1baac29501d50a715e52814ec440bdf5c0",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ju82pu2b",
@@ -1522,13 +1522,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_LERLINK_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_LERLINK_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43510,
     "manufacturerCode": 4417,
-    "sha512": "89cc5ab49f044f0552155193040cd9a17f93f175e3abd3e2bdb5f3e48918341a2f181505be6df4e52ff582eff11219e5e0ac083dfe5a27d412ba0382e32405f6",
+    "sha512": "9b69e0dc3b760705163c17048fa133ee3aef8f33c1223050f6397ef80da198a6b0adb656d4c5e452cfe3ebc8f580d9f4ba5a4938f4d4f11a0c6c852d5eeb23b0",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_dlp6yvs8",
@@ -1536,13 +1536,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_LERLINK_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_LERLINK_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "94c4a9bf8b093c4382fc97f8c2155d455b8cd1179e2a03bd9e488c188f081bb82baeb104c2258c854d60edbdf75139171b0ffcc5209f16487eb76be3d83f4e75",
+    "sha512": "2ef87d62ed499892dccc76b54f1602daf4a123245f0e85716a429ff5bbb1f84de437dc2accbd8fb6f10d1036910c7d618bc646df8ee4026b51002873b11c1cb4",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_dlp6yvs8",
@@ -1550,13 +1550,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_LERLINK_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_LERLINK_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43533,
     "manufacturerCode": 4417,
-    "sha512": "8ce0334800db2b0a955d4b8fdd44a3d0d150afd8057bb3948b214aed92b1025127b2ebbc17771a5f06d10da383486609b22ea3b9a936275fc2d0497a35a0673d",
+    "sha512": "9380906f2b750233a3b44426a37160c171f84cf3c2ddcdad0ffce1e4daf37ab03886daf61d3143aa44a19d13a3f87dc20a6310f4f17b9673369720687186fc09",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qp7x8u3a",
@@ -1564,13 +1564,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_LERLINK_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_LERLINK_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "ea664d4c4f5a0151b59df9b4bc6648f26a3a67e3390f530acfe49b3dc4abbb97090ca188ef25b90f7189f5d8080f7d1e2f2be2b5d9d70ef1854cf409c91d2ee1",
+    "sha512": "09f202a9399ea3f2711f335b3efb9cd06931aa6b98404994fecfc2a82c5f2261d7e6ec9424a9a93f3a7c66b616581d49bc59762edd67bb664e41394ed54cf219",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qp7x8u3a",
@@ -1578,13 +1578,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_A_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_A_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43599,
     "manufacturerCode": 4417,
-    "sha512": "27510ff03bda553de9647e35eb819bc7502d3067b2fb71d46ce2f7dfcb9ac848e428d87f996422434188ac4abf87c64a5f42b72035fbc04477403ea682c5961f",
+    "sha512": "4d0ec27d3d39a6dce808ffccb0195bcae0cf0367357a55f826d95e03b0ae5a8ec67cfe1965260125e4d37994f23679db18ba7f093a925523328d51ac8f82e167",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_kea5qgnd",
@@ -1592,13 +1592,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_A_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_A_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "04c31672ff336bc9df82432f441af101923414bef5596bfa2214b2680bc4c2a3c3bf83f07bafb7b330fd440de9ccc003e7438c7ba92421905c6effcb90835877",
+    "sha512": "f284ae6a424ba930d0ad95d9fb5d9efaa6e383e539285d6da32a64ce8f67e46aa04a0234ce9c80fed907318b5bb0e9295843fedf0015b7d26de0f90c79b690e6",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_kea5qgnd",
@@ -1606,13 +1606,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_A_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_A_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43600,
     "manufacturerCode": 4417,
-    "sha512": "c4e0446cabb04b551a7c27e0e29f84d4d7b5d55602d2c6bd23b359ff0260ca082eeb308e460ace6f99641128b2b1b5e91d7ab3173669e4b49932e0b307153aee",
+    "sha512": "5a3e8b802a8d634987251c83d70bc2ac72a23826f83cea475a21c3a63b2988feac5b4d4a9bea7102a89141858c1f000cb5faf0de89569a5a43b956e78efcd1fd",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_toaaawnr",
@@ -1620,13 +1620,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_A_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_A_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "4dc138cd355ba7eaa79a3d09ec1d6d13537e2abd63fe926095180b60fc3ce9977fe8288237a9af5fb4ddbf21d20da9fa2b4677099c248d837e1e7992e1aabda6",
+    "sha512": "5fdd61575e50e03b2ad617168588e7b179f7f7a9710c24a71d482f09edbfdd0e1c368fc1c610a64807b17ebc03b44902bf1a816a4828146572b424403dfe0d4a",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_toaaawnr",
@@ -1634,13 +1634,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_A_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_A_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43550,
     "manufacturerCode": 4417,
-    "sha512": "ca58f7ddc5c389d2d564c841d249a8878b0ce4cc136ff1a1600d7a39fe683a947f2070f4993c5ce6de512f60c2c3735e6db84ce4ae779031bb4d08d808a008be",
+    "sha512": "3ea08ec6ccc1e421076a7ec7e6c66b0d9f28f260723b67b2d4760287435b8647f4bcd49a34d9d9617d34b72ef7ad387163e757c03c2a3e77feb4ddc06cc826da",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_tqwydnqn",
@@ -1648,13 +1648,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_A_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155298,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_A_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "98bdda341c98afaef18ea532f748861ae9af55e11421b2346c693f4b8628e2a5e07c00526e591c6ba82568079c7d2814477fd636afc9b01483fd757f9c41fc04",
+    "sha512": "61d9919bdaaf9dd26544d4efab862c62642c15858335206dee8f1636af166b62b9b8632a418605922f536a628a21e9442b9c7eeb32176b0f803ad1afe268c317",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_tqwydnqn",
@@ -1662,13 +1662,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179134,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_B_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179242,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_B_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43586,
     "manufacturerCode": 4169,
-    "sha512": "653697639e0547093f30b85b82997c147fbf99165d5e2676d6968eabfbcbebcbea28e1923fcf9ef96affa4c8b5f0457370816d1cce20ea0d23fcc5d1d110b77e",
+    "sha512": "d5e80949167143a15a86ce3ada0661feee6e417f1af74d9c9075a4bc17bc4ad725e1db1b9e87de923d4b090a1c9cbba8973fe45ea4c94a29b13f29936e31b313",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_bmzfjnbp",
@@ -1676,13 +1676,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179118,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_B_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179254,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_B_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43587,
     "manufacturerCode": 4169,
-    "sha512": "b230ab36490424b97138448f7ed3d5c81d8fbb6e9a437d541f347fcb4cc399abaf17b260f7fe9d27c64f185fd4e696909c6107e3003e7e44eed296ef7c715cbc",
+    "sha512": "3e19dee709e024b1f552dc67efa90b6dbbf892dbfed1cf488c1ef9f0f8b6a1699f15c264ac5e8d9431f69b386db7903a32c6250aea898ae26035022a0d0803fe",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ugaem1nb",
@@ -1690,13 +1690,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179154,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MANHOT_B_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179242,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MANHOT_B_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45586,
     "manufacturerCode": 4169,
-    "sha512": "c264ab787a4d05e1c9b442c901381dda4bfdbecd02e437f9b39b87aabee037194b6ad254ff1a4297ff154d9e56c9ece3249e7153c12eddbc8f490b7474a9ec35",
+    "sha512": "9ab2ef1b488e2ee82c510d945e7c615fed0133d78b78989a879c1af302b6546df3c3057c9c23dc516141d5605d2a6097d519d92aa921e2bd2a0d548f59679464",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_snq47izk",
@@ -1704,13 +1704,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MOES_ALL_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MOES_ALL_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43532,
     "manufacturerCode": 4417,
-    "sha512": "8e0225bf31dd7922c79e497dc783862cc095ba68814926370e6c50c787ed55bbaf8e14afada934091aee625fe47218deeb13cd90eca6c14e9d908142a644112e",
+    "sha512": "519c30e0e84252c23c8c2a62b3fe1adafa8a621a9c62fa7d4c0329282b6c0f3dac6de3ac9a829aa77b638974d761bd1085951356497a625b562e6e491d17cd81",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_hhiodade",
@@ -1719,13 +1719,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155090,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MOES_ALL_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155266,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MOES_ALL_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "ed8ffd2e598630f1579ec7c7b1b1f51be9426584b038ad1ec9091e68ec2c0e2368957e321dca25a78e843d6100479dd8d45712d1b374d89d586517fef06cadbc",
+    "sha512": "946af296c5faf79fd554ac96223295eae4697f4548ac3fa5387792ddb4cdeaa45478de554779274d32e185150a64838eb9ec9ba409448a7513bf8f506bb97da8",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_hhiodade",
@@ -1734,13 +1734,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MOES_ALL_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MOES_ALL_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43510,
     "manufacturerCode": 4417,
-    "sha512": "92e6c17c208c5fc6cfba6256a2a531dabfdf7b7cf0da54d46671d16e82078874aef8897389d521f6819c7ce2141f345b2373b9283f2dba962cb110d2a2bb3667",
+    "sha512": "5bff0b53c80ed7c1ae8b66070f7c3d3990b21067e85339307d7ed62f3259c0f42a3d6fe8301b529d4fd3d03deaf269286586967917f201a157eb2b94c2e590ec",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_18ejxno0",
@@ -1749,13 +1749,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MOES_ALL_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MOES_ALL_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "caaa8206688e18d8ab552d1e81e59205bc39d5c5d0a15f3d198069f2e3327d4dbb246526050828fd8bd0e505708ac89cca06dfff73df8d2c35d687054cc9c9a0",
+    "sha512": "110f7115dec47add1deced11f08fb754264058998f59b2a1a3018d4a767898456d4dbd782f3562a5bb3d0e7d74a5c656c4715d4a148c66afa0d65dfbd5661294",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_18ejxno0",
@@ -1764,13 +1764,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MOES_ALL_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MOES_ALL_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43533,
     "manufacturerCode": 4417,
-    "sha512": "4e87d68559f69f435e51773116ba9552eca05b6d03fc9c1b80ec3ae28b7f59838a8ce9d304cc8c205e5dfcf3d4f49f67adfb2d1801244d1892fdef537e2e3fdf",
+    "sha512": "676ae6c93bf1cb2b711f8b281709c614180620399d87182acb30c195769be272cfb8b8f72dedc78ccc66a31b4c8adbffa479019b19a58809032da5a2ecd4d743",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qewo8dlz",
@@ -1779,13 +1779,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155122,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MOES_ALL_TS0013_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MOES_ALL_TS0013_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "735cdfe2b8a8cd25220c67d9e7c0b50b5a1d713e5abfcbc9b53fb01dea260d8a297582c33c9e0518281072c9974e9de2e4f2d72e113d0f12e3fbd18111b0823e",
+    "sha512": "467802e4c54b8f8b28c20ff98fe44cf0c771813ac270a67db43cec574a38ff94f1bd820876e75c9d158c77d5e5d6f7f02e23f49a50ca7dd0990a5e8de9c06ac5",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_qewo8dlz",
@@ -1794,13 +1794,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179170,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_MOES_ALL_TS0014_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179242,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_MOES_ALL_TS0014_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43566,
     "manufacturerCode": 4169,
-    "sha512": "0349fabee1192a98f81e3f2027c5dff6853a1e815def52cd5e8f74cfa2e5873472603a0a1bd8a3572e5b67a23572e18467b496333895a2c065e7a052fe1670c4",
+    "sha512": "8ef966faa1e45f7aabf50798dd4d20683b2cb0509a22581019ad9ff04d188c1b9213f4e38c326f4fa7146f44e8fc68dab4409705c27a43083765f908a4f5ca8d",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_mrduubod",
@@ -1808,13 +1808,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_ZEMISMART_1_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_ZEMISMART_1_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 43536,
     "manufacturerCode": 4417,
-    "sha512": "e0cbd297ccef5bde3725f5c6fed1d12ab4e9a8b92913935f497b3817794fafa87cd3e901f7e6a9d70b04b93bb5f2372d2d87f91e6bf38d0c2d317a19e73ed5ec",
+    "sha512": "d47127540b8857d12f61ff07d32c03558e3600d395c854b9c7d5ebf1bbc8ca30e7762678d4f103aeb958ab27aa34dc9771e1eba0a30180885b4c8c72ec9b9e2e",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zmlunnhy",
@@ -1823,13 +1823,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "fileVersion": 4294967295,
-    "fileSize": 155106,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_ZEMISMART_1_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773-from_tuya.zigbee",
+    "fileSize": 155282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_ZEMISMART_1_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73-from_tuya.zigbee",
     "imageType": 54179,
     "manufacturerCode": 4417,
-    "sha512": "66c7c81878bca2b22bec9e301cb2e57e93183a125b9f554a9ec1130f63b6af2e17b42cd0329a8abc0dac5fc16c99104dd8ecf2aa4e4ab6b0ae8e86560ae2205b",
+    "sha512": "0f1fd9e4f490d14b770c799a44d97cb9d32eab43fb0653fde6d38b9ee0f709132109fde99841bbe7daaa2b1a6818fbb44d6c12bb3cac094bd1d8e9522727804b",
     "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_zmlunnhy",
@@ -1838,13 +1838,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179142,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_ZEMISMART_2_TS0011_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179238,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_ZEMISMART_2_TS0011_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45589,
     "manufacturerCode": 4169,
-    "sha512": "e118c2344b54bf1dbe0ec524325a4131ff76c3ff8e9e3597912fdd15abc87742c984fbbbf8cc3f9345f6c61dadf8d1d016cb2fee71a75455ddb6a0e74760b674",
+    "sha512": "9f34a889a0138eaa724a6ceaa6ec7e232e9e85f2b6d3a9ab8e810e6f2fe0a298ac63bf32a1c840c874530e298190764f5e0cda1b14d1be9a5f8e5fd65ec1c30f",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_ilauzyjm",
@@ -1852,13 +1852,13 @@
     ]
   },
   {
-    "fileName": "tlc_switch-1.1.4-f8898773.zigbee",
-    "fileVersion": 285487108,
-    "fileSize": 179162,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/5cccbc1d51074c1f9f18adad6b94205f718a1de4/bin/end_device/SWITCH_ZEMISMART_2_TS0012_END_DEVICE/tlc_switch-1.1.4-f8898773.zigbee",
+    "fileName": "tlc_switch-1.1.4-fed3ca73.zigbee",
+    "fileVersion": 285487111,
+    "fileSize": 179282,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/refs/heads/claude/charming-brahmagupta-0ny4mz/bin/end_device/SWITCH_ZEMISMART_2_TS0012_END_DEVICE/tlc_switch-1.1.4-fed3ca73.zigbee",
     "imageType": 45589,
     "manufacturerCode": 4169,
-    "sha512": "03aae4b9f8418ce36cdd10da0ecd7ff1d2a7edd3780698a34510c6a72874244858122de9e11a5f0bb9966546486916fd2c8cabfefa80b1fca1bc82c335d88de0",
+    "sha512": "40b36b4e426284b4585bbe4af158890f3a551caf111c137c7e126fd8dd3b882b2f1c839af731fb0627a538499a780d0c6bfd977f7c94a8bf14c1615b79167200",
     "otaHeaderString": "Custom zigbee firmware\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
     "manufacturerName": [
       "_TZ3000_rbl8c85w",
