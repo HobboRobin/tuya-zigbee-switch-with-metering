@@ -23,7 +23,7 @@ void electrical_measurement_cluster_init(electrical_measurement_cluster_t *clust
     cluster->meter                 = meter;
     cluster->measurement_type      = MEAS_TYPE_AC_ACTIVE | MEAS_TYPE_PHASE_A;
     cluster->ac_voltage_multiplier = 1;
-    cluster->ac_voltage_divisor    = 1;    // firmware reports voltage in whole volts
+    cluster->ac_voltage_divisor    = 100;  // firmware reports voltage in centivolts
     cluster->ac_current_multiplier = 1;
     cluster->ac_current_divisor    = 1000; // firmware reports current in mA
     cluster->ac_power_multiplier   = 1;

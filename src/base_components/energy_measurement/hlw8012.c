@@ -95,7 +95,7 @@ void _update_measurement_handler(void *arg) {
         if (dev->data.sel_state)
             dev->data.voltage = (uint16_t)(((uint32_t)cf1_pulses *
                                             HLW8012_VOLTAGE_MULTIPLIER) /
-                                           HLW8012_FIXED_POINT_SCALE); // V
+                                           HLW8012_FIXED_POINT_SCALE); // cV
         else
             dev->data.current = (uint16_t)(((uint32_t)cf1_pulses *
                                             HLW8012_CURRENT_MULTIPLIER) /

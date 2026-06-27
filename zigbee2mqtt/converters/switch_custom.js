@@ -160,6 +160,27 @@ const romasku = {
         };
         return result;
     },
+    // numeric() that divides the raw firmware value by `divisor` for display
+    // (firmware sends integers; we patch fromZigbee so scaling always applies).
+    scaledMeasurement: ({name, cluster, attribute, unit, divisor, endpointName}) => {
+        const result = numeric({
+            name,
+            cluster,
+            attribute,
+            unit,
+            access: "STATE",
+            endpointName,
+        });
+        const origConvert = result.fromZigbee[0].convert;
+        result.fromZigbee[0].convert = (model, msg, publish, options, meta) => {
+            const r = origConvert(model, msg, publish, options, meta);
+            if (r && r[name] !== undefined && r[name] !== null) {
+                r[name] = r[name] / divisor;
+            }
+            return r;
+        };
+        return result;
+    },
     networkIndicator: (name, endpointName) =>
         binary({
             name,
@@ -7242,23 +7263,20 @@ const definitions = [
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
             onOff({ endpointNames: ["relay"] }),
-            numeric({
+            romasku.scaledMeasurement({
                 name: "voltage",
                 cluster: "haElectricalMeasurement",
                 attribute: "rmsVoltage",
-                description: "Measured electrical RMS voltage",
                 unit: "V",
-                access: "STATE",
+                divisor: 100, // firmware reports centivolts
                 endpointName: "switch",
             }),
-            numeric({
+            romasku.scaledMeasurement({
                 name: "current",
                 cluster: "haElectricalMeasurement",
                 attribute: "rmsCurrent",
-                description: "Measured electrical RMS current",
                 unit: "A",
-                scale: 1000, // firmware reports milliamps
-                access: "STATE",
+                divisor: 1000, // firmware reports milliamps
                 endpointName: "switch",
             }),
             numeric({
