@@ -76,31 +76,31 @@ void _update_measurement_handler(void *arg) {
     dev->data.freq_cf  = freq_cf_mhz;
     dev->data.freq_cf1 = freq_cf1_mhz;
 
-    if (cf_pulses == 0) {
-        dev->data.power = 0;
-    } else {
-        dev->data.power = (int16_t)((freq_cf_mhz * HLW8012_POWER_MULTIPLIER) /
-                                    HLW8012_FIXED_POINT_SCALE);
-        dev->data.energy +=
-            ((uint32_t)cf_pulses * HLW8012_POWER_MULTIPLIER) /
-            (HLW8012_FIXED_POINT_SCALE * 3600);
-    }
+    // Physical values are computed directly from the pulse counts (not from
+    // the mHz frequency) to keep good integer resolution. power in W.
+    dev->data.power = (int16_t)(((uint32_t)cf_pulses * HLW8012_POWER_MULTIPLIER) /
+                                HLW8012_FIXED_POINT_SCALE);
+
+    // Energy: integrate power over the sample window in a high-resolution
+    // accumulator, then derive whole Wh. energy_acc unit = pulses*MULT*seconds;
+    // 1 Wh = MULT-scaled W * 3600 s => divide by (FIXED_POINT_SCALE * 3600).
+    dev->data.energy_acc += (uint64_t)cf_pulses * HLW8012_POWER_MULTIPLIER *
+                            (HLW8012_SAMPLE_INTERVAL_MS / 1000);
+    dev->data.energy =
+        (uint32_t)(dev->data.energy_acc /
+                   ((uint64_t)HLW8012_FIXED_POINT_SCALE * 3600));
 
     // Skip the sample right after a SEL toggle (cycle_count == 0): CF1 needs
     // time to settle to the newly selected measurement.
     if (dev->cycle_count != 0) {
         if (dev->data.sel_state)
-            dev->data.voltage =
-                (cf1_pulses == 0)
-                  ? 0
-                  : (uint16_t)((freq_cf1_mhz * HLW8012_VOLTAGE_MULTIPLIER) /
-                               HLW8012_FIXED_POINT_SCALE);
+            dev->data.voltage = (uint16_t)(((uint32_t)cf1_pulses *
+                                            HLW8012_VOLTAGE_MULTIPLIER) /
+                                           HLW8012_FIXED_POINT_SCALE); // V
         else
-            dev->data.current =
-                (cf1_pulses == 0)
-                  ? 0
-                  : (uint16_t)((freq_cf1_mhz * HLW8012_CURRENT_MULTIPLIER) /
-                               HLW8012_FIXED_POINT_SCALE);
+            dev->data.current = (uint16_t)(((uint32_t)cf1_pulses *
+                                            HLW8012_CURRENT_MULTIPLIER) /
+                                           HLW8012_FIXED_POINT_SCALE); // mA
     }
 
     dev->data.valid            = 1;
@@ -136,7 +136,8 @@ void hlw8012_reset_energy(hlw8012_t *dev) {
     if (!dev)
         return;
 
-    dev->data.energy = 0;
+    dev->data.energy     = 0;
+    dev->data.energy_acc = 0;
     hal_gpio_counter_read_and_reset(dev->cf_counter);
     hal_gpio_counter_read_and_reset(dev->cf1_counter);
 }

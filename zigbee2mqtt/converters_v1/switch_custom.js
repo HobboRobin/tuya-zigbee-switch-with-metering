@@ -7258,6 +7258,7 @@ const definitions = [
                 attribute: "rmsCurrent",
                 description: "Measured electrical RMS current",
                 unit: "A",
+                scale: 1000, // firmware reports milliamps
                 access: "STATE",
                 endpointName: "switch",
             }),

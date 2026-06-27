@@ -6,10 +6,16 @@
 #include "base_components/energy_meter.h"
 #include "hal/tasks.h"
 
+// Calibration for TS011F-BS-PM-2 (BSEED), derived from hardware measurement:
+//   236.5 V <-> 9733 CF1 pulses/5s  (voltage mode)
+//   10 W    <-> ~2.5 CF pulses/5s   (power)
+//   42.3 mA <-> 5 CF1 pulses/5s     (current mode)
+// Physical value = pulses * MULTIPLIER / FIXED_POINT_SCALE.
+// Units: power in W, voltage in V, current in mA.
 #define HLW8012_FIXED_POINT_SCALE            65536
-#define HLW8012_POWER_MULTIPLIER             132777
-#define HLW8012_VOLTAGE_MULTIPLIER           12190
-#define HLW8012_CURRENT_MULTIPLIER           843
+#define HLW8012_POWER_MULTIPLIER             262144 // 4 W per pulse
+#define HLW8012_VOLTAGE_MULTIPLIER           1593   // ~0.0243 V per pulse
+#define HLW8012_CURRENT_MULTIPLIER           554196 // ~8.46 mA per pulse
 #define HLW8012_SEL_TOGGLE_CYCLE_INTERVAL    5
 #define HLW8012_PULSE_TIMEOUT_MS             20000
 #define HLW8012_SAMPLE_INTERVAL_MS           5000
@@ -30,6 +36,7 @@ typedef struct {
     uint16_t current;
     int16_t  power;
     uint32_t energy;
+    uint64_t energy_acc; // high-resolution energy accumulator (pulses*MULT*sec)
     uint8_t  sel_state;
     uint8_t  valid;
     uint32_t freq_cf;
