@@ -17,4 +17,13 @@ void basic_cluster_add_to_endpoint(zigbee_basic_cluster *cluster,
 
 void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id);
 
+/**
+ * Fill the energy-monitoring diagnostic markers in swBuildId.
+ * @param energy_enabled  1 if energy monitoring configured ('-' markers if 0)
+ * @param elec_meas_ok    1 if haElectricalMeasurement registered in the stack
+ * @param metering_ok     1 if seMetering registered in the stack
+ */
+void basic_cluster_set_energy_diag(uint8_t energy_enabled, uint8_t elec_meas_ok,
+                                   uint8_t metering_ok);
+
 #endif

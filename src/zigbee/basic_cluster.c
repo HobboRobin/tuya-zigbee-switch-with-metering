@@ -25,7 +25,11 @@ const uint8_t hwVersion    = 0x00;
 uint8_t powerSource = POWER_SOURCE_MAINS_1_PHASE; // 0x01 default
 
 const uint16_t cluster_revision = 0x01;
-DEF_STR(STRINGIFY_VALUE(VERSION_STR), swBuildId);
+// swBuildId carries an energy-monitoring runtime diagnostic suffix " E?M?":
+// E<x> = haElectricalMeasurement registered in stack (1/0, '-' if disabled),
+// M<y> = seMetering registered in stack. Filled in by
+// basic_cluster_set_energy_diag() after the stack finishes registration.
+DEF_STR_NON_CONST(STRINGIFY_VALUE(VERSION_STR) " E?M?", swBuildId);
 extern network_indicator_t network_indicator;
 
 void basic_cluster_store_attrs_to_nv();
@@ -44,6 +48,20 @@ void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id) {
     }
     if (attribute_id == ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT) {
         device_params_set_multi_press_reset_count(g_multi_press_reset_count);
+    }
+}
+
+void basic_cluster_set_energy_diag(uint8_t energy_enabled, uint8_t elec_meas_ok,
+                                   uint8_t metering_ok) {
+    // Replace the two '?' markers in swBuildId (" E?M?") in order.
+    char em  = !energy_enabled ? '-' : (elec_meas_ok ? '1' : '0');
+    char met = !energy_enabled ? '-' : (metering_ok ? '1' : '0');
+    uint8_t which = 0;
+    for (unsigned i = 0; i < sizeof(swBuildId.str); i++) {
+        if (swBuildId.str[i] == '?') {
+            swBuildId.str[i] = (which == 0) ? em : met;
+            which++;
+        }
     }
 }
 

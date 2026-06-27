@@ -36,6 +36,12 @@ hal_zigbee_attribute *find_hal_attr(uint8_t endpoint,
                                      clusterId, attributeId);
 }
 
+bool hal_zigbee_stack_has_attribute(uint8_t endpoint, uint16_t cluster_id,
+                                    uint16_t attribute_id) {
+    return hal_zigbee_find_attribute(hal_endpoints, hal_endpoints_cnt, endpoint,
+                                     cluster_id, attribute_id) != NULL;
+}
+
 static uint32_t on_command_callback(sl_service_opcode_t opcode,
                                     sl_service_function_context_t *context) {
     assert(opcode == SL_SERVICE_FUNCTION_TYPE_ZCL_COMMAND);

@@ -36,6 +36,12 @@ static uint32_t poll_rate_ms = 0;
 static stub_binding_t bindings[MAX_BINDINGS];
 static int            binding_count = 0;
 
+bool hal_zigbee_stack_has_attribute(uint8_t endpoint, uint16_t cluster_id,
+                                    uint16_t attribute_id) {
+    return hal_zigbee_find_attribute(endpoints, endpoints_count, endpoint,
+                                     cluster_id, attribute_id) != NULL;
+}
+
 void hal_zigbee_init(hal_zigbee_endpoint *ep_list, uint8_t ep_count) {
     if (!ep_list && ep_count > 0) {
         io_log("ZIGBEE", "Error: NULL endpoint list with non-zero count %d",

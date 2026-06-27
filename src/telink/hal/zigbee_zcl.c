@@ -246,6 +246,13 @@ void hal_zigbee_notify_attribute_changed(uint8_t endpoint, uint16_t cluster_id,
     report_handler(); // Trigger reporting if needed
 }
 
+bool hal_zigbee_stack_has_attribute(uint8_t endpoint, uint16_t cluster_id,
+                                    uint16_t attribute_id) {
+    // Ask the SDK registry directly: reflects whether zcl_register actually
+    // registered this cluster/attribute at runtime.
+    return zcl_findAttribute(endpoint, cluster_id, attribute_id) != NULL;
+}
+
 hal_zigbee_status_t hal_zigbee_send_cmd_to_bindings(const hal_zigbee_cmd *cmd) {
     epInfo_t dstEpInfo;
 

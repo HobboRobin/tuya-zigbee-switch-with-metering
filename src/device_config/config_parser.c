@@ -431,6 +431,18 @@ void parse_config() {
     }
 
     hal_zigbee_init(endpoints, total_endpoints);
+
+    // Record whether the energy clusters actually registered in the stack, so
+    // it can be read back from genBasic swBuildId for diagnostics.
+    basic_cluster_set_energy_diag(
+        energy_monitoring_enabled,
+        hal_zigbee_stack_has_attribute(energy_monitoring_endpoint,
+                                       ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+                                       ZCL_ATTR_ELEC_MEAS_RMS_VOLTAGE),
+        hal_zigbee_stack_has_attribute(
+            energy_monitoring_endpoint, ZCL_CLUSTER_METERING,
+            ZCL_ATTR_METERING_CURRENT_SUMMATION_DELIVERED));
+
     while (cursor != (char *)device_config_str.data) {
         cursor--;
         if (*cursor == '\0') {
