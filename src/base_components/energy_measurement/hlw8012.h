@@ -37,14 +37,16 @@ typedef struct {
 } hlw8012_data_t;
 
 typedef struct {
-    hal_gpio_pin_t cf_pin;
-    hal_gpio_pin_t cf1_pin;
-    hal_gpio_pin_t sel_pin;
-    hlw8012_data_t data;
-    hal_task_t     update_task;
-    uint8_t        cycle_count;
-    uint8_t        initialized;
-    energy_meter_t meter;
+    hal_gpio_pin_t     cf_pin;
+    hal_gpio_pin_t     cf1_pin;
+    hal_gpio_pin_t     sel_pin;
+    hal_gpio_counter_t cf_counter;
+    hal_gpio_counter_t cf1_counter;
+    hlw8012_data_t     data;
+    hal_task_t         update_task;
+    uint8_t            cycle_count;
+    uint8_t            initialized;
+    energy_meter_t     meter;
 } hlw8012_t;
 
 int            hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin,

@@ -30,17 +30,19 @@ int hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin, hal_gpio_pin_t cf1_pin,
     dev->cf1_pin = cf1_pin;
     dev->sel_pin = sel_pin;
 
-    hal_gpio_init(cf_pin, 1, HAL_GPIO_PULL_NONE);
-    hal_gpio_init(cf1_pin, 1, HAL_GPIO_PULL_NONE);
+    // CF (power) and CF1 (voltage/current) are counted by hardware pulse
+    // counters: the CF1 voltage signal is too high-frequency for the software
+    // polling loop to catch reliably.
+    dev->cf_counter =
+        hal_gpio_counter_init(cf_pin, HAL_GPIO_COUNTER_RISING, HAL_GPIO_PULL_NONE);
+    dev->cf1_counter =
+        hal_gpio_counter_init(cf1_pin, HAL_GPIO_COUNTER_RISING, HAL_GPIO_PULL_NONE);
+
     hal_gpio_init(sel_pin, 0, HAL_GPIO_PULL_NONE);
     hal_gpio_set(sel_pin);
 
-    dev->data.sel_state            = 1;
-    dev->data.last_sample_time     = hal_millis();
-    dev->data.cf_tick_pulse_count  = 0;
-    dev->data.cf1_tick_pulse_count = 0;
-    dev->data.cf_last_gpio_state   = hal_gpio_read(cf_pin);
-    dev->data.cf1_last_gpio_state  = hal_gpio_read(cf1_pin);
+    dev->data.sel_state        = 1;
+    dev->data.last_sample_time = hal_millis();
 
     dev->initialized         = 1;
     dev->update_task.handler = _update_measurement_handler;
@@ -65,41 +67,18 @@ void _update_measurement_handler(void *arg) {
 
     uint32_t now = hal_millis();
 
-    uint32_t cf_total_pulses  = dev->data.cf_tick_pulse_count;
-    uint32_t cf1_total_pulses = dev->data.cf1_tick_pulse_count;
+    // Hardware pulse counters accumulate edges since the last sample.
+    uint32_t cf_pulses  = hal_gpio_counter_read_and_reset(dev->cf_counter);
+    uint32_t cf1_pulses = hal_gpio_counter_read_and_reset(dev->cf1_counter);
 
-    uint32_t cf_pulses  = cf_total_pulses - dev->data.cf_total_pulse_count;
-    uint32_t cf1_pulses = cf1_total_pulses - dev->data.cf1_total_pulse_count;
-
-    dev->data.cf_total_pulse_count  = cf_total_pulses;
-    dev->data.cf1_total_pulse_count = cf1_total_pulses;
-
-    if (dev->data.cf_last_pulse_time > 0 &&
-        (now - dev->data.cf_last_pulse_time) > HLW8012_PULSE_TIMEOUT_MS) {
-        dev->data.power   = 0;
-        dev->data.freq_cf = 0;
-    }
-
-    if (dev->data.cf1_last_pulse_time > 0 &&
-        (now - dev->data.cf1_last_pulse_time) > HLW8012_PULSE_TIMEOUT_MS) {
-        if (dev->data.sel_state)
-            dev->data.voltage = 0;
-        else
-            dev->data.current = 0;
-        dev->data.freq_cf1 = 0;
-    }
-
-    uint32_t freq_cf_mhz = pulses_to_frequency(cf_pulses);
-    if (freq_cf_mhz <= 1)
-        freq_cf_mhz = 0;
-    dev->data.freq_cf = freq_cf_mhz;
-
+    uint32_t freq_cf_mhz  = pulses_to_frequency(cf_pulses);
     uint32_t freq_cf1_mhz = pulses_to_frequency(cf1_pulses);
-    if (freq_cf1_mhz <= 1)
-        freq_cf1_mhz = 0;
+    dev->data.freq_cf  = freq_cf_mhz;
     dev->data.freq_cf1 = freq_cf1_mhz;
 
-    if (freq_cf_mhz != 0) {
+    if (cf_pulses == 0) {
+        dev->data.power = 0;
+    } else {
         dev->data.power = (int16_t)((freq_cf_mhz * HLW8012_POWER_MULTIPLIER) /
                                     HLW8012_FIXED_POINT_SCALE);
         dev->data.energy +=
@@ -107,15 +86,21 @@ void _update_measurement_handler(void *arg) {
             (HLW8012_FIXED_POINT_SCALE * 3600);
     }
 
-    if (freq_cf1_mhz != 0 && dev->cycle_count != 0) {
+    // Skip the sample right after a SEL toggle (cycle_count == 0): CF1 needs
+    // time to settle to the newly selected measurement.
+    if (dev->cycle_count != 0) {
         if (dev->data.sel_state)
             dev->data.voltage =
-                (uint16_t)((freq_cf1_mhz * HLW8012_VOLTAGE_MULTIPLIER) /
-                           HLW8012_FIXED_POINT_SCALE);
+                (cf1_pulses == 0)
+                  ? 0
+                  : (uint16_t)((freq_cf1_mhz * HLW8012_VOLTAGE_MULTIPLIER) /
+                               HLW8012_FIXED_POINT_SCALE);
         else
             dev->data.current =
-                (uint16_t)((freq_cf1_mhz * HLW8012_CURRENT_MULTIPLIER) /
-                           HLW8012_FIXED_POINT_SCALE);
+                (cf1_pulses == 0)
+                  ? 0
+                  : (uint16_t)((freq_cf1_mhz * HLW8012_CURRENT_MULTIPLIER) /
+                               HLW8012_FIXED_POINT_SCALE);
     }
 
     dev->data.valid            = 1;
@@ -129,11 +114,6 @@ void _update_measurement_handler(void *arg) {
 
 void _cycle_sel_pin(hlw8012_t *dev) {
     if (dev->cycle_count == HLW8012_SEL_TOGGLE_CYCLE_INTERVAL) {
-        dev->data.cf1_last_pulse_time   = 0;
-        dev->data.cf1_total_pulse_count = 0;
-        dev->data.cf1_pulse_count       = 0;
-        dev->data.cf1_tick_pulse_count  = 0;
-
         if (dev->data.sel_state) {
             hal_gpio_clear(dev->sel_pin);
             dev->data.sel_state = 0;
@@ -156,13 +136,9 @@ void hlw8012_reset_energy(hlw8012_t *dev) {
     if (!dev)
         return;
 
-    dev->data.energy                = 0;
-    dev->data.cf_pulse_count        = 0;
-    dev->data.cf_total_pulse_count  = 0;
-    dev->data.cf_tick_pulse_count   = 0;
-    dev->data.cf1_pulse_count       = 0;
-    dev->data.cf1_total_pulse_count = 0;
-    dev->data.cf1_tick_pulse_count  = 0;
+    dev->data.energy = 0;
+    hal_gpio_counter_read_and_reset(dev->cf_counter);
+    hal_gpio_counter_read_and_reset(dev->cf1_counter);
 }
 
 static void hlw8012_meter_get_data(void *ctx, energy_meter_data_t *data) {
@@ -197,21 +173,7 @@ energy_meter_t *hlw8012_as_energy_meter(hlw8012_t *dev) {
 }
 
 void hlw8012_tick(hlw8012_t *dev) {
-    if (!dev || !dev->initialized)
-        return;
-
-    uint32_t now       = hal_millis();
-    uint8_t  cf_state  = hal_gpio_read(dev->cf_pin);
-    uint8_t  cf1_state = hal_gpio_read(dev->cf1_pin);
-
-    if (dev->data.cf_last_gpio_state != cf_state) {
-        dev->data.cf_tick_pulse_count++;
-        dev->data.cf_last_pulse_time = now;
-    }
-    if (dev->data.cf1_last_gpio_state != cf1_state) {
-        dev->data.cf1_tick_pulse_count++;
-        dev->data.cf1_last_pulse_time = now;
-    }
-    dev->data.cf_last_gpio_state  = cf_state;
-    dev->data.cf1_last_gpio_state = cf1_state;
+    // No-op: CF/CF1 pulses are counted by hardware counters, so no per-loop
+    // software polling is needed. Kept for API/main-loop compatibility.
+    (void)dev;
 }
