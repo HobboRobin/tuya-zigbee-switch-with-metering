@@ -54,9 +54,10 @@ void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id) {
 void basic_cluster_set_energy_diag(uint8_t energy_enabled, uint8_t elec_meas_ok,
                                    uint8_t metering_ok) {
     // Replace the two '?' markers in swBuildId (" E?M?") in order.
-    char em  = !energy_enabled ? '-' : (elec_meas_ok ? '1' : '0');
-    char met = !energy_enabled ? '-' : (metering_ok ? '1' : '0');
+    char    em    = !energy_enabled ? '-' : (elec_meas_ok ? '1' : '0');
+    char    met   = !energy_enabled ? '-' : (metering_ok ? '1' : '0');
     uint8_t which = 0;
+
     for (unsigned i = 0; i < sizeof(swBuildId.str); i++) {
         if (swBuildId.str[i] == '?') {
             swBuildId.str[i] = (which == 0) ? em : met;
