@@ -7272,7 +7272,7 @@ const definitions = [
             numeric({
                 name: "energy",
                 cluster: "seMetering",
-                attribute: "currentSummationDelivered",
+                attribute: "currentSummDelivered",
                 description: "Accumulated energy consumption",
                 unit: "kWh",
                 access: "STATE",
@@ -7356,7 +7356,7 @@ const definitions = [
                 {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 300, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
-                {attribute: "currentSummationDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
             ]);
 
 
