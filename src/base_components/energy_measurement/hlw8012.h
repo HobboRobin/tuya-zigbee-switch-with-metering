@@ -20,6 +20,12 @@
 #define HLW8012_PULSE_TIMEOUT_MS             20000
 #define HLW8012_SAMPLE_INTERVAL_MS           5000
 
+// Energy accumulates pulses*POWER_MULTIPLIER per sample; this many sub-units
+// equal 1 Wh: FIXED_POINT_SCALE * 3600s / sample_seconds. Kept under 2^32 so
+// energy can be derived with 32-bit subtraction (TC32 has no 64-bit divide).
+#define HLW8012_ENERGY_WH_SUBUNIT \
+        (HLW8012_FIXED_POINT_SCALE * 3600u / (HLW8012_SAMPLE_INTERVAL_MS / 1000u))
+
 typedef struct {
     uint32_t cf_pulse_count;
     uint32_t cf_last_pulse_time;
@@ -36,7 +42,7 @@ typedef struct {
     uint16_t current;
     int16_t  power;
     uint32_t energy;
-    uint64_t energy_acc; // high-resolution energy accumulator (pulses*MULT*sec)
+    uint32_t energy_acc; // energy sub-unit remainder (pulses*MULT, < 1 Wh)
     uint8_t  sel_state;
     uint8_t  valid;
     uint32_t freq_cf;

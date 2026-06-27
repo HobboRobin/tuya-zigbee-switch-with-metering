@@ -81,14 +81,13 @@ void _update_measurement_handler(void *arg) {
     dev->data.power = (int16_t)(((uint32_t)cf_pulses * HLW8012_POWER_MULTIPLIER) /
                                 HLW8012_FIXED_POINT_SCALE);
 
-    // Energy: integrate power over the sample window in a high-resolution
-    // accumulator, then derive whole Wh. energy_acc unit = pulses*MULT*seconds;
-    // 1 Wh = MULT-scaled W * 3600 s => divide by (FIXED_POINT_SCALE * 3600).
-    dev->data.energy_acc += (uint64_t)cf_pulses * HLW8012_POWER_MULTIPLIER *
-                            (HLW8012_SAMPLE_INTERVAL_MS / 1000);
-    dev->data.energy =
-        (uint32_t)(dev->data.energy_acc /
-                   ((uint64_t)HLW8012_FIXED_POINT_SCALE * 3600));
+    // Energy: accumulate pulses*MULT sub-units and carry whole Wh out by
+    // subtraction (no 64-bit divide, which TC32 -nostdlib can't link).
+    dev->data.energy_acc += (uint32_t)cf_pulses * HLW8012_POWER_MULTIPLIER;
+    while (dev->data.energy_acc >= HLW8012_ENERGY_WH_SUBUNIT) {
+        dev->data.energy_acc -= HLW8012_ENERGY_WH_SUBUNIT;
+        dev->data.energy++;
+    }
 
     // Skip the sample right after a SEL toggle (cycle_count == 0): CF1 needs
     // time to settle to the newly selected measurement.
