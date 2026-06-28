@@ -163,12 +163,15 @@ const romasku = {
     },
     // numeric() that divides the raw firmware value by `divisor` for display
     // (firmware sends integers; we patch fromZigbee so scaling always applies).
-    scaledMeasurement: ({name, cluster, attribute, unit, divisor, endpointName}) => {
+    // `precision` sets the default number of decimals; Z2M still lets the user
+    // override it (0-3) via the "<name> precision" device setting.
+    scaledMeasurement: ({name, cluster, attribute, unit, divisor, precision, endpointName}) => {
         const result = numeric({
             name,
             cluster,
             attribute,
             unit,
+            precision,
             access: "STATE",
             endpointName,
         });
@@ -7270,6 +7273,7 @@ const definitions = [
                 attribute: "rmsVoltage",
                 unit: "V",
                 divisor: 100, // firmware reports centivolts
+                precision: 2,
                 endpointName: "switch",
             }),
             romasku.scaledMeasurement({
@@ -7278,6 +7282,7 @@ const definitions = [
                 attribute: "rmsCurrent",
                 unit: "A",
                 divisor: 1000, // firmware reports milliamps
+                precision: 3,
                 endpointName: "switch",
             }),
             numeric({
@@ -7295,6 +7300,7 @@ const definitions = [
                 attribute: "currentSummDelivered",
                 unit: "kWh",
                 divisor: 1000, // firmware reports watt-hours
+                precision: 3,
                 endpointName: "switch",
             }),
             binary({
