@@ -7288,13 +7288,12 @@ const definitions = [
                 access: "STATE",
                 endpointName: "switch",
             }),
-            numeric({
+            romasku.scaledMeasurement({
                 name: "energy",
                 cluster: "seMetering",
                 attribute: "currentSummDelivered",
-                description: "Accumulated energy consumption",
                 unit: "kWh",
-                access: "STATE",
+                divisor: 1000, // firmware reports watt-hours
                 endpointName: "switch",
             }),
             binary({
