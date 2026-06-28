@@ -161,6 +161,30 @@ const romasku = {
         };
         return result;
     },
+    // numeric() that divides the raw firmware value by `divisor` for display
+    // (firmware sends integers; we patch fromZigbee so scaling always applies).
+    // `precision` sets the default number of decimals; Z2M still lets the user
+    // override it (0-3) via the "<name> precision" device setting.
+    scaledMeasurement: ({name, cluster, attribute, unit, divisor, precision, endpointName}) => {
+        const result = numeric({
+            name,
+            cluster,
+            attribute,
+            unit,
+            precision,
+            access: "STATE",
+            endpointName,
+        });
+        const origConvert = result.fromZigbee[0].convert;
+        result.fromZigbee[0].convert = (model, msg, publish, options, meta) => {
+            const r = origConvert(model, msg, publish, options, meta);
+            if (r && r[name] !== undefined && r[name] !== null) {
+                r[name] = r[name] / divisor;
+            }
+            return r;
+        };
+        return result;
+    },
     networkIndicator: (name, endpointName) =>
         binary({
             name,
@@ -7243,23 +7267,23 @@ const definitions = [
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
             onOff({ endpointNames: ["relay"] }),
-            numeric({
+            romasku.scaledMeasurement({
                 name: "voltage",
                 cluster: "haElectricalMeasurement",
                 attribute: "rmsVoltage",
-                description: "Measured electrical RMS voltage",
                 unit: "V",
-                access: "STATE",
-                endpointName: "relay",
+                divisor: 100, // firmware reports centivolts
+                precision: 2,
+                endpointName: "switch",
             }),
-            numeric({
+            romasku.scaledMeasurement({
                 name: "current",
                 cluster: "haElectricalMeasurement",
                 attribute: "rmsCurrent",
-                description: "Measured electrical RMS current",
                 unit: "A",
-                access: "STATE",
-                endpointName: "relay",
+                divisor: 1000, // firmware reports milliamps
+                precision: 3,
+                endpointName: "switch",
             }),
             numeric({
                 name: "power",
@@ -7268,16 +7292,27 @@ const definitions = [
                 description: "Instantaneous measured power",
                 unit: "W",
                 access: "STATE",
-                endpointName: "relay",
+                endpointName: "switch",
             }),
-            numeric({
+            romasku.scaledMeasurement({
                 name: "energy",
                 cluster: "seMetering",
-                attribute: "currentSummationDelivered",
-                description: "Accumulated energy consumption",
+                attribute: "currentSummDelivered",
                 unit: "kWh",
-                access: "STATE",
-                endpointName: "relay",
+                divisor: 1000, // firmware reports watt-hours
+                precision: 3,
+                endpointName: "switch",
+            }),
+            binary({
+                name: "reset_energy",
+                cluster: "seMetering",
+                attribute: {ID: 0xF000, type: 0x20}, // uint8
+                valueOn: ["RESET", 1],
+                valueOff: ["OFF", 0],
+                description: "Set to RESET to zero the accumulated energy counter",
+                access: "ALL",
+                entityCategory: "config",
+                endpointName: "switch",
             }),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
@@ -7319,7 +7354,7 @@ const definitions = [
                 },
             ]);
 
-            const emEndpoint = device.getEndpoint(2);
+            const emEndpoint = device.getEndpoint(1);
             await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 {attribute: "rmsVoltage", minimumReportInterval: 5, maximumReportInterval: 300, reportableChange: 5},
@@ -7327,7 +7362,7 @@ const definitions = [
                 {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 300, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
-                {attribute: "currentSummationDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
             ]);
 
 

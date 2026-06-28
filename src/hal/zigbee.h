@@ -199,6 +199,17 @@ void hal_zigbee_set_poll_rate_ms(uint32_t poll_rate_ms);
  */
 uint32_t hal_zigbee_get_poll_rate_ms(void);
 
+/**
+ * Query whether an attribute is registered in the underlying Zigbee stack.
+ *
+ * Unlike hal_zigbee_find_attribute() (which inspects the HAL's own endpoint
+ * tables), this asks the actual stack registry. On Telink this calls the SDK's
+ * zcl_findAttribute(), so it reflects whether cluster/attribute registration
+ * truly succeeded at runtime. Used for diagnostics.
+ */
+bool hal_zigbee_stack_has_attribute(uint8_t endpoint, uint16_t cluster_id,
+                                    uint16_t attribute_id);
+
 /** Find cluster definition by endpoint and cluster ID */
 static inline hal_zigbee_cluster *
 hal_zigbee_find_cluster(hal_zigbee_endpoint *endpoints, uint8_t endpoints_count,

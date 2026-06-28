@@ -18,6 +18,9 @@ typedef struct {
     uint64_t accumulated_energy_wh;
 } metering_nv_data_t;
 
+// Single metering instance, used to route attribute-write callbacks to reset.
+static metering_cluster_t *g_metering_cluster = NULL;
+
 void metering_cluster_init(metering_cluster_t *cluster, energy_meter_t *meter) {
     if (!cluster || !meter)
         return;
@@ -37,6 +40,8 @@ void metering_cluster_add_to_endpoint(metering_cluster_t *cluster,
     if (!cluster || !endpoint)
         return;
 
+    cluster->endpoint  = endpoint->endpoint;
+    g_metering_cluster = cluster;
     metering_cluster_load_energy(cluster);
     SETUP_ATTR(0, ZCL_ATTR_METERING_CURRENT_SUMMATION_DELIVERED, ZCL_DATA_TYPE_UINT48,
                ATTR_READONLY, cluster->current_summation_delivered);
@@ -50,13 +55,14 @@ void metering_cluster_add_to_endpoint(metering_cluster_t *cluster,
                cluster->summation_formatting);
     SETUP_ATTR(6, ZCL_ATTR_METERING_METERING_DEVICE_TYPE, ZCL_DATA_TYPE_BITMAP8, ATTR_READONLY,
                cluster->metering_device_type);
+    SETUP_ATTR(7, ZCL_ATTR_METERING_CUST_RESET_ENERGY, ZCL_DATA_TYPE_UINT8, ATTR_WRITABLE,
+               cluster->reset_trigger);
 
     endpoint->clusters[endpoint->cluster_count].cluster_id      = ZCL_CLUSTER_METERING;
-    endpoint->clusters[endpoint->cluster_count].attribute_count = 7;
+    endpoint->clusters[endpoint->cluster_count].attribute_count = 8;
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->cluster_count++;
-    cluster->endpoint = endpoint->endpoint;
     printf("Metering: Added to endpoint %d, energy=%llu Wh\r\n",
            endpoint->endpoint, (unsigned long long)cluster->current_summation_delivered);
 }
@@ -155,4 +161,12 @@ void metering_cluster_reset_energy(metering_cluster_t *cluster) {
         energy_meter_reset_energy(cluster->meter);
     metering_cluster_save_energy(cluster);
     printf("Metering: Energy counter reset\r\n");
+}
+
+void metering_cluster_callback_attr_write_trampoline(uint8_t endpoint,
+                                                     uint16_t attribute_id) {
+    if (attribute_id == ZCL_ATTR_METERING_CUST_RESET_ENERGY && g_metering_cluster &&
+        g_metering_cluster->endpoint == endpoint) {
+        metering_cluster_reset_energy(g_metering_cluster);
+    }
 }

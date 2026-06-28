@@ -6,13 +6,28 @@
 #include "base_components/energy_meter.h"
 #include "hal/tasks.h"
 
+// Calibration for TS011F-BS-PM-2 (BSEED), from hardware measurement against a
+// metered reference (~233 V mains, 11.58 W / 0.0495 A resistive load):
+//   233 V    <-> 9668 CF1 pulses/5s (voltage mode)  => 0.0243 V/pulse
+//   11.58 W  <-> 31.5 CF pulses/5s  (power)          => 0.3676 W/pulse
+//   49.5 mA  <-> 26 CF1 pulses/5s   (current mode)   => 1.904 mA/pulse
+// Physical value = pulses * MULTIPLIER / FIXED_POINT_SCALE.
+// Output units: voltage in centivolts (0.01 V), power in W, current in mA.
 #define HLW8012_FIXED_POINT_SCALE            65536
-#define HLW8012_POWER_MULTIPLIER             132777
-#define HLW8012_VOLTAGE_MULTIPLIER           12190
-#define HLW8012_CURRENT_MULTIPLIER           843
+#define HLW8012_POWER_MULTIPLIER             24093  // 0.3676 W per pulse
+#define HLW8012_VOLTAGE_MULTIPLIER           158235 // ~2.43 cV (0.0243 V) per pulse
+#define HLW8012_CURRENT_MULTIPLIER           124770 // ~1.904 mA per pulse
 #define HLW8012_SEL_TOGGLE_CYCLE_INTERVAL    5
 #define HLW8012_PULSE_TIMEOUT_MS             20000
 #define HLW8012_SAMPLE_INTERVAL_MS           5000
+// Plausibility cap per sample (16A/230V ~= 6300 CF pulses/5s); above = glitch.
+#define HLW8012_MAX_SANE_PULSES              30000
+
+// Energy accumulates pulses*POWER_MULTIPLIER per sample; this many sub-units
+// equal 1 Wh: FIXED_POINT_SCALE * 3600s / sample_seconds. Kept under 2^32 so
+// energy can be derived with 32-bit subtraction (TC32 has no 64-bit divide).
+#define HLW8012_ENERGY_WH_SUBUNIT \
+        (HLW8012_FIXED_POINT_SCALE * 3600u / (HLW8012_SAMPLE_INTERVAL_MS / 1000u))
 
 typedef struct {
     uint32_t cf_pulse_count;
@@ -30,6 +45,7 @@ typedef struct {
     uint16_t current;
     int16_t  power;
     uint32_t energy;
+    uint32_t energy_acc; // energy sub-unit remainder (pulses*MULT, < 1 Wh)
     uint8_t  sel_state;
     uint8_t  valid;
     uint32_t freq_cf;
@@ -37,14 +53,16 @@ typedef struct {
 } hlw8012_data_t;
 
 typedef struct {
-    hal_gpio_pin_t cf_pin;
-    hal_gpio_pin_t cf1_pin;
-    hal_gpio_pin_t sel_pin;
-    hlw8012_data_t data;
-    hal_task_t     update_task;
-    uint8_t        cycle_count;
-    uint8_t        initialized;
-    energy_meter_t meter;
+    hal_gpio_pin_t     cf_pin;
+    hal_gpio_pin_t     cf1_pin;
+    hal_gpio_pin_t     sel_pin;
+    hal_gpio_counter_t cf_counter;
+    hal_gpio_counter_t cf1_counter;
+    hlw8012_data_t     data;
+    hal_task_t         update_task;
+    uint8_t            cycle_count;
+    uint8_t            initialized;
+    energy_meter_t     meter;
 } hlw8012_t;
 
 int            hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin,

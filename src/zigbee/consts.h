@@ -136,6 +136,7 @@
 #define ZCL_ATTR_METERING_DIVISOR                                    0x0302
 #define ZCL_ATTR_METERING_SUMMATION_FORMATTING                       0x0303
 #define ZCL_ATTR_METERING_METERING_DEVICE_TYPE                       0x0306
+#define ZCL_ATTR_METERING_CUST_RESET_ENERGY                          0xF000
 
 // OTA cluster
 

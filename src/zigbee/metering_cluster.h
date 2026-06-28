@@ -15,6 +15,7 @@ typedef struct {
     uint32_t             divisor;
     uint8_t              summation_formatting;
     uint8_t              metering_device_type;
+    uint8_t              reset_trigger; // write any value to reset energy counter
     hal_zigbee_attribute attr_infos[8];
     uint32_t             last_energy_value;
     uint32_t             last_nvm_save_time;
@@ -30,5 +31,7 @@ void metering_cluster_report(metering_cluster_t *cluster);
 void metering_cluster_load_energy(metering_cluster_t *cluster);
 void metering_cluster_save_energy(metering_cluster_t *cluster);
 void metering_cluster_reset_energy(metering_cluster_t *cluster);
+void metering_cluster_callback_attr_write_trampoline(uint8_t endpoint,
+                                                     uint16_t attribute_id);
 
 #endif /* _METERING_CLUSTER_H_ */
