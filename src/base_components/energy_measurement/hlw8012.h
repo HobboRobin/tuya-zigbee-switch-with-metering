@@ -20,6 +20,8 @@
 #define HLW8012_SEL_TOGGLE_CYCLE_INTERVAL    5
 #define HLW8012_PULSE_TIMEOUT_MS             20000
 #define HLW8012_SAMPLE_INTERVAL_MS           5000
+// Plausibility cap per sample (16A/230V ~= 6300 CF pulses/5s); above = glitch.
+#define HLW8012_MAX_SANE_PULSES              30000
 
 // Energy accumulates pulses*POWER_MULTIPLIER per sample; this many sub-units
 // equal 1 Wh: FIXED_POINT_SCALE * 3600s / sample_seconds. Kept under 2^32 so

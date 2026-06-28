@@ -7297,6 +7297,17 @@ const definitions = [
                 access: "STATE",
                 endpointName: "switch",
             }),
+            binary({
+                name: "reset_energy",
+                cluster: "seMetering",
+                attribute: {ID: 0xF000, type: 0x20}, // uint8
+                valueOn: ["RESET", 1],
+                valueOff: ["OFF", 0],
+                description: "Set to RESET to zero the accumulated energy counter",
+                access: "ALL",
+                entityCategory: "config",
+                endpointName: "switch",
+            }),
             // Diagnostic: raw HLW8012/BL0937 pulse frequencies (for calibration)
             numeric({
                 name: "freq_cf",

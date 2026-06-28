@@ -71,6 +71,14 @@ void _update_measurement_handler(void *arg) {
     uint32_t cf_pulses  = hal_gpio_counter_read_and_reset(dev->cf_counter);
     uint32_t cf1_pulses = hal_gpio_counter_read_and_reset(dev->cf1_counter);
 
+    // Reject implausible counts (e.g. a residual counter value right after
+    // boot): a 16A/230V load is ~6300 CF pulses per 5s, so anything far above
+    // is a glitch and must not corrupt power or the energy accumulator.
+    if (cf_pulses > HLW8012_MAX_SANE_PULSES)
+        cf_pulses = 0;
+    if (cf1_pulses > HLW8012_MAX_SANE_PULSES)
+        cf1_pulses = 0;
+
     uint32_t freq_cf_mhz  = pulses_to_frequency(cf_pulses);
     uint32_t freq_cf1_mhz = pulses_to_frequency(cf1_pulses);
     dev->data.freq_cf  = freq_cf_mhz;
