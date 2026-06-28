@@ -7313,36 +7313,6 @@ const definitions = [
                 entityCategory: "config",
                 endpointName: "switch",
             }),
-            // Diagnostic: raw HLW8012/BL0937 pulse frequencies (for calibration)
-            numeric({
-                name: "freq_cf",
-                cluster: "haElectricalMeasurement",
-                attribute: {ID: 0xFF00, type: 0x23}, // uint32
-                description: "Raw CF pulse frequency (power signal), diagnostic",
-                unit: "mHz",
-                access: "STATE_GET",
-                entityCategory: "diagnostic",
-                endpointName: "switch",
-            }),
-            numeric({
-                name: "freq_cf1",
-                cluster: "haElectricalMeasurement",
-                attribute: {ID: 0xFF01, type: 0x23}, // uint32
-                description: "Raw CF1 pulse frequency (voltage/current signal), diagnostic",
-                unit: "mHz",
-                access: "STATE_GET",
-                entityCategory: "diagnostic",
-                endpointName: "switch",
-            }),
-            numeric({
-                name: "sel_state",
-                cluster: "haElectricalMeasurement",
-                attribute: {ID: 0xFF02, type: 0x20}, // uint8
-                description: "CF1 multiplexer state (1=voltage, 0=current), diagnostic",
-                access: "STATE_GET",
-                entityCategory: "diagnostic",
-                endpointName: "switch",
-            }),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),

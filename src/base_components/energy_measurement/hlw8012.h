@@ -7,16 +7,16 @@
 #include "hal/tasks.h"
 
 // Calibration for TS011F-BS-PM-2 (BSEED), from hardware measurement against a
-// metered reference (235 V mains, 0.005 A / 1.175 W standby load):
-//   235.00 V <-> 9733 CF1 pulses/5s (voltage mode)  => 0.0243 V/pulse
-//   1.175 W  <-> 2 CF pulses/5s     (power)          => 0.5875 W/pulse
-//   5 mA     <-> 5 CF1 pulses/5s    (current mode)   => 1 mA/pulse
+// metered reference (~233 V mains, 11.58 W / 0.0495 A resistive load):
+//   233 V    <-> 9668 CF1 pulses/5s (voltage mode)  => 0.0243 V/pulse
+//   11.58 W  <-> 31.5 CF pulses/5s  (power)          => 0.3676 W/pulse
+//   49.5 mA  <-> 26 CF1 pulses/5s   (current mode)   => 1.904 mA/pulse
 // Physical value = pulses * MULTIPLIER / FIXED_POINT_SCALE.
 // Output units: voltage in centivolts (0.01 V), power in W, current in mA.
 #define HLW8012_FIXED_POINT_SCALE            65536
-#define HLW8012_POWER_MULTIPLIER             38502  // 0.5875 W per pulse
+#define HLW8012_POWER_MULTIPLIER             24093  // 0.3676 W per pulse
 #define HLW8012_VOLTAGE_MULTIPLIER           158235 // ~2.43 cV (0.0243 V) per pulse
-#define HLW8012_CURRENT_MULTIPLIER           65536  // 1 mA per pulse
+#define HLW8012_CURRENT_MULTIPLIER           124770 // ~1.904 mA per pulse
 #define HLW8012_SEL_TOGGLE_CYCLE_INTERVAL    5
 #define HLW8012_PULSE_TIMEOUT_MS             20000
 #define HLW8012_SAMPLE_INTERVAL_MS           5000
