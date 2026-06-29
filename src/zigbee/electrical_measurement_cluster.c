@@ -5,14 +5,8 @@
 #include "hal/printf_selector.h"
 #include <string.h>
 
-#define VOLTAGE_REPORT_THRESHOLD    5
-#define CURRENT_REPORT_THRESHOLD    50
-#define POWER_REPORT_THRESHOLD      5
-#define MIN_REPORT_INTERVAL_MS      1000
-#define MAX_REPORT_INTERVAL_MS      300000
-
-#define MEAS_TYPE_AC_ACTIVE         (1 << 0)
-#define MEAS_TYPE_PHASE_A           (1 << 3)
+#define MEAS_TYPE_AC_ACTIVE    (1 << 0)
+#define MEAS_TYPE_PHASE_A      (1 << 3)
 
 void electrical_measurement_cluster_init(electrical_measurement_cluster_t *cluster,
                                          energy_meter_t *meter) {
@@ -88,39 +82,10 @@ void electrical_measurement_cluster_update(electrical_measurement_cluster_t *clu
 }
 
 void electrical_measurement_cluster_report(electrical_measurement_cluster_t *cluster) {
-    if (!cluster)
-        return;
-
-    uint32_t now = hal_millis();
-    if (now - cluster->last_report_time < MIN_REPORT_INTERVAL_MS)
-        return;
-
-    int16_t vd = (int16_t)cluster->rms_voltage - (int16_t)cluster->last_reported_voltage;
-    int16_t cd = (int16_t)cluster->rms_current - (int16_t)cluster->last_reported_current;
-    int16_t pd = cluster->active_power - cluster->last_reported_power;
-    if (vd < 0) vd = -vd;
-    if (cd < 0) cd = -cd;
-    if (pd < 0) pd = -pd;
-
-    uint8_t force = (now - cluster->last_report_time >= MAX_REPORT_INTERVAL_MS);
-
-    if (force || vd >= VOLTAGE_REPORT_THRESHOLD) {
-        hal_zigbee_send_report_attr(cluster->endpoint, ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
-                                    ZCL_ATTR_ELEC_MEAS_RMS_VOLTAGE, ZCL_DATA_TYPE_UINT16,
-                                    &cluster->rms_voltage, sizeof(cluster->rms_voltage));
-        cluster->last_reported_voltage = cluster->rms_voltage;
-    }
-    if (force || cd >= CURRENT_REPORT_THRESHOLD) {
-        hal_zigbee_send_report_attr(cluster->endpoint, ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
-                                    ZCL_ATTR_ELEC_MEAS_RMS_CURRENT, ZCL_DATA_TYPE_UINT16,
-                                    &cluster->rms_current, sizeof(cluster->rms_current));
-        cluster->last_reported_current = cluster->rms_current;
-    }
-    if (force || pd >= POWER_REPORT_THRESHOLD) {
-        hal_zigbee_send_report_attr(cluster->endpoint, ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
-                                    ZCL_ATTR_ELEC_MEAS_ACTIVE_POWER, ZCL_DATA_TYPE_INT16,
-                                    &cluster->active_power, sizeof(cluster->active_power));
-        cluster->last_reported_power = cluster->active_power;
-    }
-    cluster->last_report_time = now;
+    // No autonomous reporting: attribute values are kept current by
+    // electrical_measurement_cluster_update(), and the SDK's report_handler()
+    // sends reports according to the coordinator's configureReporting settings
+    // (min/max interval and reportable change), so reporting is fully
+    // controllable from Z2M.
+    (void)cluster;
 }
