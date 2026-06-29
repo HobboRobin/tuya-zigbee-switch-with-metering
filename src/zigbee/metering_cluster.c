@@ -8,9 +8,6 @@
 #include <string.h>
 
 #define NVM_SAVE_INTERVAL_MS             300000
-#define ENERGY_REPORT_THRESHOLD_WH       10
-#define MIN_REPORT_INTERVAL_MS           10000
-#define MAX_REPORT_INTERVAL_MS           300000
 #define METERING_DEVICE_TYPE_ELECTRIC    0x00
 #define UNIT_OF_MEASURE_KWH              0x00
 
@@ -90,31 +87,11 @@ void metering_cluster_update(metering_cluster_t *cluster) {
 }
 
 void metering_cluster_report(metering_cluster_t *cluster) {
-    if (!cluster)
-        return;
-
-    uint32_t now = hal_millis();
-    if (now - cluster->last_report_time < MIN_REPORT_INTERVAL_MS)
-        return;
-
-    uint64_t energy_diff = 0;
-    if (cluster->current_summation_delivered >= cluster->last_reported_energy)
-        energy_diff = cluster->current_summation_delivered - cluster->last_reported_energy;
-    uint8_t force = (now - cluster->last_report_time >= MAX_REPORT_INTERVAL_MS);
-    if (force || energy_diff >= ENERGY_REPORT_THRESHOLD_WH) {
-        uint8_t energy_bytes[6];
-        energy_bytes[0] = (uint8_t)(cluster->current_summation_delivered & 0xFF);
-        energy_bytes[1] = (uint8_t)((cluster->current_summation_delivered >> 8) & 0xFF);
-        energy_bytes[2] = (uint8_t)((cluster->current_summation_delivered >> 16) & 0xFF);
-        energy_bytes[3] = (uint8_t)((cluster->current_summation_delivered >> 24) & 0xFF);
-        energy_bytes[4] = (uint8_t)((cluster->current_summation_delivered >> 32) & 0xFF);
-        energy_bytes[5] = (uint8_t)((cluster->current_summation_delivered >> 40) & 0xFF);
-        hal_zigbee_send_report_attr(cluster->endpoint, ZCL_CLUSTER_METERING,
-                                    ZCL_ATTR_METERING_CURRENT_SUMMATION_DELIVERED,
-                                    ZCL_DATA_TYPE_UINT48, energy_bytes, 6);
-        cluster->last_reported_energy = cluster->current_summation_delivered;
-        cluster->last_report_time     = now;
-    }
+    // No autonomous reporting: the energy total is kept current (and persisted)
+    // by metering_cluster_update(), and the SDK's report_handler() sends
+    // currentSummDelivered reports according to the coordinator's
+    // configureReporting settings, so reporting is controllable from Z2M.
+    (void)cluster;
 }
 
 void metering_cluster_load_energy(metering_cluster_t *cluster) {
