@@ -5,9 +5,12 @@
 #include "hal/printf_selector.h"
 #include <string.h>
 
-#define VOLTAGE_REPORT_THRESHOLD    5
-#define CURRENT_REPORT_THRESHOLD    50
-#define POWER_REPORT_THRESHOLD      5
+// Thresholds are in the attribute's reported units: voltage in centivolts
+// (0.01 V), current in milliamps, power in watts. Reports are also rate
+// limited to MIN_REPORT_INTERVAL_MS and forced every MAX_REPORT_INTERVAL_MS.
+#define VOLTAGE_REPORT_THRESHOLD    500 // 5 V (centivolts)
+#define CURRENT_REPORT_THRESHOLD    50  // 50 mA
+#define POWER_REPORT_THRESHOLD      5   // 5 W
 #define MIN_REPORT_INTERVAL_MS      1000
 #define MAX_REPORT_INTERVAL_MS      300000
 
