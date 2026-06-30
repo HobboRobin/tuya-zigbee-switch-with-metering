@@ -3057,6 +3057,33 @@ OUTLET_BSEED_TS011F:
   info: Supported
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store: https://www.aliexpress.com/item/1005004402438527.html
+OUTLET_NOUS_A1Z_TS011F:
+  human_name: Nous A1Z smart plug
+  category: outlet
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3000_2putqrmw
+  stock_converter_manufacturer: Nous
+  stock_converter_model: TS011F_plug_1
+  override_z2m_device: A1Z
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: 2putqrmw;TS011F-A1Z;LB4;SB5u;RB1;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: null
+  firmware_image_type: 47114
+  build: yes
+  status: in_progress
+  info: "Stage 1: switch only (relay PB1, button PB5, LED PB4). BL0942 UART metering (PB0=MCU TX, PB7=MCU RX) pending."
+  threads: null
+  store: https://nous.technology/product/a1z.html
 OUTLET_MAKEGOOD_PM_TS011F_2GANG:
   human_name: MakeGood MG-GPO01 double socket
   category: outlet
