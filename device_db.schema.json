@@ -173,6 +173,27 @@
           "type": "integer",
           "description": "Firmware image type identifier"
         },
+        "hlw8012_voltage_multiplier": {
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "null"}
+          ],
+          "description": "Optional per-board override for HLW8012_VOLTAGE_MULTIPLIER (different hardware revisions can have different voltage dividers)"
+        },
+        "hlw8012_current_multiplier": {
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "null"}
+          ],
+          "description": "Optional per-board override for HLW8012_CURRENT_MULTIPLIER"
+        },
+        "hlw8012_power_multiplier": {
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "null"}
+          ],
+          "description": "Optional per-board override for HLW8012_POWER_MULTIPLIER"
+        },
         "build": {
           "type": "string",
           "enum": ["yes", "no"],

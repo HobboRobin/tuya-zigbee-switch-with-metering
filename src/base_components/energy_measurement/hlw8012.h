@@ -6,18 +6,28 @@
 #include "base_components/energy_meter.h"
 #include "hal/tasks.h"
 
-// Calibration for TS011F-BS-PM-2 (BSEED), from hardware measurement against a
-// precision multimeter and a purely resistive heating element (power factor 1,
-// so true power = U * I). Reference point ~237 V / 3.10 A => 734.7 W:
+// Default calibration for TS011F-BS-PM-2 (BSEED), from hardware measurement
+// against a precision multimeter and a purely resistive heating element
+// (power factor 1, so true power = U * I). Reference point ~237 V / 3.10 A
+// => 734.7 W:
 //   237 V    <-> 0.0236 V/pulse  (voltage mode, CF1)
 //   3.10 A   <-> 1.810 mA/pulse  (current mode, CF1)
 //   734.7 W  <-> 0.2127 W/pulse  (power, CF)
 // Physical value = pulses * MULTIPLIER / FIXED_POINT_SCALE.
 // Output units: voltage in centivolts (0.01 V), power in W, current in mA.
+// Different hardware revisions (same chip, different sense resistors/dividers)
+// can override these via -D build flags; see device_db.yaml's
+// hlw8012_voltage_multiplier/hlw8012_current_multiplier/hlw8012_power_multiplier.
 #define HLW8012_FIXED_POINT_SCALE            65536
+#ifndef HLW8012_POWER_MULTIPLIER
 #define HLW8012_POWER_MULTIPLIER             13939  // 0.2127 W per pulse
+#endif
+#ifndef HLW8012_VOLTAGE_MULTIPLIER
 #define HLW8012_VOLTAGE_MULTIPLIER           154672 // ~2.36 cV (0.0236 V) per pulse
+#endif
+#ifndef HLW8012_CURRENT_MULTIPLIER
 #define HLW8012_CURRENT_MULTIPLIER           118646 // ~1.810 mA per pulse
+#endif
 #define HLW8012_SEL_TOGGLE_CYCLE_INTERVAL    5
 #define HLW8012_PULSE_TIMEOUT_MS             20000
 #define HLW8012_SAMPLE_INTERVAL_MS           5000

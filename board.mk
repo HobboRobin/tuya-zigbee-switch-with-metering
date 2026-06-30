@@ -66,6 +66,12 @@ FROM_STOCK_MANUFACTURER_ID := $(shell yq -r .$(BOARD).stock_manufacturer_id $(DE
 FROM_STOCK_IMAGE_TYPE := $(shell yq -r .$(BOARD).stock_image_type $(DEVICE_DB_FILE))
 FIRMWARE_IMAGE_TYPE := $(shell yq -r .$(BOARD).firmware_image_type $(DEVICE_DB_FILE))
 
+# Optional per-board HLW8012 calibration overrides (yq prints "null" for an
+# absent/null key; strip that so an empty value reaches the platform Makefile).
+HLW8012_VOLTAGE_MULTIPLIER := $(filter-out null,$(shell yq -r .$(BOARD).hlw8012_voltage_multiplier $(DEVICE_DB_FILE)))
+HLW8012_CURRENT_MULTIPLIER := $(filter-out null,$(shell yq -r .$(BOARD).hlw8012_current_multiplier $(DEVICE_DB_FILE)))
+HLW8012_POWER_MULTIPLIER := $(filter-out null,$(shell yq -r .$(BOARD).hlw8012_power_multiplier $(DEVICE_DB_FILE)))
+
 # ==============================================================================
 # Platform Configuration
 # ==============================================================================
@@ -120,6 +126,9 @@ endif
 		CONFIG_STR="$(CONFIG_STR)" \
 		IMAGE_TYPE=$(FIRMWARE_IMAGE_TYPE) \
 		BIN_FILE=../../$(BIN_FILE) \
+		HLW8012_VOLTAGE_MULTIPLIER=$(HLW8012_VOLTAGE_MULTIPLIER) \
+		HLW8012_CURRENT_MULTIPLIER=$(HLW8012_CURRENT_MULTIPLIER) \
+		HLW8012_POWER_MULTIPLIER=$(HLW8012_POWER_MULTIPLIER) \
 		 -j32
 
 drop-old-files:

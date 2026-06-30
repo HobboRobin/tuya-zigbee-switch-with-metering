@@ -3025,9 +3025,38 @@ OUTLET_BSEED_PM_TS011F_2:
   build: yes
   status: in_progress
   info: "Power monitoring implemented (HLW8012, pins: CF=C0 CF1=C2 SEL=C1 - hardware verified)"
-  threads: 
+  threads:
   - https://github.com/romasku/tuya-zigbee-switch/issues/145
   - https://github.com/romasku/tuya-zigbee-switch/pull/397
+  store:
+  - https://www.aliexpress.com/item/1005005714480181.html
+OUTLET_BSEED_PM_TS011F_2B:
+  human_name: BSEED PM outlet 🅲 (rev. B)
+  category: outlet
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3000_4ux0ondb
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS011F_plug_1
+  override_z2m_device: TS011F_plug_1_2
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: 4ux0ondb;TS011F-BS-PM-2B;LB4;SB5u;RD2;IC3;EPC1C2C0;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47115
+  hlw8012_voltage_multiplier: 1284815
+  build: yes
+  status: in_progress
+  info: "Same stock fingerprint as TS011F-BS-PM-2 (_TZ3000_4ux0ondb) but a different PCB revision: HLW8012 CF and SEL pins are swapped (CF=C1 SEL=C0 here vs CF=C0 SEL=C1 on the other revision), and the voltage divider differs, needing its own voltage calibration (234 V real vs 28.17 V reported on the stock multiplier => 1284815). Current/power multipliers unchanged, same as TS011F-BS-PM-2."
+  threads: null
   store:
   - https://www.aliexpress.com/item/1005005714480181.html
 OUTLET_BSEED_TS011F:
