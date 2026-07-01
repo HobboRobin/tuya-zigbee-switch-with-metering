@@ -9,6 +9,14 @@ on:
 #    branches:
 #      - main
 
+# Builds commit generated bins/index files back to the branch, so two builds
+# running at once race on the final rebase/push and fail with rename/delete
+# conflicts on the (per-commit-hash) binary files. Serialize per ref: a new run
+# waits for the in-flight one to finish instead of running concurrently.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
