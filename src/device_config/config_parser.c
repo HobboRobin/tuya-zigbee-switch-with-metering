@@ -228,7 +228,11 @@ void parse_config() {
             relays[relays_cnt].pin     = pin;
             relays[relays_cnt].on_high = 1;
 
-            if (entry[3] != '\0') {
+            if (entry[3] == 'i') {
+                // R<pin>i: active-low (inverted) monostable relay - the pin is
+                // driven low to switch the relay on (same 'i' convention as LEDs).
+                relays[relays_cnt].on_high = 0;
+            } else if (entry[3] != '\0') {
                 pin = hal_gpio_parse_pin(entry + 3);
                 hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
                 relays[relays_cnt].off_pin     = pin;
