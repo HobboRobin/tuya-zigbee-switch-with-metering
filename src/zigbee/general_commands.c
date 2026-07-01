@@ -2,6 +2,7 @@
 #include "consts.h"
 #include "cover_cluster.h"
 #include "cover_switch_cluster.h"
+#include "electrical_measurement_cluster.h"
 #include "hal/printf_selector.h"
 #include "metering_cluster.h"
 #include "poll_control_cluster.h"
@@ -24,6 +25,9 @@ static void zigbee_on_attr_change(uint8_t endpoint, uint16_t cluster_id,
         cover_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
     } else if (cluster_id == ZCL_CLUSTER_METERING) {
         metering_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
+    } else if (cluster_id == ZCL_CLUSTER_ELECTRICAL_MEASUREMENT) {
+        electrical_measurement_cluster_callback_attr_write_trampoline(
+            endpoint, attribute_id);
     }
 #ifdef END_DEVICE
     else if (cluster_id == ZCL_CLUSTER_POLL_CONTROL) {

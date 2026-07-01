@@ -21,6 +21,12 @@ typedef struct {
     uint32_t             freq_cf;
     uint32_t             freq_cf1;
     uint8_t              sel_state;
+    // On-device calibration inputs: write the real measured value (voltage in
+    // cV, current in mA, power in W) to calibrate that channel. Reset to 0 by
+    // the firmware once applied.
+    uint16_t             calibrate_voltage;
+    uint16_t             calibrate_current;
+    uint16_t             calibrate_power;
     hal_zigbee_attribute attr_infos[16];
     uint32_t             last_report_time;
     uint16_t             last_reported_voltage;
@@ -34,5 +40,14 @@ void electrical_measurement_cluster_add_to_endpoint(
     electrical_measurement_cluster_t *cluster, hal_zigbee_endpoint *endpoint);
 void electrical_measurement_cluster_update(electrical_measurement_cluster_t *cluster);
 void electrical_measurement_cluster_report(electrical_measurement_cluster_t *cluster);
+
+// Load persisted calibration from NVM and apply it to the meter (call after
+// the meter is initialised, on boot).
+void electrical_measurement_cluster_load_calibration(
+    electrical_measurement_cluster_t *cluster);
+
+// Handle writes to the calibrate_* attributes (compute + persist calibration).
+void electrical_measurement_cluster_callback_attr_write_trampoline(
+    uint8_t endpoint, uint16_t attribute_id);
 
 #endif /* _ELECTRICAL_MEASUREMENT_CLUSTER_H_ */

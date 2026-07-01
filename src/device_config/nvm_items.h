@@ -32,4 +32,8 @@
 // endpoint is 1-based (1-4)
 #define NV_ITEM_ENERGY_ACCUMULATION(endpoint)    (40 + (endpoint) - 1)
 
+// Persisted HLW8012 calibration multipliers (44), set via the on-device
+// calibrate fields and re-applied on boot.
+#define NV_ITEM_ENERGY_CALIBRATION    44
+
 #endif /* DEVICE_CONFIG_NVM_ITEMS_H_ */

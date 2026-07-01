@@ -61,6 +61,12 @@ typedef struct {
     uint8_t  valid;
     uint32_t freq_cf;
     uint32_t freq_cf1;
+    // Raw pulse counts that produced the most recent valid reading of each
+    // channel, kept so on-device calibration can derive a multiplier directly
+    // (multiplier = reference * FIXED_POINT_SCALE / pulses).
+    uint32_t cal_pulses_voltage;
+    uint32_t cal_pulses_current;
+    uint32_t cal_pulses_power;
 } hlw8012_data_t;
 
 // Runtime calibration. Seeded from the compile-time defaults in hlw8012_init,
@@ -94,6 +100,12 @@ int            hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin,
 // so callers can set only the multipliers they have a reference for.
 void            hlw8012_set_calibration(hlw8012_t *dev, uint32_t voltage_mult,
                                         uint32_t current_mult, uint32_t power_mult);
+
+// Calibrate one channel (0=voltage cV, 1=current mA, 2=power W) so it reads
+// `reference` for the most recent raw pulse count. Returns 0 on success, -1 if
+// there is no signal yet (pulse count 0) or the channel/reference is invalid.
+int             hlw8012_calibrate(hlw8012_t *dev, uint8_t channel,
+                                  uint32_t reference);
 hlw8012_data_t *hlw8012_get_data(hlw8012_t *dev);
 void            hlw8012_reset_energy(hlw8012_t *dev);
 energy_meter_t *hlw8012_as_energy_meter(hlw8012_t *dev);

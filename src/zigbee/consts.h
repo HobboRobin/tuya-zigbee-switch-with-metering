@@ -126,6 +126,11 @@
 #define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_CF                         0xFF00
 #define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_CF1                        0xFF01
 #define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_SEL_STATE                  0xFF02
+// Write the real measured value (voltage in cV, current in mA, power in W) to
+// calibrate that channel; the firmware derives and persists the multiplier.
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_VOLTAGE                    0xFF10
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_CURRENT                    0xFF11
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER                      0xFF12
 
 // Metering cluster (0x0702)
 #define ZCL_CLUSTER_METERING                                         0x0702
