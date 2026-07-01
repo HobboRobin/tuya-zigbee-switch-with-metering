@@ -44,6 +44,9 @@
 #define ZCL_ATTR_BASIC_DEVICE_CONFIG              0xff00
 #define ZCL_ATTR_BASIC_STATUS_LED_STATE           0xff01
 #define ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT    0xff02
+// Diagnostic: write 1..32 (1=A0,8=A7,9=B0,...,32=D7) to briefly pulse that GPIO
+// high, to find an unknown relay/LED pin by ear/eye. 0 = no-op.
+#define ZCL_ATTR_BASIC_DIAG_PULSE_PIN             0xff03
 
 // Power Configuration cluster
 

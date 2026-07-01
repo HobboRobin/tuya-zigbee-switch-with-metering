@@ -8,9 +8,58 @@
 #include "device_config/device_params_nv.h"
 #include "device_config/nvm_items.h"
 #include "device_config/reset.h"
+#include "hal/gpio.h"
 #include "hal/nvm.h"
+#include "hal/printf_selector.h"
 #include "hal/tasks.h"
 #include <stddef.h>
+
+// Diagnostic GPIO pulse: set via ZCL_ATTR_BASIC_DIAG_PULSE_PIN to briefly drive
+// a chosen GPIO high, so an unknown relay/LED pin can be found by ear/eye while
+// porting a device. Not persisted.
+#define DIAG_PULSE_MS    400
+static uint8_t        g_diag_pulse_pin = 0;
+static hal_task_t     diag_pulse_task;
+static uint8_t        diag_pulse_task_inited = 0;
+static hal_gpio_pin_t diag_pulse_active_pin  = HAL_INVALID_PIN;
+
+static void diag_pulse_end(void *arg) {
+    (void)arg;
+    if (diag_pulse_active_pin != HAL_INVALID_PIN) {
+        hal_gpio_write(diag_pulse_active_pin, 0);
+        diag_pulse_active_pin = HAL_INVALID_PIN;
+    }
+}
+
+static void diag_pulse_start(uint8_t value) {
+    // 1..32 -> A0..D7 (8 pins per port A/B/C/D); 0 or out of range = no-op.
+    if (value == 0 || value > 32)
+        return;
+
+    uint8_t idx    = value - 1;
+    char    buf[3] = { "ABCD"[idx >> 3], (char)('0' + (idx & 7)), 0 };
+
+    hal_gpio_pin_t pin = hal_gpio_parse_pin(buf);
+    if (pin == HAL_INVALID_PIN)
+        return;
+
+    if (!diag_pulse_task_inited) {
+        diag_pulse_task.handler = diag_pulse_end;
+        diag_pulse_task.arg     = NULL;
+        hal_tasks_init(&diag_pulse_task);
+        diag_pulse_task_inited = 1;
+    }
+
+    // End any in-flight pulse, then drive the selected pin high for a moment.
+    // The rising and falling edges produce audible clicks on a relay coil pin
+    // regardless of active-high/active-low wiring.
+    diag_pulse_end(NULL);
+    hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
+    hal_gpio_write(pin, 1);
+    diag_pulse_active_pin = pin;
+    hal_tasks_schedule(&diag_pulse_task, DIAG_PULSE_MS);
+    printf("DIAG: pulsing %s (val %u)\r\n", buf, value);
+}
 
 #ifdef HAL_SILABS
 #include "silabs_config.h"
@@ -48,6 +97,9 @@ void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id) {
     }
     if (attribute_id == ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT) {
         device_params_set_multi_press_reset_count(g_multi_press_reset_count);
+    }
+    if (attribute_id == ZCL_ATTR_BASIC_DIAG_PULSE_PIN) {
+        diag_pulse_start(g_diag_pulse_pin);
     }
 }
 
@@ -105,14 +157,16 @@ void basic_cluster_add_to_endpoint(zigbee_basic_cluster *cluster,
                ATTR_WRITABLE, device_config_str);
     SETUP_ATTR(12, ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT, ZCL_DATA_TYPE_UINT8,
                ATTR_WRITABLE, g_multi_press_reset_count);
+    SETUP_ATTR(13, ZCL_ATTR_BASIC_DIAG_PULSE_PIN, ZCL_DATA_TYPE_UINT8,
+               ATTR_WRITABLE, g_diag_pulse_pin);
     if (network_indicator.has_dedicated_led) {
-        SETUP_ATTR(13, ZCL_ATTR_BASIC_STATUS_LED_STATE, ZCL_DATA_TYPE_BOOLEAN,
+        SETUP_ATTR(14, ZCL_ATTR_BASIC_STATUS_LED_STATE, ZCL_DATA_TYPE_BOOLEAN,
                    ATTR_WRITABLE, network_indicator.manual_state_when_connected);
     }
 
     endpoint->clusters[endpoint->cluster_count].cluster_id      = ZCL_CLUSTER_BASIC;
     endpoint->clusters[endpoint->cluster_count].attribute_count =
-        network_indicator.has_dedicated_led ? 14 : 13;
+        network_indicator.has_dedicated_led ? 15 : 14;
     endpoint->clusters[endpoint->cluster_count].attributes = cluster->attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server  = 1;
     endpoint->cluster_count++;
