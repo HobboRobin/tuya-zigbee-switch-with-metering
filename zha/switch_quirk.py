@@ -417,7 +417,7 @@ CONFIGS = [
     "ko6v90pg;TS011F-BS-PM-1;LC4i;SB4u;RB5;IB1i;EPC0C2C1;M;",
     "4ux0ondb;TS011F-BS-PM-2;LB4;SB5u;RD2;IC3;EPC0C2C1;M;",
     "o1jzcxou;TS011F-BS;LC2;SB4u;RC3;ID2;M;",
-    "2putqrmw;TS011F-A1Z;LB4;SB5u;RB1;M;",
+    "2putqrmw;TS011F-A1Z;LB4i;SB5u;RB1;M;",
     "bep7ccew;TS011F-MG;LB4;SC3u;RD7;IC4;SD4u;RD2;IC0;M;",
     "ss98ec5d;TS011F-MOES;SB7d;RD2;IB1;M;",
     "vddauzhn;TS011F-TPM;SB4U;RB5;IC4i;M;",
