@@ -299,7 +299,13 @@ void parse_config() {
                     ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_MOMENTARY;
             }
         } else if (entry[0] == 'E' && entry[1] == 'P') {
-            // HLW8012/BL0937 energy monitoring: EP<CF_PIN><CF1_PIN><SEL_PIN>
+            // HLW8012/BL0937 energy monitoring:
+            //   EP<CF_PIN><CF1_PIN><SEL_PIN>[V<volt_mult>][A<curr_mult>][W<pow_mult>]
+            // Pins are 2 chars each (port letter + digit). The optional V/A/W
+            // markers (decimal, any order, after the pins) override the
+            // compiled-in calibration multipliers, so a board revision with a
+            // different sense resistor/divider can be calibrated from the
+            // config_str without a firmware rebuild.
             printf("Config: Found energy monitoring entry: '%s'\r\n", entry);
             hal_gpio_pin_t cf_pin  = hal_gpio_parse_pin(entry + 2);
             hal_gpio_pin_t cf1_pin = hal_gpio_parse_pin(entry + 4);
@@ -307,6 +313,17 @@ void parse_config() {
             if (cf_pin != HAL_INVALID_PIN && cf1_pin != HAL_INVALID_PIN &&
                 sel_pin != HAL_INVALID_PIN) {
                 if (hlw8012_init(&hlw8012_device, cf_pin, cf1_pin, sel_pin) == 0) {
+                    // Pins occupy the fixed first 6 chars after "EP"; any
+                    // calibration markers follow from entry + 8 onwards.
+                    const char *cal = entry + 8;
+                    const char *v   = seek_until((char *)cal, 'V');
+                    const char *a   = seek_until((char *)cal, 'A');
+                    const char *w   = seek_until((char *)cal, 'W');
+                    hlw8012_set_calibration(
+                        &hlw8012_device,
+                        (*v == 'V') ? parse_int(v + 1) : 0,
+                        (*a == 'A') ? parse_int(a + 1) : 0,
+                        (*w == 'W') ? parse_int(w + 1) : 0);
                     energy_meter = hlw8012_as_energy_meter(&hlw8012_device);
                     electrical_measurement_cluster_init(&elec_meas_cluster, energy_meter);
                     metering_cluster_init(&metering_cluster_inst, energy_meter);

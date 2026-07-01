@@ -63,21 +63,37 @@ typedef struct {
     uint32_t freq_cf1;
 } hlw8012_data_t;
 
+// Runtime calibration. Seeded from the compile-time defaults in hlw8012_init,
+// then optionally overridden per device (e.g. from the config_str) so two
+// boards with the same firmware but different sense resistors/dividers can be
+// calibrated independently without a rebuild.
 typedef struct {
-    hal_gpio_pin_t     cf_pin;
-    hal_gpio_pin_t     cf1_pin;
-    hal_gpio_pin_t     sel_pin;
-    hal_gpio_counter_t cf_counter;
-    hal_gpio_counter_t cf1_counter;
-    hlw8012_data_t     data;
-    hal_task_t         update_task;
-    uint8_t            cycle_count;
-    uint8_t            initialized;
-    energy_meter_t     meter;
+    uint32_t voltage_multiplier;
+    uint32_t current_multiplier;
+    uint32_t power_multiplier;
+} hlw8012_calibration_t;
+
+typedef struct {
+    hal_gpio_pin_t        cf_pin;
+    hal_gpio_pin_t        cf1_pin;
+    hal_gpio_pin_t        sel_pin;
+    hal_gpio_counter_t    cf_counter;
+    hal_gpio_counter_t    cf1_counter;
+    hlw8012_data_t        data;
+    hlw8012_calibration_t cal;
+    hal_task_t            update_task;
+    uint8_t               cycle_count;
+    uint8_t               initialized;
+    energy_meter_t        meter;
 } hlw8012_t;
 
 int            hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin,
                             hal_gpio_pin_t cf1_pin, hal_gpio_pin_t sel_pin);
+
+// Override calibration multipliers. A zero argument keeps the current value,
+// so callers can set only the multipliers they have a reference for.
+void            hlw8012_set_calibration(hlw8012_t *dev, uint32_t voltage_mult,
+                                        uint32_t current_mult, uint32_t power_mult);
 hlw8012_data_t *hlw8012_get_data(hlw8012_t *dev);
 void            hlw8012_reset_energy(hlw8012_t *dev);
 energy_meter_t *hlw8012_as_energy_meter(hlw8012_t *dev);

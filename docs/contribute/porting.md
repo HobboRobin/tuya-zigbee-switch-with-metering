@@ -111,6 +111,19 @@ Additional options:
 | **`M`**      | Momentary                    | • Defaults buttons to momentary mode (for devices with built-in switches)         |
 | **`BT<pin>`** | Battery mode                | • Enables battery-powered behavior <br> • Adds battery measurement/reporting using the selected ADC pin |
 | **`SLP`**    | Simultaneous Latching Pulses |  • Enable simultaneous pulses for latching relays (they are disallowed by default)|
+| **`EP<CF><CF1><SEL>`** | Energy monitoring (HLW8012/BL0937) | • Adds power/voltage/current/energy on EP1 <br> • 3 pins: CF (power), CF1 (voltage+current, time-multiplexed), SEL (mode select) <br> • Example: `EPC0C2C1` (CF=C0, CF1=C2, SEL=C1) |
+
+The `EP` token may be followed by optional calibration multipliers, in any
+order, to override the compiled-in defaults **without a rebuild** — useful when
+the same fingerprint ships in several PCB revisions with different sense
+resistors/dividers:
+⤷ **`V<n>`**: voltage multiplier · **`A<n>`**: current multiplier · **`W<n>`**: power multiplier
+
+The physical value is `pulses * multiplier / 65536` (voltage in cV, current in
+mA, power in W). Example — same board but a revision with CF/SEL swapped and a
+different voltage divider: `EPC1C2C0V1284815` (pins swapped, voltage multiplier
+overridden, current/power left at their defaults). Calibrate against a known
+reference: `new = old * (measured / reported)`.
 
 ## Build and install
 
