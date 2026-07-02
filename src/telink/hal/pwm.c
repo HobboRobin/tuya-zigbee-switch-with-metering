@@ -64,7 +64,10 @@ int8_t hal_pwm_init(hal_gpio_pin_t pin, uint8_t inverted) {
     pwm_channels_used |= (1u << channel);
 
     if (!pwm_clk_initialized) {
-        // Run the PWM counter at the system clock (divider 1).
+        // Gate the PWM peripheral clock on (off by default) and run the PWM
+        // counter at the system clock (divider 1). Without the clock gate the
+        // PWM block produces no output and the muxed pin stays stuck.
+        reg_clk_en0 |= FLD_CLK0_PWM_EN;
         pwm_set_clk(CLOCK_SYS_CLOCK_HZ, CLOCK_SYS_CLOCK_HZ);
         pwm_clk_initialized = 1;
     }
