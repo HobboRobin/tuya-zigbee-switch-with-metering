@@ -12,6 +12,7 @@ source:
 - {path: ../../silabs/main.c}
 - {path: ../../silabs/hal/zigbee.c}
 - {path: ../../silabs/hal/gpio.c}
+- {path: ../../silabs/hal/pwm.c}
 - {path: ../../silabs/hal/gpio_counter.c}
 - {path: ../../silabs/hal/nvm.c}
 - {path: ../../silabs/hal/tasks.c}
@@ -23,6 +24,7 @@ source:
 - {path: ../../hal/adc.h}
 - {path: ../../hal/zigbee.h}
 - {path: ../../hal/gpio.h}
+- {path: ../../hal/pwm.h}
 - {path: ../../hal/nvm.h}
 - {path: ../../hal/tasks.h}
 - {path: ../../hal/timer.h}
