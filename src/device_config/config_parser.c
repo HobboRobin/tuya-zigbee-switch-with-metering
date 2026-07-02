@@ -20,7 +20,6 @@
 #include "base_components/led.h"
 #include "base_components/network_indicator.h"
 #include "base_components/battery.h"
-#include "hal/pwm.h"
 #include "config_nv.h"
 #include "device_config/device_params_nv.h"
 #include "device_config/reset.h"
@@ -81,18 +80,15 @@ uint32_t parse_int(const char *s);
 char *seek_until(char *cursor, char needle);
 char *extract_next_entry(char **cursor);
 
-// PWM channels are handed out to dimmable LEDs in config order.
-static uint8_t next_pwm_channel = 0;
-
 // Parse the optional flags after an L/I LED pin (starting at entry+3):
 //   'i' inverts the output (active-low), 'p' makes it PWM-dimmable.
+// The PWM channel itself is chosen by the HAL in led_init(): on TLSR8258 each
+// pin supports at most one specific PWM function (pin mux table).
 static void led_apply_flags(led_t *led, const char *flags) {
     led->on_high = (*seek_until((char *)flags, 'i') != 'i');
-    if (*seek_until((char *)flags, 'p') == 'p' &&
-        next_pwm_channel < HAL_PWM_CHANNELS) {
-        led->dimmable    = 1;
-        led->pwm_channel = next_pwm_channel++;
-        led->brightness  = 255;
+    if (*seek_until((char *)flags, 'p') == 'p') {
+        led->dimmable   = 1;
+        led->brightness = 255;
     }
 }
 

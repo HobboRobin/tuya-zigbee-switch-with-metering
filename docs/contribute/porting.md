@@ -103,8 +103,10 @@ Usually, pressing the button bridges the GPIO pin to Ground (active low).
 
 For LEDs, add `i` to invert the state. Add `p` to make an LED PWM-dimmable
 (e.g. `IB4ip`): the firmware then exposes a brightness (0-255) and a fade
-transition time (ms) for that indicator LED in Z2M. Up to 6 dimmable LEDs
-(one PWM channel each).
+transition time (ms) for that indicator LED in Z2M. On TLSR825x each pin maps
+to one fixed PWM channel (pins with PWM: A0, A2-A4, B0-B5, C0-C7, D2-D5; two
+LEDs must not share a channel — e.g. B4 and C6 both use PWM4). If the pin has
+no PWM the LED silently falls back to plain on/off.
 
 Additional options: 
 | Format       | Option                       | Function                                                                          |

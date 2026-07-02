@@ -13,7 +13,8 @@ typedef struct {
     uint16_t       blink_time_on;
     uint16_t       blink_time_off;
     hal_task_t     blink_task;
-    // Optional PWM dimming. Set `dimmable` + `pwm_channel` before led_init().
+    // Optional PWM dimming. Set `dimmable` before led_init(); the PWM channel
+    // is derived from the pin by the HAL (cleared again if the pin has none).
     uint8_t        dimmable;
     uint8_t        pwm_channel;
     uint8_t        brightness;    // target on-level 0..255 (255 = full)

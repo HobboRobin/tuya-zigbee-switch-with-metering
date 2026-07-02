@@ -76,9 +76,18 @@ void led_init(led_t *led) {
     if (led->dimmable) {
         if (led->brightness == 0)
             led->brightness = 255; // default to full until configured
-        hal_pwm_init(led->pin, led->pwm_channel, !led->on_high);
-        led->cur_duty    = 0;
-        led->target_duty = 0;
+
+        // The HAL picks the PWM channel from the pin (on TLSR8258 each pin
+        // supports at most one specific PWM function). If the pin has no PWM
+        // at all, fall back to plain on/off GPIO control.
+        int8_t channel = hal_pwm_init(led->pin, !led->on_high);
+        if (channel < 0) {
+            led->dimmable = 0;
+        } else {
+            led->pwm_channel = (uint8_t)channel;
+            led->cur_duty    = 0;
+            led->target_duty = 0;
+        }
     }
     led_off(led);
 }
