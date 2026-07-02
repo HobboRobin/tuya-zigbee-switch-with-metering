@@ -2955,7 +2955,7 @@ OUTLET_BSEED_PM_TS011F_b28wrpvx:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: b28wrpvx;TS011F-BS-PM;LC3;SB5u;RD2;IB4p;EPC0C2C1;M;
+  config_str: b28wrpvx;TS011F-BS-PM;LB4;SB5u;RD2;IC3p;EPA1C2B1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -2964,7 +2964,7 @@ OUTLET_BSEED_PM_TS011F_b28wrpvx:
   firmware_image_type: 43556
   build: yes
   status: in_progress
-  info: "Power monitoring enabled (HLW8012) with a default pin guess CF=C0 CF1=C2 SEL=C1. The actual pins/calibration for this revision are not hardware-verified yet — tune the EP token pins in the config_str and use the on-device calibrate fields (measure with a multimeter, enter the real V/A/W)."
+  info: "Power monitoring enabled (HLW8012), pinout hardware-verified for this revision: LED B4, switch B5, relay D2, indicator C3 (PWM-dimmable), energy CF=A1 CF1=C2 SEL=B1. Calibrate against a multimeter via the on-device calibrate fields if the reported V/A/W are off."
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store:
   - https://www.aliexpress.com/item/1005004402438527.html
