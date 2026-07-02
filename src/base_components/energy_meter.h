@@ -9,6 +9,7 @@ typedef enum {
     ENERGY_METER_NONE    = 0,
     ENERGY_METER_HLW8012 = 1,
     ENERGY_METER_BL0937  = 2,
+    ENERGY_METER_BL0942  = 3,
 } energy_meter_type_t;
 
 typedef struct {

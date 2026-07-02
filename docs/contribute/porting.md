@@ -102,11 +102,12 @@ Usually, pressing the button bridges the GPIO pin to Ground (active low).
 ⤷ So we need a pull-up resistor `u`: to hold it at VCC (high) while not-pressed.
 
 For LEDs, add `i` to invert the state. Add `p` to make an LED PWM-dimmable
-(e.g. `IB4ip`): the firmware then exposes a brightness (0-255) and a fade
-transition time (ms) for that indicator LED in Z2M. On TLSR825x each pin maps
-to one fixed PWM channel (pins with PWM: A0, A2-A4, B0-B5, C0-C7, D2-D5; two
-LEDs must not share a channel — e.g. B4 and C6 both use PWM4). If the pin has
-no PWM the LED silently falls back to plain on/off.
+(works for both `I` indicator LEDs, e.g. `IB4ip`, and the `L` network/status
+LED, e.g. `LA0ip`): the firmware then exposes a brightness (0-255) and a fade
+transition time (ms) for that LED in Z2M. On TLSR825x each pin maps to one
+fixed PWM channel (pins with PWM: A0, A2-A4, B0-B5, C0-C7, D2-D5; two LEDs
+must not share a channel — e.g. B4 and C6 both use PWM4). If the pin has no
+PWM the LED silently falls back to plain on/off.
 
 Additional options: 
 | Format       | Option                       | Function                                                                          |
@@ -117,8 +118,9 @@ Additional options:
 | **`BT<pin>`** | Battery mode                | • Enables battery-powered behavior <br> • Adds battery measurement/reporting using the selected ADC pin |
 | **`SLP`**    | Simultaneous Latching Pulses |  • Enable simultaneous pulses for latching relays (they are disallowed by default)|
 | **`EP<CF><CF1><SEL>`** | Energy monitoring (HLW8012/BL0937) | • Adds power/voltage/current/energy on EP1 <br> • 3 pins: CF (power), CF1 (voltage+current, time-multiplexed), SEL (mode select) <br> • Example: `EPC0C2C1` (CF=C0, CF1=C2, SEL=C1) |
+| **`EB<TX><RX>`** | Energy monitoring (BL0942, UART) | • Adds power/voltage/current/energy on EP1 <br> • 2 pins from the MCU's point of view: TX (poll command out), RX (data in) <br> • Optional `S<baud>` overrides the 4800 default (e.g. `EBB0B7S9600`) <br> • On TLSR825x RX must be a UART RX pin (A0/B0/B7/C3/C5/D6); TX may be any pin (bit-banged if not A2/B1/C2/D0/D3/D7) |
 
-The `EP` token may be followed by optional calibration multipliers, in any
+The `EP` and `EB` tokens may be followed by optional calibration multipliers, in any
 order, to override the compiled-in defaults **without a rebuild** — useful when
 the same fingerprint ships in several PCB revisions with different sense
 resistors/dividers:

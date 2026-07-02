@@ -37,6 +37,7 @@ SOURCES := \
 	$(SRC_DIR)/stub/main.c \
 	$(SRC_DIR)/stub/hal/gpio.c \
 	$(SRC_DIR)/stub/hal/pwm.c \
+	$(SRC_DIR)/stub/hal/uart.c \
 	$(SRC_DIR)/stub/hal/system.c \
 	$(SRC_DIR)/stub/hal/timer.c \
 	$(SRC_DIR)/stub/hal/tasks.c \
@@ -67,6 +68,7 @@ SOURCES := \
 	$(SRC_DIR)/zigbee/cover_cluster.c \
 	$(SRC_DIR)/zigbee/battery_cluster.c \
 	$(SRC_DIR)/base_components/energy_measurement/hlw8012.c \
+	$(SRC_DIR)/base_components/energy_measurement/bl0942.c \
 	$(SRC_DIR)/zigbee/electrical_measurement_cluster.c \
 	$(SRC_DIR)/zigbee/metering_cluster.c
 

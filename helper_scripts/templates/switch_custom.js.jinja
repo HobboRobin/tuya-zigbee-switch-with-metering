@@ -222,6 +222,29 @@ const romasku = {
             access: "ALL",
             entityCategory: "config",
         }),
+    networkLedBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genBasic",
+            attribute: { ID: 0xff05, type: 0x20 }, // uint8
+            description: "Network/status LED brightness when on (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
+    networkLedTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genBasic",
+            attribute: { ID: 0xff06, type: 0x21 }, // uint16
+            description: "Network/status LED fade time in milliseconds (0 = instant)",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
     // On-device calibration trigger: the user enters the real measured value
     // (in display units, e.g. Volts), we scale it to the firmware's raw integer
     // unit (multiplier) and write it. The firmware then derives and persists the
@@ -495,6 +518,10 @@ const definitions = [
             romasku.multiPressResetCount("multi_press_reset_count", "{{first_endpoint}}"),
             {% if device.has_dedicated_net_led %}
             romasku.networkIndicator("network_led", "{{first_endpoint}}"),
+            {% endif%}
+            {% if device.has_dimmable_net_led %}
+            romasku.networkLedBrightness("network_led_brightness", "{{first_endpoint}}"),
+            romasku.networkLedTransition("network_led_transition", "{{first_endpoint}}"),
             {% endif%}
             {% if device.relayNames %}
             onOff({ endpointNames: {{device.relayNames | tojson }} }),

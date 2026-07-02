@@ -11,6 +11,7 @@
 #include "zigbee/poll_control_cluster.h"
 #include "zigbee/switch_cluster.h"
 #include "base_components/energy_measurement/hlw8012.h"
+#include "base_components/energy_measurement/bl0942.h"
 #include "zigbee/electrical_measurement_cluster.h"
 #include "zigbee/metering_cluster.h"
 
@@ -93,6 +94,7 @@ static void led_apply_flags(led_t *led, const char *flags) {
 }
 
 static hlw8012_t       hlw8012_device;
+static bl0942_t        bl0942_device;
 static energy_meter_t *energy_meter = NULL;
 static electrical_measurement_cluster_t elec_meas_cluster;
 static metering_cluster_t metering_cluster_inst;
@@ -347,6 +349,39 @@ void parse_config() {
                     energy_monitoring_endpoint = 1;
                     printf("Config: HLW8012 on CF=%04x CF1=%04x SEL=%04x\r\n",
                            cf_pin, cf1_pin, sel_pin);
+                }
+            }
+        } else if (entry[0] == 'E' && entry[1] == 'B') {
+            // BL0942 UART energy monitoring:
+            //   EB<TX_PIN><RX_PIN>[S<baud>][V<volt_mult>][A<curr_mult>][W<pow_mult>]
+            // TX/RX are from the MCU's point of view, 2 chars each. The
+            // optional S marker overrides the 4800 default baudrate; V/A/W
+            // override the calibration multipliers, all editable from the
+            // config_str without a rebuild.
+            printf("Config: Found energy monitoring entry: '%s'\r\n", entry);
+            hal_gpio_pin_t tx_pin = hal_gpio_parse_pin(entry + 2);
+            hal_gpio_pin_t rx_pin = hal_gpio_parse_pin(entry + 4);
+            if (tx_pin != HAL_INVALID_PIN && rx_pin != HAL_INVALID_PIN) {
+                const char *opt  = entry + 6;
+                const char *s    = seek_until((char *)opt, 'S');
+                uint32_t    baud =
+                    (*s == 'S') ? parse_int(s + 1) : BL0942_DEFAULT_BAUDRATE;
+                if (bl0942_init(&bl0942_device, tx_pin, rx_pin, baud) == 0) {
+                    const char *v = seek_until((char *)opt, 'V');
+                    const char *a = seek_until((char *)opt, 'A');
+                    const char *w = seek_until((char *)opt, 'W');
+                    bl0942_set_calibration(
+                        &bl0942_device,
+                        (*v == 'V') ? parse_int(v + 1) : 0,
+                        (*a == 'A') ? parse_int(a + 1) : 0,
+                        (*w == 'W') ? parse_int(w + 1) : 0);
+                    energy_meter = bl0942_as_energy_meter(&bl0942_device);
+                    electrical_measurement_cluster_init(&elec_meas_cluster, energy_meter);
+                    metering_cluster_init(&metering_cluster_inst, energy_meter);
+                    energy_monitoring_enabled  = 1;
+                    energy_monitoring_endpoint = 1;
+                    printf("Config: BL0942 on TX=%04x RX=%04x\r\n", tx_pin,
+                           rx_pin);
                 }
             }
         }

@@ -2955,7 +2955,7 @@ OUTLET_BSEED_PM_TS011F_b28wrpvx:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: b28wrpvx;TS011F-BS-PM;LB4;SB5u;RD2;IC3p;EPA1C2B1;M;
+  config_str: b28wrpvx;TS011F-BS-PM;LB4p;SB5u;RD2;IC3p;EPA1C2B1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -2985,7 +2985,7 @@ OUTLET_BSEED_PM_TS011F_ko6v90pg:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: ko6v90pg;TS011F-BS-PM-1;LC4i;SB4u;RB5;IB1ip;EPC0C2C1;M;
+  config_str: ko6v90pg;TS011F-BS-PM-1;LC4ip;SB4u;RB5;IB1ip;EPC0C2C1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3015,7 +3015,7 @@ OUTLET_BSEED_PM_TS011F_4ux0ondb:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4;SB5u;RD2;IC3p;EPC0C2C1;M;
+  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4p;SB5u;RD2;IC3p;EPC0C2C1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3072,7 +3072,7 @@ OUTLET_NOUS_A1Z_TS011F:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;M;
+  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;EBB0B7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3081,7 +3081,7 @@ OUTLET_NOUS_A1Z_TS011F:
   firmware_image_type: 47114
   build: yes
   status: in_progress
-  info: "Stage 1: switch only. Relay PC2 (monostable, active-high; found via the GPIO pulse diagnostic), button PB5, LED PB4 (inverted). BL0942 UART metering (PB0=MCU TX, PB7=MCU RX) pending."
+  info: "Relay PC2 (monostable, active-high), button PB5, dimmable LED PB4 (inverted). Energy metering via BL0942 on UART (EBB0B7: MCU TX=B0 bit-banged, RX=B7; default 4800 baud, override with e.g. S9600 in the EB token). Calibrate V/A/W via the on-device calibrate fields. If the meter stays silent, swap the pins to EBB7B0."
   threads: null
   store: https://nous.technology/product/a1z.html
 OUTLET_MAKEGOOD_PM_TS011F_2GANG:
@@ -4173,7 +4173,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0001:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: ysdv91bk;TS0001-BSMN;LA0i;SC3u;RC2;M;
+  config_str: ysdv91bk;TS0001-BSMN;LA0ip;SC3u;RC2;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4203,7 +4203,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0002:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: mklgayek;TS0002-BSMN;LA0i;SC3u;RC2;SB7u;RB4;M;
+  config_str: mklgayek;TS0002-BSMN;LA0ip;SC3u;RC2;SB7u;RB4;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null

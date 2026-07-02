@@ -140,6 +140,7 @@ TELINK_SOURCES := \
 	hal/tasks.c \
 	hal/gpio.c \
 	hal/pwm.c \
+	hal/uart.c \
 	hal/gpio_counter.c \
 	hal/gpio_interrupts.c \
 	hal/nvm.c \
@@ -164,6 +165,7 @@ COMMON_SOURCES := \
 	$(SRC_DIR)/base_components/relay.c \
 	$(SRC_DIR)/base_components/battery.c \
 	$(SRC_DIR)/base_components/energy_measurement/hlw8012.c \
+	$(SRC_DIR)/base_components/energy_measurement/bl0942.c \
 	$(SRC_DIR)/device_config/config_nv.c \
 	$(SRC_DIR)/device_config/device_params_nv.c \
 	$(SRC_DIR)/device_config/reset.c \

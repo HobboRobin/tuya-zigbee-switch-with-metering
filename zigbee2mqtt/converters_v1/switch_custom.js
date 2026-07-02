@@ -220,6 +220,29 @@ const romasku = {
             access: "ALL",
             entityCategory: "config",
         }),
+    networkLedBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genBasic",
+            attribute: { ID: 0xff05, type: 0x20 }, // uint8
+            description: "Network/status LED brightness when on (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
+    networkLedTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genBasic",
+            attribute: { ID: 0xff06, type: 0x21 }, // uint16
+            description: "Network/status LED fade time in milliseconds (0 = instant)",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
     // On-device calibration trigger: the user enters the real measured value
     // (in display units, e.g. Volts), we scale it to the firmware's raw integer
     // unit (multiplier) and write it. The firmware then derives and persists the
@@ -7197,6 +7220,8 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
+            romasku.networkLedBrightness("network_led_brightness", "switch"),
+            romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay"] }),
             romasku.scaledMeasurement({
                 name: "voltage",
@@ -7343,6 +7368,8 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
+            romasku.networkLedBrightness("network_led_brightness", "switch"),
+            romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay"] }),
             romasku.scaledMeasurement({
                 name: "voltage",
@@ -7489,6 +7516,8 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
+            romasku.networkLedBrightness("network_led_brightness", "switch"),
+            romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay"] }),
             romasku.scaledMeasurement({
                 name: "voltage",
@@ -7693,6 +7722,80 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
+            romasku.scaledMeasurement({
+                name: "voltage",
+                cluster: "haElectricalMeasurement",
+                attribute: "rmsVoltage",
+                unit: "V",
+                divisor: 100, // firmware reports centivolts
+                precision: 2,
+                endpointName: "switch",
+            }),
+            romasku.scaledMeasurement({
+                name: "current",
+                cluster: "haElectricalMeasurement",
+                attribute: "rmsCurrent",
+                unit: "A",
+                divisor: 1000, // firmware reports milliamps
+                precision: 3,
+                endpointName: "switch",
+            }),
+            numeric({
+                name: "power",
+                cluster: "haElectricalMeasurement",
+                attribute: "activePower",
+                description: "Instantaneous measured power",
+                unit: "W",
+                access: "STATE",
+                endpointName: "switch",
+            }),
+            romasku.scaledMeasurement({
+                name: "energy",
+                cluster: "seMetering",
+                attribute: "currentSummDelivered",
+                unit: "kWh",
+                divisor: 1000, // firmware reports watt-hours
+                precision: 3,
+                endpointName: "switch",
+            }),
+            binary({
+                name: "reset_energy",
+                cluster: "seMetering",
+                attribute: {ID: 0xF000, type: 0x20}, // uint8
+                valueOn: ["RESET", 1],
+                valueOff: ["OFF", 0],
+                description: "Set to RESET to zero the accumulated energy counter",
+                access: "ALL",
+                entityCategory: "config",
+                endpointName: "switch",
+            }),
+            romasku.calibrate({
+                name: "calibrate_voltage",
+                attribute: {ID: 0xFF10, type: 0x21}, // uint16
+                unit: "V",
+                multiplier: 100, // firmware wants centivolts
+                valueMax: 655,
+                description: "Measure the real voltage and enter it here to calibrate; the device computes and stores the multiplier",
+                endpointName: "switch",
+            }),
+            romasku.calibrate({
+                name: "calibrate_current",
+                attribute: {ID: 0xFF11, type: 0x21}, // uint16
+                unit: "A",
+                multiplier: 1000, // firmware wants milliamps
+                valueMax: 65,
+                description: "Measure the real current (under a steady load) and enter it here to calibrate",
+                endpointName: "switch",
+            }),
+            romasku.calibrate({
+                name: "calibrate_power",
+                attribute: {ID: 0xFF12, type: 0x21}, // uint16
+                unit: "W",
+                multiplier: 1, // firmware wants whole watts
+                valueMax: 65535,
+                description: "Measure the real power (under a steady load) and enter it here to calibrate",
+                endpointName: "switch",
+            }),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
@@ -7735,6 +7838,18 @@ const definitions = [
                 },
             ]);
 
+            const emEndpoint = device.getEndpoint(1);
+            await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
+            await emEndpoint.configureReporting("haElectricalMeasurement", [
+                // reportableChange is in the attribute's raw units: voltage in
+                // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
+                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
+                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
+            ]);
+            await emEndpoint.configureReporting("seMetering", [
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+            ]);
 
 
         },
@@ -10589,6 +10704,8 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
+            romasku.networkLedBrightness("network_led_brightness", "switch"),
+            romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay"] }),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
@@ -10637,6 +10754,8 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
+            romasku.networkLedBrightness("network_led_brightness", "switch_left"),
+            romasku.networkLedTransition("network_led_transition", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
             romasku.pressAction("switch_left_press_action", "switch_left"),
             romasku.switchMode("switch_left_mode", "switch_left"),

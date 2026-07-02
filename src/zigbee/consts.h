@@ -44,6 +44,10 @@
 #define ZCL_ATTR_BASIC_DEVICE_CONFIG              0xff00
 #define ZCL_ATTR_BASIC_STATUS_LED_STATE           0xff01
 #define ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT    0xff02
+// Dimmable dedicated status/network LED (0xff03/0xff04 were once used by a
+// removed diagnostic, so start at 0xff05 to avoid stale-converter clashes).
+#define ZCL_ATTR_BASIC_STATUS_LED_BRIGHTNESS      0xff05
+#define ZCL_ATTR_BASIC_STATUS_LED_TRANSITION      0xff06
 
 // Power Configuration cluster
 
