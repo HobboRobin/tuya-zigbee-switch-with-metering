@@ -2955,7 +2955,7 @@ OUTLET_BSEED_PM_TS011F_b28wrpvx:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: b28wrpvx;TS011F-BS-PM;LC3;SB5u;RD2;IB4;EPC0C2C1;M;
+  config_str: b28wrpvx;TS011F-BS-PM;LC3;SB5u;RD2;IB4p;EPC0C2C1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -2985,7 +2985,7 @@ OUTLET_BSEED_PM_TS011F_ko6v90pg:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: ko6v90pg;TS011F-BS-PM-1;LC4i;SB4u;RB5;IB1i;EPC0C2C1;M;
+  config_str: ko6v90pg;TS011F-BS-PM-1;LC4i;SB4u;RB5;IB1ip;EPC0C2C1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3015,7 +3015,7 @@ OUTLET_BSEED_PM_TS011F_4ux0ondb:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4;SB5u;RD2;IC3;EPC0C2C1;M;
+  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4;SB5u;RD2;IC3p;EPC0C2C1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3072,7 +3072,7 @@ OUTLET_NOUS_A1Z_TS011F:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4i;M;
+  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null

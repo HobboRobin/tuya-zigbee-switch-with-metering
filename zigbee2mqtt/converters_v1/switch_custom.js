@@ -138,6 +138,29 @@ const romasku = {
             access: "ALL",
             entityCategory: "config",
         }),
+    ledBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOff",
+            attribute: { ID: 0xff03, type: 0x20 }, // uint8
+            description: "Indicator LED brightness when on (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
+    ledTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOff",
+            attribute: { ID: 0xff04, type: 0x21 }, // uint16
+            description: "Indicator LED fade time in milliseconds (0 = instant)",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
     batteryPercentage: () => {
         const result = numeric({
             name: "battery",
@@ -7259,6 +7282,8 @@ const definitions = [
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.relayIndicatorMode("relay_indicator_mode", "relay"),
             romasku.relayIndicator("relay_indicator", "relay"),
+            romasku.ledBrightness("relay_led_brightness", "relay"),
+            romasku.ledTransition("relay_led_transition", "relay"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -7403,6 +7428,8 @@ const definitions = [
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.relayIndicatorMode("relay_indicator_mode", "relay"),
             romasku.relayIndicator("relay_indicator", "relay"),
+            romasku.ledBrightness("relay_led_brightness", "relay"),
+            romasku.ledTransition("relay_led_transition", "relay"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -7547,6 +7574,8 @@ const definitions = [
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.relayIndicatorMode("relay_indicator_mode", "relay"),
             romasku.relayIndicator("relay_indicator", "relay"),
+            romasku.ledBrightness("relay_led_brightness", "relay"),
+            romasku.ledTransition("relay_led_transition", "relay"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -7674,6 +7703,8 @@ const definitions = [
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.relayIndicatorMode("relay_indicator_mode", "relay"),
             romasku.relayIndicator("relay_indicator", "relay"),
+            romasku.ledBrightness("relay_led_brightness", "relay"),
+            romasku.ledTransition("relay_led_transition", "relay"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {

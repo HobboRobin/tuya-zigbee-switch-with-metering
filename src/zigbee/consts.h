@@ -58,11 +58,14 @@
 
 // OnOff cluster
 
-#define ZCL_ATTR_ONOFF                    0x0000
-#define ZCL_ATTR_START_UP_ONOFF           0x4003
+#define ZCL_ATTR_ONOFF                         0x0000
+#define ZCL_ATTR_START_UP_ONOFF                0x4003
 
-#define ZCL_ATTR_ONOFF_INDICATOR_MODE     0xff01
-#define ZCL_ATTR_ONOFF_INDICATOR_STATE    0xff02
+#define ZCL_ATTR_ONOFF_INDICATOR_MODE          0xff01
+#define ZCL_ATTR_ONOFF_INDICATOR_STATE         0xff02
+// Dimmable indicator LED (PWM): on-brightness 0..255 and fade time in ms.
+#define ZCL_ATTR_ONOFF_INDICATOR_BRIGHTNESS    0xff03
+#define ZCL_ATTR_ONOFF_INDICATOR_TRANSITION    0xff04
 
 // OnOff configuration cluster
 

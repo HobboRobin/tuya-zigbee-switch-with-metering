@@ -36,4 +36,9 @@
 // calibrate fields and re-applied on boot.
 #define NV_ITEM_ENERGY_CALIBRATION    44
 
+// Persisted dimmable-indicator-LED settings (brightness + transition), one per
+// relay (45..). Kept separate from the relay config so growing it never resets
+// existing startup/indicator settings.
+#define NV_ITEM_LED_DIMMING(relay_idx)    (45 + (relay_idx))
+
 #endif /* DEVICE_CONFIG_NVM_ITEMS_H_ */

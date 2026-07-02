@@ -20,6 +20,7 @@
 #include "base_components/led.h"
 #include "base_components/network_indicator.h"
 #include "base_components/battery.h"
+#include "hal/pwm.h"
 #include "config_nv.h"
 #include "device_config/device_params_nv.h"
 #include "device_config/reset.h"
@@ -79,6 +80,21 @@ battery_t battery = {
 uint32_t parse_int(const char *s);
 char *seek_until(char *cursor, char needle);
 char *extract_next_entry(char **cursor);
+
+// PWM channels are handed out to dimmable LEDs in config order.
+static uint8_t next_pwm_channel = 0;
+
+// Parse the optional flags after an L/I LED pin (starting at entry+3):
+//   'i' inverts the output (active-low), 'p' makes it PWM-dimmable.
+static void led_apply_flags(led_t *led, const char *flags) {
+    led->on_high = (*seek_until((char *)flags, 'i') != 'i');
+    if (*seek_until((char *)flags, 'p') == 'p' &&
+        next_pwm_channel < HAL_PWM_CHANNELS) {
+        led->dimmable    = 1;
+        led->pwm_channel = next_pwm_channel++;
+        led->brightness  = 255;
+    }
+}
 
 static hlw8012_t       hlw8012_device;
 static energy_meter_t *energy_meter = NULL;
@@ -153,8 +169,8 @@ void parse_config() {
         } else if (entry[0] == 'L') {
             hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 1);
             hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
-            leds[leds_cnt].pin     = pin;
-            leds[leds_cnt].on_high = entry[3] != 'i';
+            leds[leds_cnt].pin = pin;
+            led_apply_flags(&leds[leds_cnt], entry + 3);
 
             led_init(&leds[leds_cnt]);
 
@@ -167,8 +183,8 @@ void parse_config() {
         } else if (entry[0] == 'I') {
             hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 1);
             hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
-            leds[leds_cnt].pin     = pin;
-            leds[leds_cnt].on_high = entry[3] != 'i';
+            leds[leds_cnt].pin = pin;
+            led_apply_flags(&leds[leds_cnt], entry + 3);
             led_init(&leds[leds_cnt]);
 
             for (int index = 0; index < 4; index++) {

@@ -140,6 +140,29 @@ const romasku = {
             access: "ALL",
             entityCategory: "config",
         }),
+    ledBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOff",
+            attribute: { ID: 0xff03, type: 0x20 }, // uint8
+            description: "Indicator LED brightness when on (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
+    ledTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOff",
+            attribute: { ID: 0xff04, type: 0x21 }, // uint16
+            description: "Indicator LED fade time in milliseconds (0 = instant)",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
     batteryPercentage: () => {
         const result = numeric({
             name: "battery",
@@ -568,6 +591,10 @@ const definitions = [
             {% for relayName in device.relayIndicatorNames %}
             romasku.relayIndicatorMode("{{relayName}}_indicator_mode", "{{relayName}}"),
             romasku.relayIndicator("{{relayName}}_indicator", "{{relayName}}"),
+            {% endfor %}
+            {% for relayName in device.dimmableRelayIndicatorNames %}
+            romasku.ledBrightness("{{relayName}}_led_brightness", "{{relayName}}"),
+            romasku.ledTransition("{{relayName}}_led_transition", "{{relayName}}"),
             {% endfor %}
             {% for coverName in device.coverNames %}
             windowCovering({ 

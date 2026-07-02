@@ -101,7 +101,10 @@ For buttons (`B`), switches (`S`), and cover switches (`X`), the next character 
 Usually, pressing the button bridges the GPIO pin to Ground (active low).  
 ⤷ So we need a pull-up resistor `u`: to hold it at VCC (high) while not-pressed.
 
-For LEDs, add `i` to invert the state.
+For LEDs, add `i` to invert the state. Add `p` to make an LED PWM-dimmable
+(e.g. `IB4ip`): the firmware then exposes a brightness (0-255) and a fade
+transition time (ms) for that indicator LED in Z2M. Up to 6 dimmable LEDs
+(one PWM channel each).
 
 Additional options: 
 | Format       | Option                       | Function                                                                          |

@@ -36,6 +36,7 @@ SOURCES := \
 	$(SRC_DIR)/zigbee/poll_control_cluster.c \
 	$(SRC_DIR)/stub/main.c \
 	$(SRC_DIR)/stub/hal/gpio.c \
+	$(SRC_DIR)/stub/hal/pwm.c \
 	$(SRC_DIR)/stub/hal/system.c \
 	$(SRC_DIR)/stub/hal/timer.c \
 	$(SRC_DIR)/stub/hal/tasks.c \
