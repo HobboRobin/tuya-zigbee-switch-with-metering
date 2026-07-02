@@ -241,7 +241,7 @@ const romasku = {
             description: "Diagnostic: briefly pulse a GPIO to find an unknown relay/LED pin by ear/eye. Value 1..32 = A0,A1..A7,B0..B7,C0..C7,D0..D7 (1=A0, 9=B0, 17=C0, 25=D0). 0 = no-op.",
             valueMin: 0,
             valueMax: 32,
-            entityCategory: "diagnostic",
+            entityCategory: "config",
         }),
     deviceConfig: (name, endpointName) =>
         text({
