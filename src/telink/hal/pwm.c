@@ -42,8 +42,9 @@ static const pwm_pin_map_t pwm_pin_map[] = {
     { GPIO_PD5, 0, 0 },
 };
 
-static uint8_t pwm_clk_initialized = 0;
-static uint8_t pwm_channels_used   = 0; // bitmask of allocated channels
+static uint8_t  pwm_clk_initialized = 0;
+static uint8_t  pwm_channels_used   = 0;               // bitmask of allocated channels
+static uint16_t pwm_channel_owner[HAL_PWM_CHANNELS];   // pin that owns each channel
 
 int8_t hal_pwm_init(hal_gpio_pin_t pin, uint8_t inverted) {
     const pwm_pin_map_t *map = NULL;
@@ -58,10 +59,17 @@ int8_t hal_pwm_init(hal_gpio_pin_t pin, uint8_t inverted) {
         return -1; // pin has no PWM function
 
     uint8_t channel = map->channel;
-    if (pwm_channels_used & (1u << channel))
-        return -1; // channel already driven by another pin
+    if (pwm_channels_used & (1u << channel)) {
+        // Already set up. Re-initializing the same pin is a no-op (led_init may
+        // run more than once); only a *different* pin on this channel conflicts.
+        if (pwm_channel_owner[channel] == pin)
+            return (int8_t)channel;
 
-    pwm_channels_used |= (1u << channel);
+        return -1;
+    }
+
+    pwm_channels_used         |= (1u << channel);
+    pwm_channel_owner[channel] = pin;
 
     if (!pwm_clk_initialized) {
         // Gate the PWM peripheral clock on (off by default) and run the PWM
