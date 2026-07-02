@@ -3072,7 +3072,7 @@ OUTLET_NOUS_A1Z_TS011F:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 2putqrmw;TS011F-A1Z;LB4i;SB5u;RB1;M;
+  config_str: 2putqrmw;TS011F-A1Z;LB4i;SB5u;RC2;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3081,7 +3081,7 @@ OUTLET_NOUS_A1Z_TS011F:
   firmware_image_type: 47114
   build: yes
   status: in_progress
-  info: "Stage 1: switch only (relay PB1, button PB5, LED PB4 inverted). If the relay does not respond to on/off, it is likely active-low: try RB1i in the config_str. BL0942 UART metering (PB0=MCU TX, PB7=MCU RX) pending."
+  info: "Stage 1: switch only. Relay PC2 (monostable, active-high; found via the GPIO pulse diagnostic), button PB5, LED PB4 (inverted). BL0942 UART metering (PB0=MCU TX, PB7=MCU RX) pending."
   threads: null
   store: https://nous.technology/product/a1z.html
 OUTLET_MAKEGOOD_PM_TS011F_2GANG:
