@@ -16,7 +16,7 @@
 // divider; reference constants: 15883.34 counts/V, 251065.7 counts/A,
 // 623.03 counts/W). Physical value = raw * MULTIPLIER / FIXED_POINT_SCALE with
 // the same output units as the HLW8012 driver: voltage in cV, current in mA,
-// power in W. Field-adjustable via the on-device calibrate attributes or the
+// power in cW. Field-adjustable via the on-device calibrate attributes or the
 // config_str V/A/W markers.
 #define BL0942_FIXED_POINT_SCALE     65536
 #ifndef BL0942_VOLTAGE_MULTIPLIER
@@ -41,7 +41,7 @@
 typedef struct {
     uint16_t voltage;    // cV
     uint16_t current;    // mA
-    int16_t  power;      // W
+    int32_t  power;      // cW (centiwatts)
     uint32_t energy;     // Wh
     uint32_t energy_acc; // W*ms remainder (< 1 Wh)
     uint32_t last_frame_time;

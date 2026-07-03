@@ -13,8 +13,9 @@
 //   237 V    <-> 0.0236 V/pulse  (voltage mode, CF1)
 //   3.10 A   <-> 1.810 mA/pulse  (current mode, CF1)
 //   734.7 W  <-> 0.2127 W/pulse  (power, CF)
-// Physical value = pulses * MULTIPLIER / FIXED_POINT_SCALE.
-// Output units: voltage in centivolts (0.01 V), power in W, current in mA.
+// Physical value = pulses * MULTIPLIER / FIXED_POINT_SCALE (power via
+// energy_meter_product_to_cw). Output units: voltage in centivolts (0.01 V),
+// current in mA, power in centiwatts (0.01 W).
 // Different hardware revisions (same chip, different sense resistors/dividers)
 // can override these via -D build flags; see device_db.yaml's
 // hlw8012_voltage_multiplier/hlw8012_current_multiplier/hlw8012_power_multiplier.
@@ -54,7 +55,7 @@ typedef struct {
     uint8_t  cf1_last_gpio_state;
     uint16_t voltage;
     uint16_t current;
-    int16_t  power;
+    int32_t  power;      // cW (centiwatts)
     uint32_t energy;
     uint32_t energy_acc; // energy sub-unit remainder (pulses*MULT, < 1 Wh)
     uint8_t  sel_state;
@@ -101,7 +102,7 @@ int            hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin,
 void            hlw8012_set_calibration(hlw8012_t *dev, uint32_t voltage_mult,
                                         uint32_t current_mult, uint32_t power_mult);
 
-// Calibrate one channel (0=voltage cV, 1=current mA, 2=power W) so it reads
+// Calibrate one channel (0=voltage cV, 1=current mA, 2=power cW) so it reads
 // `reference` for the most recent raw pulse count. Returns 0 on success, -1 if
 // there is no signal yet (pulse count 0) or the channel/reference is invalid.
 int             hlw8012_calibrate(hlw8012_t *dev, uint8_t channel,

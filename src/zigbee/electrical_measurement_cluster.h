@@ -11,7 +11,8 @@ typedef struct {
     uint32_t             measurement_type;
     uint16_t             rms_voltage;
     uint16_t             rms_current;
-    int16_t              active_power;
+    int16_t              active_power;    // 0x050B, whole watts (compat)
+    int32_t              active_power_cw; // 0xFF13, centiwatts (0.01 W)
     uint16_t             ac_voltage_multiplier;
     uint16_t             ac_voltage_divisor;
     uint16_t             ac_current_multiplier;
@@ -22,16 +23,16 @@ typedef struct {
     uint32_t             freq_cf1;
     uint8_t              sel_state;
     // On-device calibration inputs: write the real measured value (voltage in
-    // cV, current in mA, power in W) to calibrate that channel. Reset to 0 by
+    // cV, current in mA, power in cW) to calibrate that channel. Reset to 0 by
     // the firmware once applied.
     uint16_t             calibrate_voltage;
     uint16_t             calibrate_current;
-    uint16_t             calibrate_power;
-    hal_zigbee_attribute attr_infos[16];
+    uint32_t             calibrate_power; // cW reference (needs > 16 bits)
+    hal_zigbee_attribute attr_infos[17];
     uint32_t             last_report_time;
     uint16_t             last_reported_voltage;
     uint16_t             last_reported_current;
-    int16_t              last_reported_power;
+    int32_t              last_reported_power;
 } electrical_measurement_cluster_t;
 
 void electrical_measurement_cluster_init(electrical_measurement_cluster_t *cluster,

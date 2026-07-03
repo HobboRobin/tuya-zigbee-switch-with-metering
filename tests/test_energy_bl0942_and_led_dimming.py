@@ -9,6 +9,8 @@ ZCL_CLUSTER_ELECTRICAL_MEASUREMENT = 0x0B04
 
 ZCL_ATTR_ELEC_MEAS_RMS_VOLTAGE = 0x0505
 ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_VOLTAGE = 0xFF10
+ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER = 0xFF12
+ZCL_ATTR_ELEC_MEAS_CUST_ACTIVE_POWER_CW = 0xFF13
 
 ZCL_ATTR_BASIC_STATUS_LED_BRIGHTNESS = 0xFF05
 ZCL_ATTR_BASIC_STATUS_LED_TRANSITION = 0xFF06
@@ -35,6 +37,24 @@ def test_bl0942_registers_electrical_measurement(device: Device):
             1,
             ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
             ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_VOLTAGE,
+        )
+        is not None
+    )
+    # 0.01 W power path: the custom int32 centiwatt attribute and the (now
+    # uint32) power-calibration attribute must both be registered.
+    assert (
+        device.read_zigbee_attr(
+            1,
+            ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+            ZCL_ATTR_ELEC_MEAS_CUST_ACTIVE_POWER_CW,
+        )
+        is not None
+    )
+    assert (
+        device.read_zigbee_attr(
+            1,
+            ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+            ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER,
         )
         is not None
     )

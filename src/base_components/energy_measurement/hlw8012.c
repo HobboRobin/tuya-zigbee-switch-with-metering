@@ -121,11 +121,16 @@ int hlw8012_calibrate(hlw8012_t *dev, uint8_t channel, uint32_t reference) {
     if (pulses == 0)
         return -1;
 
-    // value = pulses * multiplier / SCALE, so to make value == reference now:
-    //   multiplier = reference * SCALE / pulses.
-    // reference is a uint16-range value (<= 65535) and SCALE is 65536, so the
-    // product stays within uint32 (< 2^32); pure 32-bit math, no 64-bit divide.
-    *target = ((uint32_t)reference * (uint32_t)HLW8012_FIXED_POINT_SCALE) / pulses;
+    // value = pulses * multiplier / SCALE, so multiplier = reference * SCALE /
+    // pulses (pure 32-bit, no 64-bit divide). Voltage/current references are in
+    // cV/mA; the power reference is in cW, handled by a helper that keeps the
+    // multiplier's whole-watt meaning so stored calibration stays valid.
+    if (channel == ENERGY_METER_CHANNEL_POWER) {
+        *target = energy_meter_power_mult_from_cw(reference, pulses);
+    } else {
+        *target = ((uint32_t)reference * (uint32_t)HLW8012_FIXED_POINT_SCALE) /
+                  pulses;
+    }
 
     printf("HLW8012: calibrated ch %u to ref %u (%u pulses) => mult %u\r\n",
            channel, reference, pulses, *target);
@@ -182,15 +187,15 @@ void _update_measurement_handler(void *arg) {
     dev->data.freq_cf1 = freq_cf1_mhz;
 
     // Physical values are computed directly from the pulse counts (not from
-    // the mHz frequency) to keep good integer resolution. power in W.
-    dev->data.power = (int16_t)(((uint32_t)cf_pulses * dev->cal.power_multiplier) /
-                                HLW8012_FIXED_POINT_SCALE);
+    // the mHz frequency) to keep good integer resolution. power in cW.
+    uint32_t power_product = (uint32_t)cf_pulses * dev->cal.power_multiplier;
+    dev->data.power = energy_meter_product_to_cw(power_product);
 
     // Energy: accumulate pulses*MULT sub-units and carry whole Wh out by
     // subtraction (no 64-bit divide, which TC32 -nostdlib can't link). The Wh
     // sub-unit threshold is independent of the power multiplier, so a runtime
     // calibration change stays consistent with the power reading.
-    dev->data.energy_acc += (uint32_t)cf_pulses * dev->cal.power_multiplier;
+    dev->data.energy_acc += power_product;
     while (dev->data.energy_acc >= HLW8012_ENERGY_WH_SUBUNIT) {
         dev->data.energy_acc -= HLW8012_ENERGY_WH_SUBUNIT;
         dev->data.energy++;
