@@ -84,6 +84,7 @@ typedef struct {
     uint16_t             diag_polls;
     uint8_t              diag_headers;
     uint8_t              diag_checksums;
+    uint16_t             diag_rx_low; // RX-line LOW samples in last probe window
 } bl0942_t;
 
 /** Initialize the driver and start polling. Returns 0 on success. */

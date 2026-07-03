@@ -20,6 +20,7 @@ static uint8_t uart_rx_dma_buf[72] __attribute__((aligned(4)));
 static hal_uart_rx_callback_t uart_rx_cb = NULL;
 static uint8_t        uart_tx_is_hw      = 0;
 static hal_gpio_pin_t uart_tx_pin_g      = HAL_INVALID_PIN;
+static hal_gpio_pin_t uart_rx_pin_g      = HAL_INVALID_PIN;
 static uint32_t       uart_bit_ticks;         // sys-timer ticks per bit
 
 static uint8_t pin_in_table(uint16_t pin, const uint16_t *table, uint8_t n) {
@@ -51,6 +52,7 @@ int hal_uart_init(hal_gpio_pin_t tx_pin, hal_gpio_pin_t rx_pin,
 
     uart_rx_cb    = rx_cb;
     uart_tx_pin_g = tx_pin;
+    uart_rx_pin_g = rx_pin;
     // clock_time() reads the system timer (stimer), which on the TLSR825x
     // always ticks at 16 MHz (sys_tick_per_us = 16 in chip_8258/timer.h),
     // independent of the 24 MHz CPU clock. Deriving the bit period from
@@ -134,4 +136,27 @@ void hal_uart_task(void) {
         drv_uart_rx_irq_handler();
     }
     irq_restore(r);
+}
+
+uint16_t hal_uart_probe_rx_low(void) {
+    // Diagnostic: sample the physical RX line for ~60 ms and count how often it
+    // reads LOW. A silent (idle) UART line stays high, so a non-zero count means
+    // the peer is actually driving the line (i.e. transmitting), independent of
+    // any UART/DMA decoding. The pin keeps its AS_UART function; on the TLSR825x
+    // the GPIO input register still reflects the pad level while input is
+    // enabled. Interrupts stay enabled so the radio/MAC keep running.
+    if (uart_rx_pin_g == HAL_INVALID_PIN)
+        return 0;
+
+    uint16_t lows   = 0;
+    uint32_t start  = clock_time();
+    uint32_t window = 60u * 1000u * sys_tick_per_us; // 60 ms of 16 MHz ticks
+
+    while ((uint32_t)(clock_time() - start) < window) {
+        if (!gpio_read((GPIO_PinTypeDef)uart_rx_pin_g)) {
+            if (lows != 0xFFFF)
+                lows++;
+        }
+    }
+    return lows;
 }

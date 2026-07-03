@@ -19,3 +19,7 @@ void hal_uart_send(const uint8_t *data, uint8_t len) {
 
 void hal_uart_task(void) {
 }
+
+uint16_t hal_uart_probe_rx_low(void) {
+    return 0;
+}
