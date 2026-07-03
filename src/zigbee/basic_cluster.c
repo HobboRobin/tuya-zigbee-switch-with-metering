@@ -29,7 +29,14 @@ const uint16_t cluster_revision = 0x01;
 // E<x> = haElectricalMeasurement registered in stack (1/0, '-' if disabled),
 // M<y> = seMetering registered in stack. Filled in by
 // basic_cluster_set_energy_diag() after the stack finishes registration.
-DEF_STR_NON_CONST(STRINGIFY_VALUE(VERSION_STR) " E?M?", swBuildId);
+//
+// The " P0000R0000H00K00" suffix is a temporary BL0942 UART diagnostic,
+// refreshed ~1x/second by basic_cluster_update_uart_diag():
+//   P = poll commands sent, R = raw bytes received on UART RX,
+//   H = frame headers (0x55) matched, K = checksum-valid frames.
+// Read swBuildId (genBasic attr 0x4000) to see whether TX/RX/parsing works.
+DEF_STR_NON_CONST(STRINGIFY_VALUE(VERSION_STR) " E?M? P0000R0000H00K00",
+                  swBuildId);
 extern network_indicator_t network_indicator;
 
 void basic_cluster_store_attrs_to_nv();
@@ -113,6 +120,31 @@ void basic_cluster_set_energy_diag(uint8_t energy_enabled, uint8_t elec_meas_ok,
             which++;
         }
     }
+}
+
+// Overwrite `width` decimal digits following the first occurrence of `marker`
+// in swBuildId with the zero-padded low digits of `value`. Length is unchanged,
+// so the ZCL string stays valid without re-reporting its size.
+static void basic_cluster_write_dec_field(char marker, uint32_t value,
+                                          uint8_t width) {
+    for (unsigned i = 0; i + 1 + width <= sizeof(swBuildId.str); i++) {
+        if (swBuildId.str[i] != marker) {
+            continue;
+        }
+        for (int d = width - 1; d >= 0; d--) {
+            swBuildId.str[i + 1 + d] = (char)('0' + (value % 10));
+            value /= 10;
+        }
+        return;
+    }
+}
+
+void basic_cluster_update_uart_diag(uint16_t polls, uint16_t rx_bytes,
+                                    uint8_t headers, uint8_t checksums) {
+    basic_cluster_write_dec_field('P', polls % 10000u, 4);
+    basic_cluster_write_dec_field('R', rx_bytes % 10000u, 4);
+    basic_cluster_write_dec_field('H', headers % 100u, 2);
+    basic_cluster_write_dec_field('K', checksums % 100u, 2);
 }
 
 void basic_cluster_add_to_endpoint(zigbee_basic_cluster *cluster,

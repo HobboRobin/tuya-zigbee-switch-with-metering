@@ -71,6 +71,11 @@ typedef struct {
     volatile uint8_t     rx_head;
     uint8_t              rx_tail;
     energy_meter_t       meter;
+    // Temporary link diagnostics surfaced through swBuildId.
+    volatile uint16_t    diag_rx_bytes;
+    uint16_t             diag_polls;
+    uint8_t              diag_headers;
+    uint8_t              diag_checksums;
 } bl0942_t;
 
 /** Initialize the driver and start polling. Returns 0 on success. */

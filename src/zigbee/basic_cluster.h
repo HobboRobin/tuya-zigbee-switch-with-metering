@@ -30,4 +30,9 @@ void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id);
 void basic_cluster_set_energy_diag(uint8_t energy_enabled, uint8_t elec_meas_ok,
                                    uint8_t metering_ok);
 
+// Temporary BL0942 UART diagnostic: refreshes the " P..R..H..K.." counters in
+// swBuildId so a plain attribute read shows whether the UART link is alive.
+void basic_cluster_update_uart_diag(uint16_t polls, uint16_t rx_bytes,
+                                    uint8_t headers, uint8_t checksums);
+
 #endif
