@@ -339,8 +339,12 @@ const romasku = {
                         validatePin(part.slice(2,4));
                         validatePin(part.slice(4,6));
                         validatePin(part.slice(6,8));
+                    } else if(part.startsWith('EB')) {
+                        // BL0942 UART metering: EB<TX><RX>[S<baud>][V..][A..][W..]
+                        validatePin(part.slice(2,4));
+                        validatePin(part.slice(4,6));
                     } else {
-                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EP, I, L, M, R, S, SLP, X, i`);
+                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, R, S, SLP, X, i`);
                     }
                 }
             },
