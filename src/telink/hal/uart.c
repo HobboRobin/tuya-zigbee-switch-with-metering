@@ -51,10 +51,12 @@ int hal_uart_init(hal_gpio_pin_t tx_pin, hal_gpio_pin_t rx_pin,
 
     uart_rx_cb    = rx_cb;
     uart_tx_pin_g = tx_pin;
-    // clock_time() / the system timer runs at the CPU system clock, NOT a fixed
-    // 16 MHz. On this build CLOCK_SYS_CLOCK_HZ is 24 MHz; getting this wrong
-    // skews the bit-banged baud rate and the BL0942 stops answering the poll.
-    uart_bit_ticks = (uint32_t)CLOCK_SYS_CLOCK_HZ / baudrate;
+    // clock_time() reads the system timer (stimer), which on the TLSR825x
+    // always ticks at 16 MHz (sys_tick_per_us = 16 in chip_8258/timer.h),
+    // independent of the 24 MHz CPU clock. Deriving the bit period from
+    // CLOCK_SYS_CLOCK_HZ instead skews the bit-banged baud rate by 24/16 and
+    // the BL0942 never decodes the poll command.
+    uart_bit_ticks = (sys_tick_per_us * 1000000u) / baudrate;
     uart_tx_is_hw  = pin_in_table(
         tx_pin, uart_hw_tx_pins,
         sizeof(uart_hw_tx_pins) / sizeof(uart_hw_tx_pins[0]));
@@ -118,4 +120,18 @@ void hal_uart_send(const uint8_t *data, uint8_t len) {
     } else {
         uart_bitbang_send(data, len);
     }
+}
+
+void hal_uart_task(void) {
+    // Normally the platform irq_handler dispatches the UART RX DMA interrupt
+    // and drv_uart calls our callback. Should that interrupt ever be masked or
+    // lost, the DMA channel's status flag still latches — drain it here so
+    // received bursts are delivered at poll cadence as a fallback.
+    uint8_t r = irq_disable();
+
+    if (dma_chn_irq_status_get() & FLD_DMA_CHN_UART_RX) {
+        dma_chn_irq_status_clr(FLD_DMA_CHN_UART_RX);
+        drv_uart_rx_irq_handler();
+    }
+    irq_restore(r);
 }

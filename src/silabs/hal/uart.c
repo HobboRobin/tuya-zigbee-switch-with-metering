@@ -16,3 +16,6 @@ void hal_uart_send(const uint8_t *data, uint8_t len) {
     (void)data;
     (void)len;
 }
+
+void hal_uart_task(void) {
+}

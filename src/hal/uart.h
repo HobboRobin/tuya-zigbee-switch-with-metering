@@ -26,4 +26,12 @@ int hal_uart_init(hal_gpio_pin_t tx_pin, hal_gpio_pin_t rx_pin,
 /** Send a small buffer (a few command bytes). */
 void hal_uart_send(const uint8_t *data, uint8_t len);
 
+/**
+ * Poll for completed receptions. Interrupt delivery is the normal path; this
+ * is a robustness fallback for platforms where the RX-done interrupt may be
+ * masked/lost — call it periodically (e.g. from the driver's poll task) and
+ * any pending burst is delivered through the rx callback.
+ */
+void hal_uart_task(void);
+
 #endif /* _HAL_UART_H_ */

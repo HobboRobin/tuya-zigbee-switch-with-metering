@@ -36,15 +36,6 @@
 #define MODULE_WATCHDOG_ENABLE    1 /* Watchdog module */
 #define MODULE_UART_ENABLE        0 /* UART module */
 
-/*
- * UART_ENABLE gates the UART DMA RX/TX interrupt dispatch in the platform's
- * irq_handler.c (#if UART_ENABLE). It is otherwise only defined by the
- * bootloader, so the main app never received UART RX-done interrupts — the
- * BL0942 driver's DMA callback never fired and no bytes were ever read. Enable
- * it so hal_uart / the BL0942 metering driver actually receives data.
- */
-#define UART_ENABLE               1
-
 /* Host Controller Interface */
 #if (ZBHCI_USB_PRINT || ZBHCI_USB_CDC || ZBHCI_USB_HID || ZBHCI_UART)
 #define ZBHCI_EN    1

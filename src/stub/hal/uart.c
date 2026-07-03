@@ -27,3 +27,7 @@ void hal_uart_send(const uint8_t *data, uint8_t len) {
     }
     stub_uart_last_tx_len = len;
 }
+
+void hal_uart_task(void) {
+    // Host stub: rx is injected directly via the stored callback.
+}
