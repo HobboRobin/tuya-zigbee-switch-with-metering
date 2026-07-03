@@ -31,16 +31,8 @@
 
 #define BL0942_DEFAULT_BAUDRATE      4800
 #define BL0942_POLL_INTERVAL_MS      1000
-
-// Temporary hardware bring-up aid: when 1, get_data() reports the UART link
-// counters (polls/rx-bytes/headers/checksums) on the measurement tiles instead
-// of the real readings, so the link can be diagnosed without a debug UART.
-// Set back to 0 once BL0942 metering is confirmed working.
-#ifndef BL0942_UART_DIAG
-#define BL0942_UART_DIAG       1
-#endif
-#define BL0942_FRAME_LEN       23
-#define BL0942_RX_RING_SIZE    64
+#define BL0942_FRAME_LEN             23
+#define BL0942_RX_RING_SIZE          64
 
 // Energy accumulates power[W] * elapsed[ms]; 1 Wh = 3,600,000 W*ms. Kept in
 // 32-bit with subtract-carry (TC32 has no 64-bit divide).
@@ -79,12 +71,6 @@ typedef struct {
     volatile uint8_t     rx_head;
     uint8_t              rx_tail;
     energy_meter_t       meter;
-    // Temporary link diagnostics surfaced through swBuildId.
-    volatile uint16_t    diag_rx_bytes;
-    uint16_t             diag_polls;
-    uint8_t              diag_headers;
-    uint8_t              diag_checksums;
-    uint16_t             diag_rx_low; // RX-line LOW samples in last probe window
 } bl0942_t;
 
 /** Initialize the driver and start polling. Returns 0 on success. */

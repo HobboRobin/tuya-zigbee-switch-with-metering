@@ -3072,7 +3072,7 @@ OUTLET_NOUS_A1Z_TS011F:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;EBB0B7;M;
+  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;EBB1B7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3081,7 +3081,7 @@ OUTLET_NOUS_A1Z_TS011F:
   firmware_image_type: 47114
   build: yes
   status: in_progress
-  info: "Relay PC2 (monostable, active-high), button PB5, dimmable LED PB4 (inverted). Energy metering via BL0942 on UART (EBB0B7: MCU TX=B0 bit-banged, RX=B7; default 4800 baud, override with e.g. S9600 in the EB token). Calibrate V/A/W via the on-device calibrate fields. If the meter stays silent, swap the pins to EBB7B0."
+  info: "Relay PC2 (monostable, active-high), button PB5, dimmable LED PB4 (inverted). Energy metering via BL0942 on UART (EBB1B7: MCU TX=B1, RX=B7, both hardware UART pins; default 4800 baud, override with e.g. S9600 in the EB token). Calibrate V/A/W via the on-device calibrate fields. If the meter stays silent, swap the pins to EBB7B1."
   threads: null
   store: https://nous.technology/product/a1z.html
 OUTLET_MAKEGOOD_PM_TS011F_2GANG:

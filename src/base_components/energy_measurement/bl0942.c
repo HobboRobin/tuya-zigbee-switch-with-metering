@@ -12,11 +12,6 @@
 // driver instance (mirrors the g_elec_cluster pattern).
 static bl0942_t *g_bl0942 = NULL;
 
-// Temporary UART link diagnostic sink (implemented in the basic cluster);
-// forward-declared to avoid pulling the zigbee layer into a base component.
-extern void basic_cluster_update_uart_diag(uint16_t polls, uint16_t rx_bytes,
-                                           uint8_t headers, uint8_t checksums);
-
 static void bl0942_meter_get_data(void *ctx, energy_meter_data_t *data);
 static void bl0942_meter_reset_energy(void *ctx);
 static int  bl0942_meter_calibrate(void *ctx, energy_meter_channel_t channel,
@@ -38,7 +33,6 @@ static const energy_meter_ops_t bl0942_energy_meter_ops = {
 
 // May run in interrupt context: only touch the rx ring.
 void bl0942_rx_feed(bl0942_t *dev, const uint8_t *data, uint16_t len) {
-    dev->diag_rx_bytes += len;
     for (uint16_t i = 0; i < len; i++) {
         uint8_t next = (uint8_t)((dev->rx_head + 1) % BL0942_RX_RING_SIZE);
         if (next == dev->rx_tail)
@@ -113,8 +107,6 @@ void bl0942_process_rx(bl0942_t *dev) {
             continue;
         }
 
-        dev->diag_headers++;
-
         uint8_t checksum = BL0942_READ_COMMAND;
         for (uint8_t i = 0; i < BL0942_FRAME_LEN - 1; i++) {
             checksum = (uint8_t)(checksum + ring_at(dev, i));
@@ -127,7 +119,6 @@ void bl0942_process_rx(bl0942_t *dev) {
             continue;
         }
 
-        dev->diag_checksums++;
         bl0942_apply_frame(dev);
         dev->rx_tail = (uint8_t)((dev->rx_tail + BL0942_FRAME_LEN) %
                                  BL0942_RX_RING_SIZE);
@@ -143,13 +134,6 @@ static void bl0942_poll_handler(void *arg) {
 
     static const uint8_t poll_cmd[2] = { BL0942_READ_COMMAND, BL0942_FULL_PACKET };
     hal_uart_send(poll_cmd, sizeof(poll_cmd));
-    dev->diag_polls++;
-
-    // Right after polling, check whether the peer actually drives the RX line.
-    dev->diag_rx_low = hal_uart_probe_rx_low();
-
-    basic_cluster_update_uart_diag(dev->diag_polls, dev->diag_rx_bytes,
-                                   dev->diag_headers, dev->diag_checksums);
 
     hal_tasks_schedule(&dev->poll_task, BL0942_POLL_INTERVAL_MS);
 }
@@ -216,25 +200,6 @@ static void bl0942_meter_get_data(void *ctx, energy_meter_data_t *data) {
     bl0942_t *dev = (bl0942_t *)ctx;
 
     memset(data, 0, sizeof(*data));
-#if BL0942_UART_DIAG
-    // TEMPORARY bring-up aid: until the first checksum-valid frame arrives,
-    // surface the UART link counters through the measurement tiles (the
-    // developer console cannot read swBuildId on this device). Once real data
-    // flows, fall through and report actual measurements.
-    //   power (W, divisor 1) = RX-line LOW samples in last 60 ms  << key number
-    //                          (0 = line idle/silent, >0 = peer is transmitting)
-    //   voltage (V, /100)    = P : poll commands sent (loop alive?)
-    //   current (A, /1000)   = R : raw bytes decoded by the UART/DMA
-    //   energy               = K : checksum-valid frames
-    if (!dev->data.valid) {
-        data->power   = (int16_t)dev->diag_rx_low;
-        data->voltage = dev->diag_polls;
-        data->current = dev->diag_rx_bytes;
-        data->energy  = dev->diag_checksums;
-        data->valid   = 1;
-        return;
-    }
-#endif
     data->voltage = dev->data.voltage;
     data->current = dev->data.current;
     data->power   = dev->data.power;

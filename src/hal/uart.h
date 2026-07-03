@@ -34,12 +34,4 @@ void hal_uart_send(const uint8_t *data, uint8_t len);
  */
 void hal_uart_task(void);
 
-/**
- * Diagnostic probe: sample the RX line for a short window and return how many
- * samples read LOW. Zero means the line stayed idle-high (peer silent); a large
- * value means the peer is actively driving the line. Independent of UART/DMA
- * decoding. Returns 0 on platforms without a real UART.
- */
-uint16_t hal_uart_probe_rx_low(void);
-
 #endif /* _HAL_UART_H_ */
