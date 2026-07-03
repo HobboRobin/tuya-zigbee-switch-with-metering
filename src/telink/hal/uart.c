@@ -20,7 +20,7 @@ static uint8_t uart_rx_dma_buf[72] __attribute__((aligned(4)));
 static hal_uart_rx_callback_t uart_rx_cb = NULL;
 static uint8_t        uart_tx_is_hw      = 0;
 static hal_gpio_pin_t uart_tx_pin_g      = HAL_INVALID_PIN;
-static uint32_t       uart_bit_ticks;         // 16MHz sys-timer ticks per bit
+static uint32_t       uart_bit_ticks;         // sys-timer ticks per bit
 
 static uint8_t pin_in_table(uint16_t pin, const uint16_t *table, uint8_t n) {
     for (uint8_t i = 0; i < n; i++) {
@@ -49,9 +49,12 @@ int hal_uart_init(hal_gpio_pin_t tx_pin, hal_gpio_pin_t rx_pin,
                       sizeof(uart_hw_rx_pins) / sizeof(uart_hw_rx_pins[0])))
         return -1;
 
-    uart_rx_cb     = rx_cb;
-    uart_tx_pin_g  = tx_pin;
-    uart_bit_ticks = 16000000u / baudrate; // system timer runs at 16 MHz
+    uart_rx_cb    = rx_cb;
+    uart_tx_pin_g = tx_pin;
+    // clock_time() / the system timer runs at the CPU system clock, NOT a fixed
+    // 16 MHz. On this build CLOCK_SYS_CLOCK_HZ is 24 MHz; getting this wrong
+    // skews the bit-banged baud rate and the BL0942 stops answering the poll.
+    uart_bit_ticks = (uint32_t)CLOCK_SYS_CLOCK_HZ / baudrate;
     uart_tx_is_hw  = pin_in_table(
         tx_pin, uart_hw_tx_pins,
         sizeof(uart_hw_tx_pins) / sizeof(uart_hw_tx_pins[0]));
@@ -80,7 +83,7 @@ int hal_uart_init(hal_gpio_pin_t tx_pin, hal_gpio_pin_t rx_pin,
     return 0;
 }
 
-// Wait until the 16 MHz system timer reaches `target` (handles wrap-around).
+// Wait until the system timer reaches `target` (handles wrap-around).
 static inline void wait_until_tick(uint32_t target) {
     while ((uint32_t)(clock_time() - target) & 0x80000000u) {
     }
