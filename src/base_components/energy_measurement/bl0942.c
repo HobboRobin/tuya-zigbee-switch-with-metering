@@ -211,11 +211,26 @@ static void bl0942_meter_get_data(void *ctx, energy_meter_data_t *data) {
     bl0942_t *dev = (bl0942_t *)ctx;
 
     memset(data, 0, sizeof(*data));
+#if BL0942_UART_DIAG
+    // TEMPORARY: the developer console cannot read swBuildId on this device, so
+    // surface the UART link counters through the measurement tiles, which do
+    // update reliably. valid is forced so they report even while R stays 0.
+    //   power (W, divisor 1) = R : raw bytes received on UART RX  << key number
+    //   voltage (V, /100)    = P : poll commands sent (loop alive?)
+    //   current (A, /1000)   = K : checksum-valid frames
+    //   energy               = H : frame headers (0x55) matched
+    data->power   = (int16_t)dev->diag_rx_bytes;
+    data->voltage = dev->diag_polls;
+    data->current = dev->diag_checksums;
+    data->energy  = dev->diag_headers;
+    data->valid   = 1;
+#else
     data->voltage = dev->data.voltage;
     data->current = dev->data.current;
     data->power   = dev->data.power;
     data->energy  = dev->data.energy;
     data->valid   = dev->data.valid;
+#endif
 }
 
 static void bl0942_meter_reset_energy(void *ctx) {

@@ -31,8 +31,16 @@
 
 #define BL0942_DEFAULT_BAUDRATE      4800
 #define BL0942_POLL_INTERVAL_MS      1000
-#define BL0942_FRAME_LEN             23
-#define BL0942_RX_RING_SIZE          64
+
+// Temporary hardware bring-up aid: when 1, get_data() reports the UART link
+// counters (polls/rx-bytes/headers/checksums) on the measurement tiles instead
+// of the real readings, so the link can be diagnosed without a debug UART.
+// Set back to 0 once BL0942 metering is confirmed working.
+#ifndef BL0942_UART_DIAG
+#define BL0942_UART_DIAG       1
+#endif
+#define BL0942_FRAME_LEN       23
+#define BL0942_RX_RING_SIZE    64
 
 // Energy accumulates power[W] * elapsed[ms]; 1 Wh = 3,600,000 W*ms. Kept in
 // 32-bit with subtract-carry (TC32 has no 64-bit divide).
