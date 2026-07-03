@@ -247,7 +247,7 @@ const romasku = {
     // (in display units, e.g. Volts), we scale it to the firmware's raw integer
     // unit (multiplier) and write it. The firmware then derives and persists the
     // multiplier so the channel reads that value, and clears the field.
-    calibrate: ({name, attribute, unit, multiplier, valueMax, description, endpointName}) => {
+    calibrate: ({name, attribute, unit, multiplier, valueMax, valueStep, description, endpointName}) => {
         const result = numeric({
             name,
             cluster: "haElectricalMeasurement",
@@ -257,6 +257,7 @@ const romasku = {
             access: "ALL",
             valueMin: 0,
             valueMax,
+            valueStep,
             entityCategory: "config",
             endpointName,
         });
@@ -7280,6 +7281,7 @@ const definitions = [
                 unit: "V",
                 multiplier: 100, // firmware wants centivolts
                 valueMax: 655,
+                valueStep: 0.01, // allow e.g. 236.54 V
                 description: "Measure the real voltage and enter it here to calibrate; the device computes and stores the multiplier",
                 endpointName: "switch",
             }),
@@ -7289,6 +7291,7 @@ const definitions = [
                 unit: "A",
                 multiplier: 1000, // firmware wants milliamps
                 valueMax: 65,
+                valueStep: 0.001, // allow e.g. 0.523 A
                 description: "Measure the real current (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
@@ -7296,8 +7299,9 @@ const definitions = [
                 name: "calibrate_power",
                 attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 1, // firmware wants whole watts
+                multiplier: 1, // firmware wants whole watts (chip resolution)
                 valueMax: 65535,
+                valueStep: 0.1, // accepts decimals; rounded to whole watts on write
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
@@ -7428,6 +7432,7 @@ const definitions = [
                 unit: "V",
                 multiplier: 100, // firmware wants centivolts
                 valueMax: 655,
+                valueStep: 0.01, // allow e.g. 236.54 V
                 description: "Measure the real voltage and enter it here to calibrate; the device computes and stores the multiplier",
                 endpointName: "switch",
             }),
@@ -7437,6 +7442,7 @@ const definitions = [
                 unit: "A",
                 multiplier: 1000, // firmware wants milliamps
                 valueMax: 65,
+                valueStep: 0.001, // allow e.g. 0.523 A
                 description: "Measure the real current (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
@@ -7444,8 +7450,9 @@ const definitions = [
                 name: "calibrate_power",
                 attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 1, // firmware wants whole watts
+                multiplier: 1, // firmware wants whole watts (chip resolution)
                 valueMax: 65535,
+                valueStep: 0.1, // accepts decimals; rounded to whole watts on write
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
@@ -7576,6 +7583,7 @@ const definitions = [
                 unit: "V",
                 multiplier: 100, // firmware wants centivolts
                 valueMax: 655,
+                valueStep: 0.01, // allow e.g. 236.54 V
                 description: "Measure the real voltage and enter it here to calibrate; the device computes and stores the multiplier",
                 endpointName: "switch",
             }),
@@ -7585,6 +7593,7 @@ const definitions = [
                 unit: "A",
                 multiplier: 1000, // firmware wants milliamps
                 valueMax: 65,
+                valueStep: 0.001, // allow e.g. 0.523 A
                 description: "Measure the real current (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
@@ -7592,8 +7601,9 @@ const definitions = [
                 name: "calibrate_power",
                 attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 1, // firmware wants whole watts
+                multiplier: 1, // firmware wants whole watts (chip resolution)
                 valueMax: 65535,
+                valueStep: 0.1, // accepts decimals; rounded to whole watts on write
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
@@ -7779,6 +7789,7 @@ const definitions = [
                 unit: "V",
                 multiplier: 100, // firmware wants centivolts
                 valueMax: 655,
+                valueStep: 0.01, // allow e.g. 236.54 V
                 description: "Measure the real voltage and enter it here to calibrate; the device computes and stores the multiplier",
                 endpointName: "switch",
             }),
@@ -7788,6 +7799,7 @@ const definitions = [
                 unit: "A",
                 multiplier: 1000, // firmware wants milliamps
                 valueMax: 65,
+                valueStep: 0.001, // allow e.g. 0.523 A
                 description: "Measure the real current (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
@@ -7795,8 +7807,9 @@ const definitions = [
                 name: "calibrate_power",
                 attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 1, // firmware wants whole watts
+                multiplier: 1, // firmware wants whole watts (chip resolution)
                 valueMax: 65535,
+                valueStep: 0.1, // accepts decimals; rounded to whole watts on write
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
