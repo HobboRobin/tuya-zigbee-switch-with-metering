@@ -7228,18 +7228,6 @@ const definitions = [
             romasku.networkLedBrightness("network_led_brightness", "switch"),
             romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay"] }),
-            // Name the custom int32 centiwatt power attribute so Zigbee2MQTT
-            // shows it (e.g. in the Reporting tab) and configures reporting with
-            // the correct data type. Merges into the standard cluster, so the
-            // built-in attributes (rmsVoltage, activePower, ...) stay available.
-            deviceAddCustomCluster("haElectricalMeasurement", {
-                ID: 0x0b04,
-                attributes: {
-                    activePowerPrecise: {ID: 0xFF13, type: Zcl.DataType.INT32},
-                },
-                commands: {},
-                commandsResponse: {},
-            }),
             romasku.scaledMeasurement({
                 name: "voltage",
                 cluster: "haElectricalMeasurement",
@@ -7261,9 +7249,9 @@ const definitions = [
             romasku.scaledMeasurement({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts (named via deviceAddCustomCluster
-                // above); the standard activePower is int16 / whole-watt only.
-                attribute: "activePowerPrecise",
+                // Custom int32 in centiwatts: the standard activePower (0x050B)
+                // is int16 and can only carry whole watts.
+                attribute: {ID: 0xFF13, type: 0x2b},
                 unit: "W",
                 divisor: 100,
                 precision: 2,
@@ -7370,7 +7358,7 @@ const definitions = [
                 // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePowerPrecise", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
@@ -7395,18 +7383,6 @@ const definitions = [
             romasku.networkLedBrightness("network_led_brightness", "switch"),
             romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay"] }),
-            // Name the custom int32 centiwatt power attribute so Zigbee2MQTT
-            // shows it (e.g. in the Reporting tab) and configures reporting with
-            // the correct data type. Merges into the standard cluster, so the
-            // built-in attributes (rmsVoltage, activePower, ...) stay available.
-            deviceAddCustomCluster("haElectricalMeasurement", {
-                ID: 0x0b04,
-                attributes: {
-                    activePowerPrecise: {ID: 0xFF13, type: Zcl.DataType.INT32},
-                },
-                commands: {},
-                commandsResponse: {},
-            }),
             romasku.scaledMeasurement({
                 name: "voltage",
                 cluster: "haElectricalMeasurement",
@@ -7428,9 +7404,9 @@ const definitions = [
             romasku.scaledMeasurement({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts (named via deviceAddCustomCluster
-                // above); the standard activePower is int16 / whole-watt only.
-                attribute: "activePowerPrecise",
+                // Custom int32 in centiwatts: the standard activePower (0x050B)
+                // is int16 and can only carry whole watts.
+                attribute: {ID: 0xFF13, type: 0x2b},
                 unit: "W",
                 divisor: 100,
                 precision: 2,
@@ -7537,7 +7513,7 @@ const definitions = [
                 // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePowerPrecise", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
@@ -7562,18 +7538,6 @@ const definitions = [
             romasku.networkLedBrightness("network_led_brightness", "switch"),
             romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay"] }),
-            // Name the custom int32 centiwatt power attribute so Zigbee2MQTT
-            // shows it (e.g. in the Reporting tab) and configures reporting with
-            // the correct data type. Merges into the standard cluster, so the
-            // built-in attributes (rmsVoltage, activePower, ...) stay available.
-            deviceAddCustomCluster("haElectricalMeasurement", {
-                ID: 0x0b04,
-                attributes: {
-                    activePowerPrecise: {ID: 0xFF13, type: Zcl.DataType.INT32},
-                },
-                commands: {},
-                commandsResponse: {},
-            }),
             romasku.scaledMeasurement({
                 name: "voltage",
                 cluster: "haElectricalMeasurement",
@@ -7595,9 +7559,9 @@ const definitions = [
             romasku.scaledMeasurement({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts (named via deviceAddCustomCluster
-                // above); the standard activePower is int16 / whole-watt only.
-                attribute: "activePowerPrecise",
+                // Custom int32 in centiwatts: the standard activePower (0x050B)
+                // is int16 and can only carry whole watts.
+                attribute: {ID: 0xFF13, type: 0x2b},
                 unit: "W",
                 divisor: 100,
                 precision: 2,
@@ -7704,7 +7668,7 @@ const definitions = [
                 // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePowerPrecise", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
@@ -7784,18 +7748,6 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
-            // Name the custom int32 centiwatt power attribute so Zigbee2MQTT
-            // shows it (e.g. in the Reporting tab) and configures reporting with
-            // the correct data type. Merges into the standard cluster, so the
-            // built-in attributes (rmsVoltage, activePower, ...) stay available.
-            deviceAddCustomCluster("haElectricalMeasurement", {
-                ID: 0x0b04,
-                attributes: {
-                    activePowerPrecise: {ID: 0xFF13, type: Zcl.DataType.INT32},
-                },
-                commands: {},
-                commandsResponse: {},
-            }),
             romasku.scaledMeasurement({
                 name: "voltage",
                 cluster: "haElectricalMeasurement",
@@ -7817,9 +7769,9 @@ const definitions = [
             romasku.scaledMeasurement({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts (named via deviceAddCustomCluster
-                // above); the standard activePower is int16 / whole-watt only.
-                attribute: "activePowerPrecise",
+                // Custom int32 in centiwatts: the standard activePower (0x050B)
+                // is int16 and can only carry whole watts.
+                attribute: {ID: 0xFF13, type: 0x2b},
                 unit: "W",
                 divisor: 100,
                 precision: 2,
@@ -7926,7 +7878,7 @@ const definitions = [
                 // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePowerPrecise", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
