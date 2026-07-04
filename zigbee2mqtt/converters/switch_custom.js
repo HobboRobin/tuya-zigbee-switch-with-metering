@@ -246,6 +246,22 @@ const romasku = {
     // (in display units, e.g. Volts), we scale it to the firmware's raw integer
     // unit (multiplier) and write it. The firmware then derives and persists the
     // multiplier so the channel reads that value, and clears the field.
+    calibrationValues: (name, endpointName) =>
+        text({
+            name,
+            endpointName,
+            access: "ALL",
+            cluster: "haElectricalMeasurement",
+            attribute: {ID: 0xFF20, type: 0x42}, // char str
+            description: "Active calibration multipliers as V<v>A<a>W<w>. Read it from a calibrated device and write it to others of the same type to copy the calibration (a missing or 0 channel keeps its current value)",
+            entityCategory: "config",
+            validate: (value) => {
+                assertString(value);
+                if (!/^([VAW]\d{1,10}){0,3}$/.test(value)) {
+                    throw new Error("Expected format like V154672A118646W13939 (V/A/W each followed by digits)");
+                }
+            },
+        }),
     calibrate: ({name, attribute, unit, multiplier, valueMax, valueStep, description, endpointName}) => {
         const result = numeric({
             name,
@@ -7245,15 +7261,13 @@ const definitions = [
                 precision: 3,
                 endpointName: "switch",
             }),
-            romasku.scaledMeasurement({
+            numeric({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts: the standard activePower (0x050B)
-                // is int16 and can only carry whole watts.
-                attribute: {ID: 0xFF13, type: 0x2b},
+                attribute: "activePower",
+                description: "Instantaneous measured power",
                 unit: "W",
-                divisor: 100,
-                precision: 2,
+                access: "STATE",
                 endpointName: "switch",
             }),
             romasku.scaledMeasurement({
@@ -7298,14 +7312,15 @@ const definitions = [
             }),
             romasku.calibrate({
                 name: "calibrate_power",
-                attribute: {ID: 0xFF12, type: 0x23}, // uint32 (centiwatts)
+                attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 100, // firmware wants centiwatts
-                valueMax: 4000,
-                valueStep: 0.01, // allow e.g. 1234.56 W
+                multiplier: 1, // firmware wants whole watts
+                valueMax: 65535,
+                valueStep: 1,
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
+            romasku.calibrationValues("calibration_values", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
@@ -7352,12 +7367,10 @@ const definitions = [
             await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
-                // centivolts (500 = 5 V), current in mA (50 = 0.05 A). Power is
-                // reported via the custom int32 centiwatt attribute 0xFF13
-                // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
+                // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
@@ -7400,15 +7413,13 @@ const definitions = [
                 precision: 3,
                 endpointName: "switch",
             }),
-            romasku.scaledMeasurement({
+            numeric({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts: the standard activePower (0x050B)
-                // is int16 and can only carry whole watts.
-                attribute: {ID: 0xFF13, type: 0x2b},
+                attribute: "activePower",
+                description: "Instantaneous measured power",
                 unit: "W",
-                divisor: 100,
-                precision: 2,
+                access: "STATE",
                 endpointName: "switch",
             }),
             romasku.scaledMeasurement({
@@ -7453,14 +7464,15 @@ const definitions = [
             }),
             romasku.calibrate({
                 name: "calibrate_power",
-                attribute: {ID: 0xFF12, type: 0x23}, // uint32 (centiwatts)
+                attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 100, // firmware wants centiwatts
-                valueMax: 4000,
-                valueStep: 0.01, // allow e.g. 1234.56 W
+                multiplier: 1, // firmware wants whole watts
+                valueMax: 65535,
+                valueStep: 1,
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
+            romasku.calibrationValues("calibration_values", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
@@ -7507,12 +7519,10 @@ const definitions = [
             await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
-                // centivolts (500 = 5 V), current in mA (50 = 0.05 A). Power is
-                // reported via the custom int32 centiwatt attribute 0xFF13
-                // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
+                // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
@@ -7555,15 +7565,13 @@ const definitions = [
                 precision: 3,
                 endpointName: "switch",
             }),
-            romasku.scaledMeasurement({
+            numeric({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts: the standard activePower (0x050B)
-                // is int16 and can only carry whole watts.
-                attribute: {ID: 0xFF13, type: 0x2b},
+                attribute: "activePower",
+                description: "Instantaneous measured power",
                 unit: "W",
-                divisor: 100,
-                precision: 2,
+                access: "STATE",
                 endpointName: "switch",
             }),
             romasku.scaledMeasurement({
@@ -7608,14 +7616,15 @@ const definitions = [
             }),
             romasku.calibrate({
                 name: "calibrate_power",
-                attribute: {ID: 0xFF12, type: 0x23}, // uint32 (centiwatts)
+                attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 100, // firmware wants centiwatts
-                valueMax: 4000,
-                valueStep: 0.01, // allow e.g. 1234.56 W
+                multiplier: 1, // firmware wants whole watts
+                valueMax: 65535,
+                valueStep: 1,
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
+            romasku.calibrationValues("calibration_values", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
@@ -7662,12 +7671,10 @@ const definitions = [
             await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
-                // centivolts (500 = 5 V), current in mA (50 = 0.05 A). Power is
-                // reported via the custom int32 centiwatt attribute 0xFF13
-                // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
+                // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
@@ -7765,15 +7772,13 @@ const definitions = [
                 precision: 3,
                 endpointName: "switch",
             }),
-            romasku.scaledMeasurement({
+            numeric({
                 name: "power",
                 cluster: "haElectricalMeasurement",
-                // Custom int32 in centiwatts: the standard activePower (0x050B)
-                // is int16 and can only carry whole watts.
-                attribute: {ID: 0xFF13, type: 0x2b},
+                attribute: "activePower",
+                description: "Instantaneous measured power",
                 unit: "W",
-                divisor: 100,
-                precision: 2,
+                access: "STATE",
                 endpointName: "switch",
             }),
             romasku.scaledMeasurement({
@@ -7818,14 +7823,15 @@ const definitions = [
             }),
             romasku.calibrate({
                 name: "calibrate_power",
-                attribute: {ID: 0xFF12, type: 0x23}, // uint32 (centiwatts)
+                attribute: {ID: 0xFF12, type: 0x21}, // uint16
                 unit: "W",
-                multiplier: 100, // firmware wants centiwatts
-                valueMax: 4000,
-                valueStep: 0.01, // allow e.g. 1234.56 W
+                multiplier: 1, // firmware wants whole watts
+                valueMax: 65535,
+                valueStep: 1,
                 description: "Measure the real power (under a steady load) and enter it here to calibrate",
                 endpointName: "switch",
             }),
+            romasku.calibrationValues("calibration_values", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
@@ -7872,12 +7878,10 @@ const definitions = [
             await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
-                // centivolts (500 = 5 V), current in mA (50 = 0.05 A). Power is
-                // reported via the custom int32 centiwatt attribute 0xFF13
-                // (50 = 0.5 W); the standard int16 activePower stays whole-watt.
+                // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
                 {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
                 {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: {ID: 0xFF13, type: 0x2b}, minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},

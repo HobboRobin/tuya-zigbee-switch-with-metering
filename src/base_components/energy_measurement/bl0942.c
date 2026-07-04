@@ -81,16 +81,15 @@ static void bl0942_apply_frame(bl0942_t *dev) {
                                    BL0942_FIXED_POINT_SCALE);
     dev->data.current = (uint16_t)((i_rms * dev->cal.current_multiplier) /
                                    BL0942_FIXED_POINT_SCALE);
-    dev->data.power = energy_meter_product_to_cw(watt *
-                                                 dev->cal.power_multiplier);
+    dev->data.power = (int16_t)((watt * dev->cal.power_multiplier) /
+                                BL0942_FIXED_POINT_SCALE);
 
     // Energy: integrate the reported power over wall-clock time. This stays
-    // consistent with the user's power calibration automatically. Integrated in
-    // whole watts (power / 100) so the W*ms accumulator keeps ample headroom.
+    // consistent with the user's power calibration automatically.
     uint32_t now     = hal_millis();
     uint32_t elapsed = now - dev->data.last_frame_time;
     if (dev->data.valid && elapsed <= 10u * BL0942_POLL_INTERVAL_MS) {
-        dev->data.energy_acc += (uint32_t)(dev->data.power / 100) * elapsed;
+        dev->data.energy_acc += (uint32_t)dev->data.power * elapsed;
         while (dev->data.energy_acc >= BL0942_ENERGY_WH_SUBUNIT) {
             dev->data.energy_acc -= BL0942_ENERGY_WH_SUBUNIT;
             dev->data.energy++;
@@ -246,14 +245,8 @@ static int bl0942_meter_calibrate(void *ctx, energy_meter_channel_t channel,
         return -1;
 
     // value = raw * multiplier / SCALE, so multiplier = reference * SCALE / raw.
-    // Voltage/current references are in cV/mA; the power reference is in cW,
-    // handled by a helper that keeps the multiplier's whole-watt meaning.
-    if (channel == ENERGY_METER_CHANNEL_POWER) {
-        *target = energy_meter_power_mult_from_cw(reference, raw);
-    } else {
-        *target = ((uint32_t)reference * (uint32_t)BL0942_FIXED_POINT_SCALE) /
-                  raw;
-    }
+    // reference is uint16-range, so the product stays within uint32.
+    *target = ((uint32_t)reference * (uint32_t)BL0942_FIXED_POINT_SCALE) / raw;
 
     printf("BL0942: calibrated ch %u to ref %u (raw %u) => mult %u\r\n",
            channel, reference, raw, *target);

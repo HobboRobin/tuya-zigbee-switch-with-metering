@@ -10,7 +10,7 @@ ZCL_CLUSTER_ELECTRICAL_MEASUREMENT = 0x0B04
 ZCL_ATTR_ELEC_MEAS_RMS_VOLTAGE = 0x0505
 ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_VOLTAGE = 0xFF10
 ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER = 0xFF12
-ZCL_ATTR_ELEC_MEAS_CUST_ACTIVE_POWER_CW = 0xFF13
+ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES = 0xFF20
 
 ZCL_ATTR_BASIC_STATUS_LED_BRIGHTNESS = 0xFF05
 ZCL_ATTR_BASIC_STATUS_LED_TRANSITION = 0xFF06
@@ -40,16 +40,6 @@ def test_bl0942_registers_electrical_measurement(device: Device):
         )
         is not None
     )
-    # 0.01 W power path: the custom int32 centiwatt attribute and the (now
-    # uint32) power-calibration attribute must both be registered.
-    assert (
-        device.read_zigbee_attr(
-            1,
-            ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
-            ZCL_ATTR_ELEC_MEAS_CUST_ACTIVE_POWER_CW,
-        )
-        is not None
-    )
     assert (
         device.read_zigbee_attr(
             1,
@@ -58,6 +48,51 @@ def test_bl0942_registers_electrical_measurement(device: Device):
         )
         is not None
     )
+
+
+def test_calibration_values_read_write_persist(device: Device):
+    """0xFF20 mirrors the multipliers; writes apply, canonicalise and persist."""
+    # BL0942 compile-time defaults: V=413, A=261, W=105.
+    assert (
+        device.read_zigbee_attr(
+            1,
+            ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+            ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES,
+        )
+        == "V413A261W105"
+    )
+
+    # Partial write: V and W change, missing A keeps its value; a read
+    # afterwards returns the canonical full string.
+    device.write_zigbee_attr(
+        1,
+        ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+        ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES,
+        "V500W700",
+    )
+    assert (
+        device.read_zigbee_attr(
+            1,
+            ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+            ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES,
+        )
+        == "V500A261W700"
+    )
+
+    # The imported multipliers survive a reboot (persisted like a normal
+    # on-device calibration).
+    with StubProc(
+        device_config="StubManufacturer;StubDevice;LA0ip;SB5u;RC2;IB4ip;EBB0B7;M;"
+    ) as proc:
+        rebooted = Device(proc)
+        assert (
+            rebooted.read_zigbee_attr(
+                1,
+                ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+                ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES,
+            )
+            == "V500A261W700"
+        )
 
 
 def test_network_led_dimming_attrs_present_and_persisted(device: Device):

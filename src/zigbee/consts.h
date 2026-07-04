@@ -138,9 +138,9 @@
 #define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_VOLTAGE                    0xFF10
 #define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_CURRENT                    0xFF11
 #define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER                      0xFF12
-// activePower (0x050B) is int16 and can only carry whole watts; this custom
-// int32 attribute carries the same power in centiwatts (0.01 W resolution).
-#define ZCL_ATTR_ELEC_MEAS_CUST_ACTIVE_POWER_CW                      0xFF13
+// Read/write string "V<mult>A<mult>W<mult>" mirroring the calibration
+// multipliers, for copying a reference device's calibration to others.
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES                   0xFF20
 
 // Metering cluster (0x0702)
 #define ZCL_CLUSTER_METERING                                         0x0702

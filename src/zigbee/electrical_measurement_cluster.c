@@ -36,6 +36,76 @@ static void elec_meas_save_calibration(electrical_measurement_cluster_t *cluster
     hal_nvm_write(NV_ITEM_ENERGY_CALIBRATION, sizeof(nv), (uint8_t *)&nv);
 }
 
+// Append `value` as decimal digits at str+pos, returning the new position.
+static uint8_t append_u32_dec(char *str, uint8_t pos, uint32_t value) {
+    char    digits[10];
+    uint8_t n = 0;
+
+    do {
+        digits[n++] = (char)('0' + (value % 10u));
+        value      /= 10u;
+    } while (value != 0);
+    while (n > 0) {
+        str[pos++] = digits[--n];
+    }
+    return pos;
+}
+
+// Rebuild the calibration_values string ("V<mult>A<mult>W<mult>") from the
+// meter's active multipliers, so a read always returns the canonical form.
+static void elec_meas_refresh_calibration_values(
+    electrical_measurement_cluster_t *cluster) {
+    energy_meter_calibration_t cal;
+    uint8_t pos = 0;
+
+    energy_meter_get_calibration(cluster->meter, &cal);
+    cluster->calibration_values.str[pos++] = 'V';
+    pos = append_u32_dec(cluster->calibration_values.str, pos,
+                         cal.voltage_multiplier);
+    cluster->calibration_values.str[pos++] = 'A';
+    pos = append_u32_dec(cluster->calibration_values.str, pos,
+                         cal.current_multiplier);
+    cluster->calibration_values.str[pos++] = 'W';
+    pos = append_u32_dec(cluster->calibration_values.str, pos,
+                         cal.power_multiplier);
+    cluster->calibration_values.len = pos;
+}
+
+// Parse "V<mult>A<mult>W<mult>" (any order, each channel optional; 0 or a
+// missing channel keeps the current multiplier) and apply + persist it.
+static void elec_meas_apply_calibration_values(
+    electrical_measurement_cluster_t *cluster) {
+    const char *str      = cluster->calibration_values.str;
+    uint8_t     len      = cluster->calibration_values.len;
+    uint32_t    mults[3] = { 0, 0, 0 }; // V, A, W
+
+    if (len >= sizeof(cluster->calibration_values.str))
+        len = sizeof(cluster->calibration_values.str) - 1;
+
+    for (uint8_t i = 0; i < len; i++) {
+        int8_t channel = -1;
+        if (str[i] == 'V')
+            channel = 0;
+        else if (str[i] == 'A')
+            channel = 1;
+        else if (str[i] == 'W')
+            channel = 2;
+
+        if (channel < 0)
+            continue;
+
+        uint32_t value = 0;
+        for (i++; i < len && str[i] >= '0' && str[i] <= '9'; i++) {
+            value = value * 10u + (uint32_t)(str[i] - '0');
+        }
+        i--; // outer loop increments past the last digit
+        mults[channel] = value;
+    }
+
+    energy_meter_set_calibration(cluster->meter, mults[0], mults[1], mults[2]);
+    elec_meas_save_calibration(cluster);
+}
+
 void electrical_measurement_cluster_init(electrical_measurement_cluster_t *cluster,
                                          energy_meter_t *meter) {
     if (!cluster || !meter)
@@ -49,10 +119,7 @@ void electrical_measurement_cluster_init(electrical_measurement_cluster_t *clust
     cluster->ac_current_multiplier = 1;
     cluster->ac_current_divisor    = 1000; // firmware reports current in mA
     cluster->ac_power_multiplier   = 1;
-    // Standard activePower (0x050B) stays whole-watt; 0.01 W resolution is
-    // carried by the custom int32 attribute 0xFF13 (divided by 100 in the
-    // converter), so this divisor applies only to the compat whole-watt value.
-    cluster->ac_power_divisor = 1;
+    cluster->ac_power_divisor      = 1;    // firmware reports power in whole watts
 }
 
 void electrical_measurement_cluster_add_to_endpoint(
@@ -90,10 +157,11 @@ void electrical_measurement_cluster_add_to_endpoint(
                cluster->calibrate_voltage);
     SETUP_ATTR(14, ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_CURRENT, ZCL_DATA_TYPE_UINT16, ATTR_WRITABLE,
                cluster->calibrate_current);
-    SETUP_ATTR(15, ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER, ZCL_DATA_TYPE_UINT32, ATTR_WRITABLE,
+    SETUP_ATTR(15, ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER, ZCL_DATA_TYPE_UINT16, ATTR_WRITABLE,
                cluster->calibrate_power);
-    SETUP_ATTR(16, ZCL_ATTR_ELEC_MEAS_CUST_ACTIVE_POWER_CW, ZCL_DATA_TYPE_INT32, ATTR_READONLY,
-               cluster->active_power_cw);
+    SETUP_ATTR(16, ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES, ZCL_DATA_TYPE_CHAR_STR,
+               ATTR_WRITABLE,
+               cluster->calibration_values);
 
     endpoint->clusters[endpoint->cluster_count].cluster_id =
         ZCL_CLUSTER_ELECTRICAL_MEASUREMENT;
@@ -104,6 +172,9 @@ void electrical_measurement_cluster_add_to_endpoint(
     cluster->endpoint = endpoint->endpoint;
     g_elec_cluster    = cluster;
     electrical_measurement_cluster_load_calibration(cluster);
+    // Seed the readable multiplier string (defaults, config_str markers and
+    // NVM-restored calibration are all applied by now).
+    elec_meas_refresh_calibration_values(cluster);
 }
 
 void electrical_measurement_cluster_load_calibration(
@@ -157,12 +228,21 @@ void electrical_measurement_cluster_callback_attr_write_trampoline(
                                             cluster->calibrate_power);
         cluster->calibrate_power = 0;
         break;
+    case ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES:
+        // Direct multiplier import (e.g. copied from a calibrated reference
+        // device). Applies, persists, and rewrites the canonical string.
+        elec_meas_apply_calibration_values(cluster);
+        elec_meas_refresh_calibration_values(cluster);
+        return;
+
     default:
         return;
     }
 
-    if (calibrated == 0)
+    if (calibrated == 0) {
         elec_meas_save_calibration(cluster);
+        elec_meas_refresh_calibration_values(cluster);
+    }
 }
 
 void electrical_measurement_cluster_update(electrical_measurement_cluster_t *cluster) {
@@ -172,15 +252,12 @@ void electrical_measurement_cluster_update(electrical_measurement_cluster_t *clu
     energy_meter_data_t data;
     energy_meter_get_data(cluster->meter, &data);
     if (data.valid) {
-        cluster->rms_voltage = data.voltage;
-        cluster->rms_current = data.current;
-        // data.power is centiwatts: expose it directly on the custom int32
-        // attribute (0.01 W) and the whole-watt value on standard activePower.
-        cluster->active_power_cw = data.power;
-        cluster->active_power    = (int16_t)(data.power / 100);
-        cluster->freq_cf         = data.freq_cf;
-        cluster->freq_cf1        = data.freq_cf1;
-        cluster->sel_state       = data.sel_state;
+        cluster->rms_voltage  = data.voltage;
+        cluster->rms_current  = data.current;
+        cluster->active_power = data.power;
+        cluster->freq_cf      = data.freq_cf;
+        cluster->freq_cf1     = data.freq_cf1;
+        cluster->sel_state    = data.sel_state;
     }
 }
 

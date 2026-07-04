@@ -15,41 +15,13 @@ typedef enum {
 typedef struct {
     uint16_t voltage; // cV
     uint16_t current; // mA
-    int32_t  power;   // cW (centiwatts, 0.01 W resolution)
+    int16_t  power;   // W
     uint32_t energy;  // Wh
     uint8_t  valid;
     uint32_t freq_cf;
     uint32_t freq_cf1;
     uint8_t  sel_state;
 } energy_meter_data_t;
-
-// Power fixed-point helpers. Drivers keep computing the product
-// (pulse_count-or-raw-register * power_multiplier) at FIXED_POINT_SCALE = 65536;
-// these turn it into centiwatts (2 decimals) and let calibration accept a
-// centiwatt reference, WITHOUT changing the meaning of the stored multiplier
-// (so existing calibration stays valid). All math is 32-bit (TC32 has no
-// 64-bit divide); both drivers use SCALE = 65536.
-#define ENERGY_METER_POWER_SCALE    65536u
-
-// product * 100 / SCALE, split so no intermediate overflows uint32.
-static inline int32_t energy_meter_product_to_cw(uint32_t product) {
-    return (int32_t)((product / ENERGY_METER_POWER_SCALE) * 100u +
-                     ((product % ENERGY_METER_POWER_SCALE) * 100u) /
-                     ENERGY_METER_POWER_SCALE);
-}
-
-// Multiplier from a centiwatt reference. Equals ref_watt * SCALE / raw, i.e.
-// identical to the old whole-watt calibration, so stored multipliers are
-// unchanged. Exact in 32-bit: 65536 = 655*100 + 36, so
-//   ref_cw * SCALE / 100 = ref_cw*655 + ref_cw*36/100.
-static inline uint32_t energy_meter_power_mult_from_cw(uint32_t ref_cw,
-                                                       uint32_t raw) {
-    if (raw == 0)
-        return 0;
-
-    uint32_t scaled = ref_cw * 655u + (ref_cw * 36u) / 100u;
-    return scaled / raw;
-}
 
 // Calibration channels used by energy_meter_calibrate().
 typedef enum {
