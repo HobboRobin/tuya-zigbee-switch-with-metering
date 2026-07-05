@@ -182,8 +182,10 @@ void _update_measurement_handler(void *arg) {
     dev->data.freq_cf1 = freq_cf1_mhz;
 
     // Physical values are computed directly from the pulse counts (not from
-    // the mHz frequency) to keep good integer resolution. power in W.
-    dev->data.power = (int16_t)(((uint32_t)cf_pulses * dev->cal.power_multiplier) /
+    // the mHz frequency) to keep good integer resolution. power in W,
+    // rounded to nearest so small loads read honestly (1.8 W -> 2, not 1).
+    dev->data.power = (int16_t)(((uint32_t)cf_pulses * dev->cal.power_multiplier +
+                                 HLW8012_FIXED_POINT_SCALE / 2) /
                                 HLW8012_FIXED_POINT_SCALE);
 
     // Energy: accumulate pulses*MULT sub-units and carry whole Wh out by

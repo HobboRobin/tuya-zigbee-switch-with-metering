@@ -2955,7 +2955,7 @@ OUTLET_BSEED_PM_TS011F_b28wrpvx:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: b28wrpvx;TS011F-BS-PM;LB4p;SB5u;RD2;IC3p;EPA1C2B1;M;
+  config_str: b28wrpvx;TS011F-BS-PM;LC3p;SB5u;RD2;IB4p;EPA1C2B1V161460A144679W16989;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -2964,7 +2964,7 @@ OUTLET_BSEED_PM_TS011F_b28wrpvx:
   firmware_image_type: 43556
   build: yes
   status: in_progress
-  info: "Power monitoring enabled (HLW8012), pinout hardware-verified for this revision: LED B4, switch B5, relay D2, indicator C3 (PWM-dimmable), energy CF=A1 CF1=C2 SEL=B1. Calibrate against a multimeter via the on-device calibrate fields if the reported V/A/W are off."
+  info: "Power monitoring enabled (HLW8012), pinout hardware-verified for this revision: network LED C3, switch B5, relay D2, relay indicator B4 (both LEDs PWM-dimmable), energy CF=A1 CF1=C2 SEL=B1. Ships factory-calibrated (V/A/W markers in the config_str, measured against a reference meter); fine-tune per device via the calibrate fields or import multipliers via calibration_values."
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store:
   - https://www.aliexpress.com/item/1005004402438527.html
@@ -3015,7 +3015,7 @@ OUTLET_BSEED_PM_TS011F_4ux0ondb:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4p;SB5u;RD2;IC3p;EPC0C2C1;M;
+  config_str: 4ux0ondb;TS011F-BS-PM-2;LC3p;SB5u;RD2;IB4p;EPC0C2C1V154714A137765W16193;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3024,7 +3024,7 @@ OUTLET_BSEED_PM_TS011F_4ux0ondb:
   firmware_image_type: 47004
   build: yes
   status: in_progress
-  info: "Power monitoring (HLW8012, default pins CF=C0 CF1=C2 SEL=C1, hardware verified). This fingerprint (_TZ3000_4ux0ondb) ships in more than one PCB revision that cannot be told apart over Zigbee: a second revision has CF and SEL swapped (EPC1C2C0) and a different voltage divider. Pins are runtime-settable in the config_str, and calibration can be done on-device via the calibrate_voltage/current/power fields (measure with a multimeter, enter the real value, it computes and persists the multiplier). For the swapped revision set the EP token to EPC1C2C0, then calibrate."
+  info: "Power monitoring (HLW8012, default pins CF=C0 CF1=C2 SEL=C1, hardware verified; network LED C3, relay indicator B4, both PWM-dimmable). Ships factory-calibrated (V/A/W markers in the config_str). This fingerprint (_TZ3000_4ux0ondb) ships in more than one PCB revision that cannot be told apart over Zigbee: a second revision has CF and SEL swapped (EPC1C2C0) and a different voltage divider. Pins are runtime-settable in the config_str; for the swapped revision set the EP token to EPC1C2C0, then calibrate via the calibrate fields (or import multipliers via calibration_values)."
   threads:
   - https://github.com/romasku/tuya-zigbee-switch/issues/145
   - https://github.com/romasku/tuya-zigbee-switch/pull/397
@@ -3072,7 +3072,7 @@ OUTLET_NOUS_A1Z_TS011F:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;EBB1B7;M;
+  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;EBB1B7V412A256W103;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3081,7 +3081,7 @@ OUTLET_NOUS_A1Z_TS011F:
   firmware_image_type: 47114
   build: yes
   status: in_progress
-  info: "Relay PC2 (monostable, active-high), button PB5, dimmable LED PB4 (inverted). Energy metering via BL0942 on UART (EBB1B7: MCU TX=B1, RX=B7, both hardware UART pins; default 4800 baud, override with e.g. S9600 in the EB token). Calibrate V/A/W via the on-device calibrate fields. If the meter stays silent, swap the pins to EBB7B1."
+  info: "Relay PC2 (monostable, active-high), button PB5, dimmable LED PB4 (inverted). Energy metering via BL0942 on UART (EBB1B7: MCU TX=B1, RX=B7, both hardware UART pins; default 4800 baud, override with e.g. S9600 in the EB token). Ships factory-calibrated (V/A/W markers in the config_str); fine-tune via the calibrate fields or import multipliers via calibration_values. If the meter stays silent, swap the pins to EBB7B1."
   threads: null
   store: https://nous.technology/product/a1z.html
 OUTLET_MAKEGOOD_PM_TS011F_2GANG:

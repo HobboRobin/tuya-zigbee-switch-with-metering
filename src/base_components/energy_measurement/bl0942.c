@@ -81,7 +81,9 @@ static void bl0942_apply_frame(bl0942_t *dev) {
                                    BL0942_FIXED_POINT_SCALE);
     dev->data.current = (uint16_t)((i_rms * dev->cal.current_multiplier) /
                                    BL0942_FIXED_POINT_SCALE);
-    dev->data.power = (int16_t)((watt * dev->cal.power_multiplier) /
+    // Rounded to nearest whole watt so small loads read honestly (1.8 W -> 2).
+    dev->data.power = (int16_t)((watt * dev->cal.power_multiplier +
+                                 BL0942_FIXED_POINT_SCALE / 2) /
                                 BL0942_FIXED_POINT_SCALE);
 
     // Energy: integrate the reported power over wall-clock time. This stays

@@ -149,3 +149,20 @@ def test_indicator_dimming_still_present_alongside_network_led(device: Device):
         )
         is not None
     )
+
+
+def test_config_str_calibration_markers_seed_multipliers():
+    """V/A/W markers baked into the EB token (factory calibration templates)
+    must land in the active multipliers, readable via calibration_values."""
+    with StubProc(
+        device_config="StubManufacturer;StubDevice;SB5u;RC2;IB4ip;EBB0B7V412A256W103;M;"
+    ) as proc:
+        device = Device(proc)
+        assert (
+            device.read_zigbee_attr(
+                1,
+                ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+                ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES,
+            )
+            == "V412A256W103"
+        )
