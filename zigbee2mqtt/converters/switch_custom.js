@@ -7368,12 +7368,14 @@ const definitions = [
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
                 // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
-                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
-                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
+                // Long max intervals (10 h) keep idle devices quiet on the mesh;
+                // changes still report within the min interval.
+                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 500},
+                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
-                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
 
 
@@ -7520,12 +7522,14 @@ const definitions = [
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
                 // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
-                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
-                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
+                // Long max intervals (10 h) keep idle devices quiet on the mesh;
+                // changes still report within the min interval.
+                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 500},
+                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
-                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
 
 
@@ -7672,12 +7676,14 @@ const definitions = [
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
                 // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
-                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
-                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
+                // Long max intervals (10 h) keep idle devices quiet on the mesh;
+                // changes still report within the min interval.
+                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 500},
+                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
-                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
 
 
@@ -7879,12 +7885,14 @@ const definitions = [
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
                 // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
-                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
-                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
+                // Long max intervals (10 h) keep idle devices quiet on the mesh;
+                // changes still report within the min interval.
+                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 500},
+                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
-                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
 
 
