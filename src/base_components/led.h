@@ -13,6 +13,15 @@ typedef struct {
     uint16_t       blink_time_on;
     uint16_t       blink_time_off;
     hal_task_t     blink_task;
+    // Optional PWM dimming. Set `dimmable` before led_init(); the PWM channel
+    // is derived from the pin by the HAL (cleared again if the pin has none).
+    uint8_t        dimmable;
+    uint8_t        pwm_channel;
+    uint8_t        brightness;    // target on-level 0..255 (255 = full)
+    uint16_t       transition_ms; // fade duration for on/off/brightness changes
+    uint8_t        cur_duty;      // current PWM duty 0..255
+    uint8_t        target_duty;   // fade target
+    hal_task_t     fade_task;
 } led_t;
 
 /**
@@ -35,6 +44,23 @@ void led_on(led_t *led);
  * @return     none
  */
 void led_off(led_t *led);
+
+/**
+ * @brief      Set the on-brightness of a dimmable led. If the led is currently
+ *             on, it fades to the new brightness immediately (transition time).
+ * @param	   *led - Led to use
+ *             brightness - 0..255 (0 = off, 255 = full)
+ * @return     none
+ */
+void led_set_brightness(led_t *led, uint8_t brightness);
+
+/**
+ * @brief      Set the fade duration for on/off/brightness changes (dimmable led)
+ * @param	   *led - Led to use
+ *             transition_ms - fade duration in milliseconds (0 = instant)
+ * @return     none
+ */
+void led_set_transition(led_t *led, uint16_t transition_ms);
 
 #define LED_BLINK_FOREVER    0xFFFF
 

@@ -12,6 +12,8 @@ source:
 - {path: ../../silabs/main.c}
 - {path: ../../silabs/hal/zigbee.c}
 - {path: ../../silabs/hal/gpio.c}
+- {path: ../../silabs/hal/pwm.c}
+- {path: ../../silabs/hal/uart.c}
 - {path: ../../silabs/hal/gpio_counter.c}
 - {path: ../../silabs/hal/nvm.c}
 - {path: ../../silabs/hal/tasks.c}
@@ -23,6 +25,8 @@ source:
 - {path: ../../hal/adc.h}
 - {path: ../../hal/zigbee.h}
 - {path: ../../hal/gpio.h}
+- {path: ../../hal/pwm.h}
+- {path: ../../hal/uart.h}
 - {path: ../../hal/nvm.h}
 - {path: ../../hal/tasks.h}
 - {path: ../../hal/timer.h}
@@ -35,6 +39,7 @@ source:
 - {path: ../../base_components/network_indicator.c}
 - {path: ../../base_components/relay.c}
 - {path: ../../base_components/energy_measurement/hlw8012.c}
+- {path: ../../base_components/energy_measurement/bl0942.c}
 - {path: ../../base_components/battery.h}
 - {path: ../../base_components/button.h}
 - {path: ../../base_components/led.h}
@@ -42,6 +47,7 @@ source:
 - {path: ../../base_components/relay.h}
 - {path: ../../base_components/energy_meter.h}
 - {path: ../../base_components/energy_measurement/hlw8012.h}
+- {path: ../../base_components/energy_measurement/bl0942.h}
 - {path: ../../device_config/config_nv.c}
 - {path: ../../device_config/config_nv.h}
 - {path: ../../device_config/config_parser.c}

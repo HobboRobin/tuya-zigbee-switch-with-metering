@@ -18,9 +18,16 @@ CONFIG_STR ?= ja5osu5g;TS004F-Loginovo;IC4i;SC2u;BTB5;M;
 # CONFIG_STR ?= jl7qyupf;TS0012-custom;BA0f;LD7;SC2f;RC0;SC3f;RB4;
 MANUFACTURER_ID ?= 4417
 IMAGE_TYPE ?= 43521
-OTA_VERSION ?= 
+OTA_VERSION ?=
 OTA_MANUFACTURER_ID ?= ${MANUFACTURER_ID}
 OTA_IMAGE_TYPE ?= ${IMAGE_TYPE}
+
+# Optional per-board HLW8012 calibration overrides (different hardware
+# revisions can have different sense resistors/dividers). Empty = use the
+# defaults baked into hlw8012.h.
+HLW8012_VOLTAGE_MULTIPLIER ?=
+HLW8012_CURRENT_MULTIPLIER ?=
+HLW8012_POWER_MULTIPLIER ?=
 
 # Toolchain paths
 SDK_PATH := $(TELINK_TOOLS_DIR)/sdk
@@ -89,7 +96,10 @@ DEVICE_DEFS := \
 	-DDEFAULT_CONFIG="$(CONFIG_STR)" \
 	-DIMAGE_TYPE=$(IMAGE_TYPE) \
 	-DHAL_TELINK \
-	$(TEL_CHIP) 
+	$(TEL_CHIP) \
+	$(if $(HLW8012_VOLTAGE_MULTIPLIER),-DHLW8012_VOLTAGE_MULTIPLIER=$(HLW8012_VOLTAGE_MULTIPLIER)) \
+	$(if $(HLW8012_CURRENT_MULTIPLIER),-DHLW8012_CURRENT_MULTIPLIER=$(HLW8012_CURRENT_MULTIPLIER)) \
+	$(if $(HLW8012_POWER_MULTIPLIER),-DHLW8012_POWER_MULTIPLIER=$(HLW8012_POWER_MULTIPLIER))
 
 ifeq ($(DEBUG), 1)
 	DEVICE_DEFS := $(DEVICE_DEFS) -DUART_PRINTF_MODE=1
@@ -129,6 +139,8 @@ TELINK_SOURCES := \
 	hal/timer.c \
 	hal/tasks.c \
 	hal/gpio.c \
+	hal/pwm.c \
+	hal/uart.c \
 	hal/gpio_counter.c \
 	hal/gpio_interrupts.c \
 	hal/nvm.c \
@@ -153,6 +165,7 @@ COMMON_SOURCES := \
 	$(SRC_DIR)/base_components/relay.c \
 	$(SRC_DIR)/base_components/battery.c \
 	$(SRC_DIR)/base_components/energy_measurement/hlw8012.c \
+	$(SRC_DIR)/base_components/energy_measurement/bl0942.c \
 	$(SRC_DIR)/device_config/config_nv.c \
 	$(SRC_DIR)/device_config/device_params_nv.c \
 	$(SRC_DIR)/device_config/reset.c \

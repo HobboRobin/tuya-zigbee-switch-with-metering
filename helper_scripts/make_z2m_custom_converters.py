@@ -43,7 +43,9 @@ if __name__ == "__main__":
         cover_switch_cnt = 0
         cover_cnt = 0
         indicators_cnt = 0
+        dimmable_indicators = []
         has_dedicated_net_led = False
+        has_dimmable_net_led = False
         has_battery_cluster = False
         has_energy_meter = False
         for peripheral in peripherals:
@@ -59,11 +61,15 @@ if __name__ == "__main__":
                 cover_cnt += 1
             if peripheral[0] == "I":
                 indicators_cnt += 1
+                # flags after the 2-char pin; 'p' = PWM-dimmable
+                dimmable_indicators.append("p" in peripheral[3:])
             if peripheral[0] == "L":
                 has_dedicated_net_led = True
+                # flags after the 2-char pin; 'p' = PWM-dimmable
+                has_dimmable_net_led = "p" in peripheral[3:]
             if peripheral[:2] == "BT":
                 has_battery_cluster = True
-            if peripheral[:2] == "EP":
+            if peripheral[:2] in ("EP", "EB"):
                 has_energy_meter = True
 
         if switch_cnt == 1:
@@ -116,9 +122,15 @@ if __name__ == "__main__":
                 "switchNames": switch_names,
                 "relayNames": relay_names,
                 "relayIndicatorNames": relay_names[:indicators_cnt],
+                "dimmableRelayIndicatorNames": [
+                    relay_names[i]
+                    for i in range(min(indicators_cnt, len(relay_names)))
+                    if dimmable_indicators[i]
+                ],
                 "coverSwitchNames": cover_switch_names,
                 "coverNames": cover_names,
                 "has_dedicated_net_led": has_dedicated_net_led,
+                "has_dimmable_net_led": has_dimmable_net_led,
                 "has_battery_cluster": has_battery_cluster,
                 "has_energy_meter": has_energy_meter,
             }

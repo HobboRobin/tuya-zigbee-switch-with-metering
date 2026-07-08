@@ -9,7 +9,11 @@ typedef struct {
     uint8_t              deviceEnable;
     char                 manuName[32];
     char                 modelId[32];
-    hal_zigbee_attribute attr_infos[14];
+    // Dimmable dedicated status/network LED settings (only registered when
+    // the L-configured LED is PWM-dimmable).
+    uint8_t              status_led_brightness;
+    uint16_t             status_led_transition;
+    hal_zigbee_attribute attr_infos[16];
 } zigbee_basic_cluster;
 
 void basic_cluster_add_to_endpoint(zigbee_basic_cluster *cluster,

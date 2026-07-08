@@ -90,7 +90,7 @@ The pinout is stored in the **device config string**.
 | **`B`** | Reset button  | • Puts device in pairing                                                                                          |
 | **`L`** | Network led   | • Blinks while pairing <br> • Is the backlight sometimes                                                          |
 | **`S`** | Switch        | • User input <br> • Tactile/touch button or external switch <br> • Spam to put in pairing mode                    |
-| **`R`** | Relay / Triac | • Output <br> • Non-latching: `RC1` - 1 pin: on when high <br> • Latching: `RC2C3` - 2 pins: pulse on, pulse off  |
+| **`R`** | Relay / Triac | • Output <br> • Non-latching: `RC1` - 1 pin: on when high <br> • Non-latching inverted: `RC1i` - 1 pin: active-low (on when low) <br> • Latching: `RC2C3` - 2 pins: pulse on, pulse off  |
 | **`X`** | Cover Switch  | • User input for cover control <br> • Format: `XA2B3u` - 2 pins + pull resistor: open button, close button        |
 | **`C`** | Cover         | • Motor control for curtains/blinds/shades <br> • Format: `CA2B3` - 2 pins: open relay, close relay               |
 | **`I`** | Indicator LED | • 1 per relay, follows state <br> • Briefly flashes on button press (binding confirmation) <br> • Blinks while pairing if there is no network led |
@@ -101,7 +101,13 @@ For buttons (`B`), switches (`S`), and cover switches (`X`), the next character 
 Usually, pressing the button bridges the GPIO pin to Ground (active low).  
 ⤷ So we need a pull-up resistor `u`: to hold it at VCC (high) while not-pressed.
 
-For LEDs, add `i` to invert the state.
+For LEDs, add `i` to invert the state. Add `p` to make an LED PWM-dimmable
+(works for both `I` indicator LEDs, e.g. `IB4ip`, and the `L` network/status
+LED, e.g. `LA0ip`): the firmware then exposes a brightness (0-255) and a fade
+transition time (ms) for that LED in Z2M. On TLSR825x each pin maps to one
+fixed PWM channel (pins with PWM: A0, A2-A4, B0-B5, C0-C7, D2-D5; two LEDs
+must not share a channel — e.g. B4 and C6 both use PWM4). If the pin has no
+PWM the LED silently falls back to plain on/off.
 
 Additional options: 
 | Format       | Option                       | Function                                                                          |
@@ -111,6 +117,20 @@ Additional options:
 | **`M`**      | Momentary                    | • Defaults buttons to momentary mode (for devices with built-in switches)         |
 | **`BT<pin>`** | Battery mode                | • Enables battery-powered behavior <br> • Adds battery measurement/reporting using the selected ADC pin |
 | **`SLP`**    | Simultaneous Latching Pulses |  • Enable simultaneous pulses for latching relays (they are disallowed by default)|
+| **`EP<CF><CF1><SEL>`** | Energy monitoring (HLW8012/BL0937) | • Adds power/voltage/current/energy on EP1 <br> • 3 pins: CF (power), CF1 (voltage+current, time-multiplexed), SEL (mode select) <br> • Example: `EPC0C2C1` (CF=C0, CF1=C2, SEL=C1) |
+| **`EB<TX><RX>`** | Energy monitoring (BL0942, UART) | • Adds power/voltage/current/energy on EP1 <br> • 2 pins from the MCU's point of view: TX (poll command out), RX (data in) <br> • Optional `S<baud>` overrides the 4800 default (e.g. `EBB0B7S9600`) <br> • On TLSR825x RX must be a UART RX pin (A0/B0/B7/C3/C5/D6); TX may be any pin (bit-banged if not A2/B1/C2/D0/D3/D7) |
+
+The `EP` and `EB` tokens may be followed by optional calibration multipliers, in any
+order, to override the compiled-in defaults **without a rebuild** — useful when
+the same fingerprint ships in several PCB revisions with different sense
+resistors/dividers:
+⤷ **`V<n>`**: voltage multiplier · **`A<n>`**: current multiplier · **`W<n>`**: power multiplier
+
+The physical value is `pulses * multiplier / 65536` (voltage in cV, current in
+mA, power in W). Example — same board but a revision with CF/SEL swapped and a
+different voltage divider: `EPC1C2C0V1284815` (pins swapped, voltage multiplier
+overridden, current/power left at their defaults). Calibrate against a known
+reference: `new = old * (measured / reported)`.
 
 ## Build and install
 

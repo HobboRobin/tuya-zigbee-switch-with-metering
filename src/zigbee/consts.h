@@ -44,6 +44,10 @@
 #define ZCL_ATTR_BASIC_DEVICE_CONFIG              0xff00
 #define ZCL_ATTR_BASIC_STATUS_LED_STATE           0xff01
 #define ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT    0xff02
+// Dimmable dedicated status/network LED (0xff03/0xff04 were once used by a
+// removed diagnostic, so start at 0xff05 to avoid stale-converter clashes).
+#define ZCL_ATTR_BASIC_STATUS_LED_BRIGHTNESS      0xff05
+#define ZCL_ATTR_BASIC_STATUS_LED_TRANSITION      0xff06
 
 // Power Configuration cluster
 
@@ -58,11 +62,14 @@
 
 // OnOff cluster
 
-#define ZCL_ATTR_ONOFF                    0x0000
-#define ZCL_ATTR_START_UP_ONOFF           0x4003
+#define ZCL_ATTR_ONOFF                         0x0000
+#define ZCL_ATTR_START_UP_ONOFF                0x4003
 
-#define ZCL_ATTR_ONOFF_INDICATOR_MODE     0xff01
-#define ZCL_ATTR_ONOFF_INDICATOR_STATE    0xff02
+#define ZCL_ATTR_ONOFF_INDICATOR_MODE          0xff01
+#define ZCL_ATTR_ONOFF_INDICATOR_STATE         0xff02
+// Dimmable indicator LED (PWM): on-brightness 0..255 and fade time in ms.
+#define ZCL_ATTR_ONOFF_INDICATOR_BRIGHTNESS    0xff03
+#define ZCL_ATTR_ONOFF_INDICATOR_TRANSITION    0xff04
 
 // OnOff configuration cluster
 
@@ -126,6 +133,14 @@
 #define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_CF                         0xFF00
 #define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_CF1                        0xFF01
 #define ZCL_ATTR_ELEC_MEAS_CUST_FREQUENCY_SEL_STATE                  0xFF02
+// Write the real measured value (voltage in cV, current in mA, power in W) to
+// calibrate that channel; the firmware derives and persists the multiplier.
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_VOLTAGE                    0xFF10
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_CURRENT                    0xFF11
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATE_POWER                      0xFF12
+// Read/write string "V<mult>A<mult>W<mult>" mirroring the calibration
+// multipliers, for copying a reference device's calibration to others.
+#define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES                   0xFF20
 
 // Metering cluster (0x0702)
 #define ZCL_CLUSTER_METERING                                         0x0702

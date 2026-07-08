@@ -2940,7 +2940,7 @@ OUTLET_BSEED_BORUIDAPLS_PM_TS011F:
   - https://github.com/romasku/tuya-zigbee-switch/pull/406
   store:
   - https://www.aliexpress.com/item/1005007725022757.html
-OUTLET_BSEED_PM_TS011F:
+OUTLET_BSEED_PM_TS011F_b28wrpvx:
   human_name: BSEED PM outlet 🅰
   category: outlet
   power: mains
@@ -2955,7 +2955,7 @@ OUTLET_BSEED_PM_TS011F:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: b28wrpvx;TS011F-BS-PM;LC3;SB5u;RD2;IB4;M;
+  config_str: b28wrpvx;TS011F-BS-PM;LC3p;SB5u;RD2;IB4p;EPA1C2B1V161460A144679W16989;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -2964,13 +2964,13 @@ OUTLET_BSEED_PM_TS011F:
   firmware_image_type: 43556
   build: yes
   status: in_progress
-  info: Power monitoring not implemented
+  info: "Power monitoring enabled (HLW8012), pinout hardware-verified for this revision: network LED C3, switch B5, relay D2, relay indicator B4 (both LEDs PWM-dimmable), energy CF=A1 CF1=C2 SEL=B1. Ships factory-calibrated (V/A/W markers in the config_str, measured against a reference meter); fine-tune per device via the calibrate fields or import multipliers via calibration_values."
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store:
   - https://www.aliexpress.com/item/1005004402438527.html
   - https://www.aliexpress.com/i/1005005835434423.html
   - https://www.aliexpress.com/item/1005003350696939.html
-OUTLET_BSEED_PM_TS011F_1:
+OUTLET_BSEED_PM_TS011F_ko6v90pg:
   human_name: BSEED PM outlet 🅱
   category: outlet
   power: mains
@@ -2985,7 +2985,7 @@ OUTLET_BSEED_PM_TS011F_1:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: ko6v90pg;TS011F-BS-PM-1;LC4i;SB4u;RB5;IB1i;M;
+  config_str: ko6v90pg;TS011F-BS-PM-1;LC4ip;SB4u;RB5;IB1ip;EPC0C2C1;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -2994,13 +2994,13 @@ OUTLET_BSEED_PM_TS011F_1:
   firmware_image_type: 47003
   build: yes
   status: in_progress
-  info: Power monitoring not implemented
+  info: "Power monitoring enabled (HLW8012) with a default pin guess CF=C0 CF1=C2 SEL=C1. The actual pins/calibration for this revision are not hardware-verified yet — tune the EP token pins in the config_str and use the on-device calibrate fields (measure with a multimeter, enter the real V/A/W)."
   threads:
   - https://github.com/romasku/tuya-zigbee-switch/issues/145
   - https://github.com/romasku/tuya-zigbee-switch/pull/390
   store:
   - https://www.aliexpress.com/item/1005005714480181.html
-OUTLET_BSEED_PM_TS011F_2:
+OUTLET_BSEED_PM_TS011F_4ux0ondb:
   human_name: BSEED PM outlet 🅲
   category: outlet
   power: mains
@@ -3015,7 +3015,7 @@ OUTLET_BSEED_PM_TS011F_2:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 4ux0ondb;TS011F-BS-PM-2;LB4;SB5u;RD2;IC3;EPC0C2C1;M;
+  config_str: 4ux0ondb;TS011F-BS-PM-2;LC3p;SB5u;RD2;IB4p;EPC0C2C1V154714A137765W16193;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3024,8 +3024,8 @@ OUTLET_BSEED_PM_TS011F_2:
   firmware_image_type: 47004
   build: yes
   status: in_progress
-  info: "Power monitoring implemented (HLW8012, pins: CF=C0 CF1=C2 SEL=C1 - hardware verified)"
-  threads: 
+  info: "Power monitoring (HLW8012, default pins CF=C0 CF1=C2 SEL=C1, hardware verified; network LED C3, relay indicator B4, both PWM-dimmable). Ships factory-calibrated (V/A/W markers in the config_str). This fingerprint (_TZ3000_4ux0ondb) ships in more than one PCB revision that cannot be told apart over Zigbee: a second revision has CF and SEL swapped (EPC1C2C0) and a different voltage divider. Pins are runtime-settable in the config_str; for the swapped revision set the EP token to EPC1C2C0, then calibrate via the calibrate fields (or import multipliers via calibration_values)."
+  threads:
   - https://github.com/romasku/tuya-zigbee-switch/issues/145
   - https://github.com/romasku/tuya-zigbee-switch/pull/397
   store:
@@ -3057,6 +3057,33 @@ OUTLET_BSEED_TS011F:
   info: Supported
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/145
   store: https://www.aliexpress.com/item/1005004402438527.html
+OUTLET_NOUS_A1Z_TS011F:
+  human_name: Nous A1Z smart plug
+  category: outlet
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3000_2putqrmw
+  stock_converter_manufacturer: Nous
+  stock_converter_model: TS011F_plug_1
+  override_z2m_device: A1Z
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: 2putqrmw;TS011F-A1Z;SB5u;RC2;IB4ip;EBB1B7V412A256W103;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47114
+  build: yes
+  status: in_progress
+  info: "Relay PC2 (monostable, active-high), button PB5, dimmable LED PB4 (inverted). Energy metering via BL0942 on UART (EBB1B7: MCU TX=B1, RX=B7, both hardware UART pins; default 4800 baud, override with e.g. S9600 in the EB token). Ships factory-calibrated (V/A/W markers in the config_str); fine-tune via the calibrate fields or import multipliers via calibration_values. If the meter stays silent, swap the pins to EBB7B1."
+  threads: null
+  store: https://nous.technology/product/a1z.html
 OUTLET_MAKEGOOD_PM_TS011F_2GANG:
   human_name: MakeGood MG-GPO01 double socket
   category: outlet
@@ -4146,7 +4173,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0001:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: ysdv91bk;TS0001-BSMN;LA0i;SC3u;RC2;M;
+  config_str: ysdv91bk;TS0001-BSMN;LA0ip;SC3u;RC2;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4176,7 +4203,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0002:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: mklgayek;TS0002-BSMN;LA0i;SC3u;RC2;SB7u;RB4;M;
+  config_str: mklgayek;TS0002-BSMN;LA0ip;SC3u;RC2;SB7u;RB4;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null

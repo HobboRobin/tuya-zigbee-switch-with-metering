@@ -33,6 +33,8 @@ void relay_cluster_on_write_attr(zigbee_relay_cluster *cluster,
 void relay_cluster_store_attrs_to_nv(zigbee_relay_cluster *cluster);
 void relay_cluster_load_attrs_from_nv(zigbee_relay_cluster *cluster);
 void relay_cluster_handle_startup_mode(zigbee_relay_cluster *cluster);
+void relay_cluster_load_dimming(zigbee_relay_cluster *cluster);
+void relay_cluster_save_dimming(zigbee_relay_cluster *cluster);
 
 void sync_indicator_led(zigbee_relay_cluster *cluster);
 
@@ -68,19 +70,35 @@ void relay_cluster_add_to_endpoint(zigbee_relay_cluster *cluster,
                cluster->relay->on);
     SETUP_ATTR(1, ZCL_ATTR_START_UP_ONOFF, ZCL_DATA_TYPE_ENUM8, ATTR_WRITABLE,
                cluster->startup_mode);
+    uint8_t attr_count = 2;
     if (cluster->indicator_led != NULL) {
         SETUP_ATTR(2, ZCL_ATTR_ONOFF_INDICATOR_MODE, ZCL_DATA_TYPE_ENUM8,
                    ATTR_WRITABLE, cluster->indicator_led_mode);
         SETUP_ATTR(3, ZCL_ATTR_ONOFF_INDICATOR_STATE, ZCL_DATA_TYPE_BOOLEAN,
                    ATTR_WRITABLE, cluster->indicator_state);
+        attr_count = 4;
+
+        if (cluster->indicator_led->dimmable) {
+            // Seed from the led's defaults, then let NVM override.
+            cluster->led_brightness = cluster->indicator_led->brightness;
+            cluster->led_transition = cluster->indicator_led->transition_ms;
+            relay_cluster_load_dimming(cluster);
+            led_set_brightness(cluster->indicator_led, cluster->led_brightness);
+            led_set_transition(cluster->indicator_led, cluster->led_transition);
+
+            SETUP_ATTR(4, ZCL_ATTR_ONOFF_INDICATOR_BRIGHTNESS, ZCL_DATA_TYPE_UINT8,
+                       ATTR_WRITABLE, cluster->led_brightness);
+            SETUP_ATTR(5, ZCL_ATTR_ONOFF_INDICATOR_TRANSITION, ZCL_DATA_TYPE_UINT16,
+                       ATTR_WRITABLE, cluster->led_transition);
+            attr_count = 6;
+        }
     }
 
     endpoint->clusters[endpoint->cluster_count].cluster_id      = ZCL_CLUSTER_ON_OFF;
-    endpoint->clusters[endpoint->cluster_count].attribute_count =
-        cluster->indicator_led != NULL ? 4 : 2;
-    endpoint->clusters[endpoint->cluster_count].attributes   = cluster->attr_infos;
-    endpoint->clusters[endpoint->cluster_count].is_server    = 1;
-    endpoint->clusters[endpoint->cluster_count].cmd_callback =
+    endpoint->clusters[endpoint->cluster_count].attribute_count = attr_count;
+    endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
+    endpoint->clusters[endpoint->cluster_count].is_server       = 1;
+    endpoint->clusters[endpoint->cluster_count].cmd_callback    =
         relay_cluster_callback_trampoline;
     endpoint->cluster_count++;
 
@@ -215,7 +233,43 @@ void relay_cluster_on_write_attr(zigbee_relay_cluster *cluster,
         sync_indicator_led(cluster);
     }
 
+    if (cluster->indicator_led != NULL && cluster->indicator_led->dimmable) {
+        if (attribute_id == ZCL_ATTR_ONOFF_INDICATOR_BRIGHTNESS) {
+            // Live dimming: applies immediately if the led is currently on.
+            led_set_brightness(cluster->indicator_led, cluster->led_brightness);
+            relay_cluster_save_dimming(cluster);
+        } else if (attribute_id == ZCL_ATTR_ONOFF_INDICATOR_TRANSITION) {
+            led_set_transition(cluster->indicator_led, cluster->led_transition);
+            relay_cluster_save_dimming(cluster);
+        }
+    }
+
     relay_cluster_store_attrs_to_nv(cluster);
+}
+
+typedef struct {
+    uint8_t  brightness;
+    uint16_t transition;
+} relay_led_dimming_nv_t;
+
+void relay_cluster_load_dimming(zigbee_relay_cluster *cluster) {
+    relay_led_dimming_nv_t nv;
+
+    if (hal_nvm_read(NV_ITEM_LED_DIMMING(cluster->relay_idx), sizeof(nv),
+                     (uint8_t *)&nv) == HAL_NVM_SUCCESS) {
+        cluster->led_brightness = nv.brightness;
+        cluster->led_transition = nv.transition;
+    }
+}
+
+void relay_cluster_save_dimming(zigbee_relay_cluster *cluster) {
+    relay_led_dimming_nv_t nv = {
+        .brightness = cluster->led_brightness,
+        .transition = cluster->led_transition,
+    };
+
+    hal_nvm_write(NV_ITEM_LED_DIMMING(cluster->relay_idx), sizeof(nv),
+                  (uint8_t *)&nv);
 }
 
 typedef struct {

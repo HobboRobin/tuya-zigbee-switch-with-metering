@@ -32,4 +32,17 @@
 // endpoint is 1-based (1-4)
 #define NV_ITEM_ENERGY_ACCUMULATION(endpoint)    (40 + (endpoint) - 1)
 
+// Persisted HLW8012 calibration multipliers (44), set via the on-device
+// calibrate fields and re-applied on boot.
+#define NV_ITEM_ENERGY_CALIBRATION    44
+
+// Persisted dimmable-indicator-LED settings (brightness + transition), one per
+// relay (45..). Kept separate from the relay config so growing it never resets
+// existing startup/indicator settings.
+#define NV_ITEM_LED_DIMMING(relay_idx)    (45 + (relay_idx))
+
+// Persisted dimmable network/status LED settings (brightness + transition).
+// Relay LED dimming uses 45..49 (MAX_RELAYS), so the next free slot is 50.
+#define NV_ITEM_NET_LED_DIMMING    50
+
 #endif /* DEVICE_CONFIG_NVM_ITEMS_H_ */

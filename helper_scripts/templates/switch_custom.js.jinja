@@ -140,6 +140,29 @@ const romasku = {
             access: "ALL",
             entityCategory: "config",
         }),
+    ledBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOff",
+            attribute: { ID: 0xff03, type: 0x20 }, // uint8
+            description: "Indicator LED brightness when on (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
+    ledTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOff",
+            attribute: { ID: 0xff04, type: 0x21 }, // uint16
+            description: "Indicator LED fade time in milliseconds (0 = instant)",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
     batteryPercentage: () => {
         const result = numeric({
             name: "battery",
@@ -199,6 +222,70 @@ const romasku = {
             access: "ALL",
             entityCategory: "config",
         }),
+    networkLedBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genBasic",
+            attribute: { ID: 0xff05, type: 0x20 }, // uint8
+            description: "Network/status LED brightness when on (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
+    networkLedTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genBasic",
+            attribute: { ID: 0xff06, type: 0x21 }, // uint16
+            description: "Network/status LED fade time in milliseconds (0 = instant)",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
+    // On-device calibration trigger: the user enters the real measured value
+    // (in display units, e.g. Volts), we scale it to the firmware's raw integer
+    // unit (multiplier) and write it. The firmware then derives and persists the
+    // multiplier so the channel reads that value, and clears the field.
+    calibrationValues: (name, endpointName) =>
+        text({
+            name,
+            endpointName,
+            access: "ALL",
+            cluster: "haElectricalMeasurement",
+            attribute: {ID: 0xFF20, type: 0x42}, // char str
+            description: "Active calibration multipliers as V<v>A<a>W<w>. Read it from a calibrated device and write it to others of the same type to copy the calibration (a missing or 0 channel keeps its current value)",
+            entityCategory: "config",
+            validate: (value) => {
+                assertString(value);
+                if (!/^([VAW]\d{1,10}){0,3}$/.test(value)) {
+                    throw new Error("Expected format like V154672A118646W13939 (V/A/W each followed by digits)");
+                }
+            },
+        }),
+    calibrate: ({name, attribute, unit, multiplier, valueMax, valueStep, description, endpointName}) => {
+        const result = numeric({
+            name,
+            cluster: "haElectricalMeasurement",
+            attribute,
+            unit,
+            description,
+            access: "ALL",
+            valueMin: 0,
+            valueMax,
+            valueStep,
+            entityCategory: "config",
+            endpointName,
+        });
+        const origConvertSet = result.toZigbee[0].convertSet;
+        result.toZigbee[0].convertSet = async (entity, key, value, meta) => {
+            const raw = Math.round(Number(value) * multiplier);
+            return await origConvertSet(entity, key, raw, meta);
+        };
+        return result;
+    },
     multiPressResetCount: (name, endpointName) =>
         numeric({
             name,
@@ -269,8 +356,12 @@ const romasku = {
                         validatePin(part.slice(2,4));
                         validatePin(part.slice(4,6));
                         validatePin(part.slice(6,8));
+                    } else if(part.startsWith('EB')) {
+                        // BL0942 UART metering: EB<TX><RX>[S<baud>][V..][A..][W..]
+                        validatePin(part.slice(2,4));
+                        validatePin(part.slice(4,6));
                     } else {
-                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EP, I, L, M, R, S, SLP, X, i`);
+                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, R, S, SLP, X, i`);
                     }
                 }
             },
@@ -449,6 +540,10 @@ const definitions = [
             {% if device.has_dedicated_net_led %}
             romasku.networkIndicator("network_led", "{{first_endpoint}}"),
             {% endif%}
+            {% if device.has_dimmable_net_led %}
+            romasku.networkLedBrightness("network_led_brightness", "{{first_endpoint}}"),
+            romasku.networkLedTransition("network_led_transition", "{{first_endpoint}}"),
+            {% endif%}
             {% if device.relayNames %}
             onOff({ endpointNames: {{device.relayNames | tojson }} }),
             {% endif %}
@@ -501,6 +596,37 @@ const definitions = [
                 entityCategory: "config",
                 endpointName: "{{energy_ep_name}}",
             }),
+            romasku.calibrate({
+                name: "calibrate_voltage",
+                attribute: {ID: 0xFF10, type: 0x21}, // uint16
+                unit: "V",
+                multiplier: 100, // firmware wants centivolts
+                valueMax: 655,
+                valueStep: 0.01, // allow e.g. 236.54 V
+                description: "Measure the real voltage and enter it here to calibrate; the device computes and stores the multiplier",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.calibrate({
+                name: "calibrate_current",
+                attribute: {ID: 0xFF11, type: 0x21}, // uint16
+                unit: "A",
+                multiplier: 1000, // firmware wants milliamps
+                valueMax: 65,
+                valueStep: 0.001, // allow e.g. 0.523 A
+                description: "Measure the real current (under a steady load) and enter it here to calibrate",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.calibrate({
+                name: "calibrate_power",
+                attribute: {ID: 0xFF12, type: 0x21}, // uint16
+                unit: "W",
+                multiplier: 1, // firmware wants whole watts
+                valueMax: 65535,
+                valueStep: 1,
+                description: "Measure the real power (under a steady load) and enter it here to calibrate",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.calibrationValues("calibration_values", "{{energy_ep_name}}"),
             {% endif %}
             {% for switchName in device.switchNames %}
             romasku.pressAction("{{switchName}}_press_action", "{{switchName}}"),
@@ -517,6 +643,10 @@ const definitions = [
             {% for relayName in device.relayIndicatorNames %}
             romasku.relayIndicatorMode("{{relayName}}_indicator_mode", "{{relayName}}"),
             romasku.relayIndicator("{{relayName}}_indicator", "{{relayName}}"),
+            {% endfor %}
+            {% for relayName in device.dimmableRelayIndicatorNames %}
+            romasku.ledBrightness("{{relayName}}_led_brightness", "{{relayName}}"),
+            romasku.ledTransition("{{relayName}}_led_transition", "{{relayName}}"),
             {% endfor %}
             {% for coverName in device.coverNames %}
             windowCovering({ 
@@ -595,12 +725,14 @@ const definitions = [
             await emEndpoint.configureReporting("haElectricalMeasurement", [
                 // reportableChange is in the attribute's raw units: voltage in
                 // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
-                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 3600, reportableChange: 500},
-                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 50},
-                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 3600, reportableChange: 5},
+                // Long max intervals (10 h) keep idle devices quiet on the mesh;
+                // changes still report within the min interval.
+                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 500},
+                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
             ]);
             await emEndpoint.configureReporting("seMetering", [
-                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 10},
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
             {% endif %}
 

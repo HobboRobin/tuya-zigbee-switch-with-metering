@@ -6,13 +6,23 @@
 static void hlw8012_meter_get_data(void *ctx, energy_meter_data_t *data);
 static void hlw8012_meter_reset_energy(void *ctx);
 static void hlw8012_meter_tick(void *ctx);
+static int  hlw8012_meter_calibrate(void *ctx, energy_meter_channel_t channel,
+                                    uint32_t reference);
+static void hlw8012_meter_get_calibration(void *ctx,
+                                          energy_meter_calibration_t *cal);
+static void hlw8012_meter_set_calibration(void *ctx, uint32_t voltage_mult,
+                                          uint32_t current_mult,
+                                          uint32_t power_mult);
 void        _update_measurement_handler(void *arg);
 void        _cycle_sel_pin(hlw8012_t *dev);
 
 static const energy_meter_ops_t hlw8012_energy_meter_ops = {
-    .get_data     = hlw8012_meter_get_data,
-    .reset_energy = hlw8012_meter_reset_energy,
-    .tick         = hlw8012_meter_tick,
+    .get_data        = hlw8012_meter_get_data,
+    .reset_energy    = hlw8012_meter_reset_energy,
+    .tick            = hlw8012_meter_tick,
+    .calibrate       = hlw8012_meter_calibrate,
+    .get_calibration = hlw8012_meter_get_calibration,
+    .set_calibration = hlw8012_meter_set_calibration,
 };
 
 static uint32_t pulses_to_frequency(uint32_t pulse_count) {
@@ -29,6 +39,12 @@ int hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin, hal_gpio_pin_t cf1_pin,
     dev->cf_pin  = cf_pin;
     dev->cf1_pin = cf1_pin;
     dev->sel_pin = sel_pin;
+
+    // Seed calibration from the compile-time defaults; may be overridden later
+    // per device via hlw8012_set_calibration (e.g. from the config_str).
+    dev->cal.voltage_multiplier = HLW8012_VOLTAGE_MULTIPLIER;
+    dev->cal.current_multiplier = HLW8012_CURRENT_MULTIPLIER;
+    dev->cal.power_multiplier   = HLW8012_POWER_MULTIPLIER;
 
     // CF (power) and CF1 (voltage/current) are counted by hardware pulse
     // counters: the CF1 voltage signal is too high-frequency for the software
@@ -59,6 +75,87 @@ int hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin, hal_gpio_pin_t cf1_pin,
     return 0;
 }
 
+void hlw8012_set_calibration(hlw8012_t *dev, uint32_t voltage_mult,
+                             uint32_t current_mult, uint32_t power_mult) {
+    if (!dev)
+        return;
+
+    // Zero means "keep the current value", so a caller can override only the
+    // multipliers it has a measured reference for.
+    if (voltage_mult)
+        dev->cal.voltage_multiplier = voltage_mult;
+    if (current_mult)
+        dev->cal.current_multiplier = current_mult;
+    if (power_mult)
+        dev->cal.power_multiplier = power_mult;
+
+    printf("HLW8012: calibration V=%u A=%u W=%u\r\n",
+           dev->cal.voltage_multiplier, dev->cal.current_multiplier,
+           dev->cal.power_multiplier);
+}
+
+int hlw8012_calibrate(hlw8012_t *dev, uint8_t channel, uint32_t reference) {
+    if (!dev || reference == 0)
+        return -1;
+
+    uint32_t  pulses;
+    uint32_t *target;
+    switch (channel) {
+    case ENERGY_METER_CHANNEL_VOLTAGE:
+        pulses = dev->data.cal_pulses_voltage;
+        target = &dev->cal.voltage_multiplier;
+        break;
+    case ENERGY_METER_CHANNEL_CURRENT:
+        pulses = dev->data.cal_pulses_current;
+        target = &dev->cal.current_multiplier;
+        break;
+    case ENERGY_METER_CHANNEL_POWER:
+        pulses = dev->data.cal_pulses_power;
+        target = &dev->cal.power_multiplier;
+        break;
+    default:
+        return -1;
+    }
+
+    // Need a live signal on the channel to calibrate against.
+    if (pulses == 0)
+        return -1;
+
+    // value = pulses * multiplier / SCALE, so to make value == reference now:
+    //   multiplier = reference * SCALE / pulses.
+    // reference is a uint16-range value (<= 65535) and SCALE is 65536, so the
+    // product stays within uint32 (< 2^32); pure 32-bit math, no 64-bit divide.
+    *target = ((uint32_t)reference * (uint32_t)HLW8012_FIXED_POINT_SCALE) / pulses;
+
+    printf("HLW8012: calibrated ch %u to ref %u (%u pulses) => mult %u\r\n",
+           channel, reference, pulses, *target);
+    return 0;
+}
+
+static int hlw8012_meter_calibrate(void *ctx, energy_meter_channel_t channel,
+                                   uint32_t reference) {
+    return hlw8012_calibrate((hlw8012_t *)ctx, (uint8_t)channel, reference);
+}
+
+static void hlw8012_meter_get_calibration(void *ctx,
+                                          energy_meter_calibration_t *cal) {
+    hlw8012_t *dev = (hlw8012_t *)ctx;
+
+    if (!dev || !cal)
+        return;
+
+    cal->voltage_multiplier = dev->cal.voltage_multiplier;
+    cal->current_multiplier = dev->cal.current_multiplier;
+    cal->power_multiplier   = dev->cal.power_multiplier;
+}
+
+static void hlw8012_meter_set_calibration(void *ctx, uint32_t voltage_mult,
+                                          uint32_t current_mult,
+                                          uint32_t power_mult) {
+    hlw8012_set_calibration((hlw8012_t *)ctx, voltage_mult, current_mult,
+                            power_mult);
+}
+
 void _update_measurement_handler(void *arg) {
     hlw8012_t *dev = (hlw8012_t *)arg;
 
@@ -85,29 +182,37 @@ void _update_measurement_handler(void *arg) {
     dev->data.freq_cf1 = freq_cf1_mhz;
 
     // Physical values are computed directly from the pulse counts (not from
-    // the mHz frequency) to keep good integer resolution. power in W.
-    dev->data.power = (int16_t)(((uint32_t)cf_pulses * HLW8012_POWER_MULTIPLIER) /
+    // the mHz frequency) to keep good integer resolution. power in W,
+    // rounded to nearest so small loads read honestly (1.8 W -> 2, not 1).
+    dev->data.power = (int16_t)(((uint32_t)cf_pulses * dev->cal.power_multiplier +
+                                 HLW8012_FIXED_POINT_SCALE / 2) /
                                 HLW8012_FIXED_POINT_SCALE);
 
     // Energy: accumulate pulses*MULT sub-units and carry whole Wh out by
-    // subtraction (no 64-bit divide, which TC32 -nostdlib can't link).
-    dev->data.energy_acc += (uint32_t)cf_pulses * HLW8012_POWER_MULTIPLIER;
+    // subtraction (no 64-bit divide, which TC32 -nostdlib can't link). The Wh
+    // sub-unit threshold is independent of the power multiplier, so a runtime
+    // calibration change stays consistent with the power reading.
+    dev->data.energy_acc += (uint32_t)cf_pulses * dev->cal.power_multiplier;
     while (dev->data.energy_acc >= HLW8012_ENERGY_WH_SUBUNIT) {
         dev->data.energy_acc -= HLW8012_ENERGY_WH_SUBUNIT;
         dev->data.energy++;
     }
+    dev->data.cal_pulses_power = cf_pulses;
 
     // Skip the sample right after a SEL toggle (cycle_count == 0): CF1 needs
     // time to settle to the newly selected measurement.
     if (dev->cycle_count != 0) {
-        if (dev->data.sel_state)
+        if (dev->data.sel_state) {
             dev->data.voltage = (uint16_t)(((uint32_t)cf1_pulses *
-                                            HLW8012_VOLTAGE_MULTIPLIER) /
+                                            dev->cal.voltage_multiplier) /
                                            HLW8012_FIXED_POINT_SCALE); // cV
-        else
+            dev->data.cal_pulses_voltage = cf1_pulses;
+        } else {
             dev->data.current = (uint16_t)(((uint32_t)cf1_pulses *
-                                            HLW8012_CURRENT_MULTIPLIER) /
+                                            dev->cal.current_multiplier) /
                                            HLW8012_FIXED_POINT_SCALE); // mA
+            dev->data.cal_pulses_current = cf1_pulses;
+        }
     }
 
     dev->data.valid            = 1;

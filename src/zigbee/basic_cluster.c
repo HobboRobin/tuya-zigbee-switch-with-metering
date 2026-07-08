@@ -35,6 +35,43 @@ extern network_indicator_t network_indicator;
 void basic_cluster_store_attrs_to_nv();
 void basic_cluster_load_attrs_from_nv();
 
+// Set when the dedicated status/network LED is PWM-dimmable, so attribute
+// writes can reach the cluster's brightness/transition storage.
+static zigbee_basic_cluster *g_basic_cluster = NULL;
+
+// The dedicated status LED is always the network indicator's first led (the
+// config parser puts the L-configured led there).
+static led_t *status_led(void) {
+    if (!network_indicator.has_dedicated_led)
+        return NULL;
+
+    return network_indicator.leds[0];
+}
+
+typedef struct {
+    uint8_t  brightness;
+    uint16_t transition;
+} net_led_dimming_nv_t;
+
+static void basic_cluster_save_net_led_dimming(zigbee_basic_cluster *cluster) {
+    net_led_dimming_nv_t nv = {
+        .brightness = cluster->status_led_brightness,
+        .transition = cluster->status_led_transition,
+    };
+
+    hal_nvm_write(NV_ITEM_NET_LED_DIMMING, sizeof(nv), (uint8_t *)&nv);
+}
+
+static void basic_cluster_load_net_led_dimming(zigbee_basic_cluster *cluster) {
+    net_led_dimming_nv_t nv;
+
+    if (hal_nvm_read(NV_ITEM_NET_LED_DIMMING, sizeof(nv), (uint8_t *)&nv) ==
+        HAL_NVM_SUCCESS) {
+        cluster->status_led_brightness = nv.brightness;
+        cluster->status_led_transition = nv.transition;
+    }
+}
+
 void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id) {
     basic_cluster_store_attrs_to_nv();
     if (attribute_id == ZCL_ATTR_BASIC_DEVICE_CONFIG) {
@@ -48,6 +85,18 @@ void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id) {
     }
     if (attribute_id == ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT) {
         device_params_set_multi_press_reset_count(g_multi_press_reset_count);
+    }
+    if (g_basic_cluster != NULL && status_led() != NULL) {
+        if (attribute_id == ZCL_ATTR_BASIC_STATUS_LED_BRIGHTNESS) {
+            // Live dimming: applies immediately if the led is currently on.
+            led_set_brightness(status_led(),
+                               g_basic_cluster->status_led_brightness);
+            basic_cluster_save_net_led_dimming(g_basic_cluster);
+        } else if (attribute_id == ZCL_ATTR_BASIC_STATUS_LED_TRANSITION) {
+            led_set_transition(status_led(),
+                               g_basic_cluster->status_led_transition);
+            basic_cluster_save_net_led_dimming(g_basic_cluster);
+        }
     }
 }
 
@@ -105,16 +154,35 @@ void basic_cluster_add_to_endpoint(zigbee_basic_cluster *cluster,
                ATTR_WRITABLE, device_config_str);
     SETUP_ATTR(12, ZCL_ATTR_BASIC_MULTI_PRESS_RESET_COUNT, ZCL_DATA_TYPE_UINT8,
                ATTR_WRITABLE, g_multi_press_reset_count);
+    uint8_t attr_count = 13;
     if (network_indicator.has_dedicated_led) {
         SETUP_ATTR(13, ZCL_ATTR_BASIC_STATUS_LED_STATE, ZCL_DATA_TYPE_BOOLEAN,
                    ATTR_WRITABLE, network_indicator.manual_state_when_connected);
+        attr_count = 14;
+
+        if (status_led()->dimmable) {
+            // Seed from the led's defaults, then let NVM override.
+            cluster->status_led_brightness = status_led()->brightness;
+            cluster->status_led_transition = status_led()->transition_ms;
+            basic_cluster_load_net_led_dimming(cluster);
+            led_set_brightness(status_led(), cluster->status_led_brightness);
+            led_set_transition(status_led(), cluster->status_led_transition);
+            g_basic_cluster = cluster;
+
+            SETUP_ATTR(14, ZCL_ATTR_BASIC_STATUS_LED_BRIGHTNESS,
+                       ZCL_DATA_TYPE_UINT8, ATTR_WRITABLE,
+                       cluster->status_led_brightness);
+            SETUP_ATTR(15, ZCL_ATTR_BASIC_STATUS_LED_TRANSITION,
+                       ZCL_DATA_TYPE_UINT16, ATTR_WRITABLE,
+                       cluster->status_led_transition);
+            attr_count = 16;
+        }
     }
 
     endpoint->clusters[endpoint->cluster_count].cluster_id      = ZCL_CLUSTER_BASIC;
-    endpoint->clusters[endpoint->cluster_count].attribute_count =
-        network_indicator.has_dedicated_led ? 14 : 13;
-    endpoint->clusters[endpoint->cluster_count].attributes = cluster->attr_infos;
-    endpoint->clusters[endpoint->cluster_count].is_server  = 1;
+    endpoint->clusters[endpoint->cluster_count].attribute_count = attr_count;
+    endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
+    endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->cluster_count++;
 
     device_params_load_from_nv();
