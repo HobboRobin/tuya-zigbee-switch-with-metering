@@ -23,12 +23,13 @@ static void bl0942_meter_set_calibration(void *ctx, uint32_t voltage_mult,
                                          uint32_t power_mult);
 
 static const energy_meter_ops_t bl0942_energy_meter_ops = {
-    .get_data        = bl0942_meter_get_data,
-    .reset_energy    = bl0942_meter_reset_energy,
-    .tick            = NULL,
-    .calibrate       = bl0942_meter_calibrate,
-    .get_calibration = bl0942_meter_get_calibration,
-    .set_calibration = bl0942_meter_set_calibration,
+    .get_data          = bl0942_meter_get_data,
+    .reset_energy      = bl0942_meter_reset_energy,
+    .tick              = NULL,
+    .calibrate         = bl0942_meter_calibrate,
+    .get_calibration   = bl0942_meter_get_calibration,
+    .set_calibration   = bl0942_meter_set_calibration,
+    .get_instant_power = NULL, // get_data() power is already ~1 s fresh
 };
 
 // May run in interrupt context: only touch the rx ring.

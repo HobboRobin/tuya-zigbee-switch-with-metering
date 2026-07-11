@@ -69,6 +69,7 @@ SOURCES := \
 	$(SRC_DIR)/zigbee/battery_cluster.c \
 	$(SRC_DIR)/base_components/energy_measurement/hlw8012.c \
 	$(SRC_DIR)/base_components/energy_measurement/bl0942.c \
+	$(SRC_DIR)/base_components/overload_protection.c \
 	$(SRC_DIR)/zigbee/electrical_measurement_cluster.c \
 	$(SRC_DIR)/zigbee/metering_cluster.c
 

@@ -265,6 +265,47 @@ const romasku = {
                 }
             },
         }),
+    overloadSetting: ({name, attribute, unit, scale, valueMin, valueMax, valueStep, description, endpointName}) => {
+        const result = numeric({
+            name,
+            cluster: "haElectricalMeasurement",
+            attribute,
+            unit,
+            description,
+            access: "ALL",
+            valueMin,
+            valueMax,
+            valueStep,
+            entityCategory: "config",
+            endpointName,
+        });
+        // Firmware stores current in mA and voltage in cV; present A/V and scale.
+        if (scale && scale !== 1) {
+            const origSet = result.toZigbee[0].convertSet;
+            result.toZigbee[0].convertSet = async (entity, key, value, meta) =>
+                await origSet(entity, key, Math.round(Number(value) * scale), meta);
+            const origConvert = result.fromZigbee[0].convert;
+            result.fromZigbee[0].convert = (model, msg, publish, options, meta) => {
+                const r = origConvert(model, msg, publish, options, meta);
+                if (r && r[name] !== undefined && r[name] !== null) {
+                    r[name] = r[name] / scale;
+                }
+                return r;
+            };
+        }
+        return result;
+    },
+    overloadAlarm: (name, endpointName) =>
+        enumLookup({
+            name,
+            cluster: "haElectricalMeasurement",
+            attribute: {ID: 0xFF36, type: 0x30}, // enum8
+            lookup: {none: 0, power: 1, current: 2, peak: 3, voltage_high: 4, voltage_low: 5, locked_out: 6},
+            description: "Overload protection status: what tripped the relay or is being warned about (locked_out = tripped too many times, switch on manually to re-arm)",
+            access: "STATE",
+            entityCategory: "diagnostic",
+            endpointName,
+        }),
     calibrate: ({name, attribute, unit, multiplier, valueMax, valueStep, description, endpointName}) => {
         const result = numeric({
             name,
@@ -627,6 +668,47 @@ const definitions = [
                 endpointName: "{{energy_ep_name}}",
             }),
             romasku.calibrationValues("calibration_values", "{{energy_ep_name}}"),
+            {% if device.relayNames %}
+            // Overload protection (always active; the hard 3680 W / 16 A peak
+            // cannot be disabled or raised above the manufacturer maximum).
+            romasku.overloadSetting({
+                name: "overload_power_limit", attribute: {ID: 0xFF30, type: 0x21}, unit: "W", scale: 1,
+                valueMin: 100, valueMax: 3680, valueStep: 10,
+                description: "Soft power limit: over this for longer than the trip delay switches the relay off",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.overloadSetting({
+                name: "overload_current_limit", attribute: {ID: 0xFF31, type: 0x21}, unit: "A", scale: 1000,
+                valueMin: 1, valueMax: 16, valueStep: 0.5,
+                description: "Soft current limit: over this for longer than the trip delay switches the relay off",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.overloadSetting({
+                name: "overload_trip_delay", attribute: {ID: 0xFF32, type: 0x21}, unit: "s", scale: 1,
+                valueMin: 0, valueMax: 3600, valueStep: 1,
+                description: "How long the load may stay above the soft limit before the relay is switched off (the hard peak trips instantly regardless)",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.overloadSetting({
+                name: "overvoltage_warn", attribute: {ID: 0xFF33, type: 0x21}, unit: "V", scale: 100,
+                valueMin: 230, valueMax: 280, valueStep: 1,
+                description: "Overvoltage warning threshold (raises the alarm only, does not switch off)",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.overloadSetting({
+                name: "undervoltage_warn", attribute: {ID: 0xFF34, type: 0x21}, unit: "V", scale: 100,
+                valueMin: 150, valueMax: 240, valueStep: 1,
+                description: "Undervoltage warning threshold (raises the alarm only, does not switch off)",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.overloadSetting({
+                name: "overload_reconnect_delay", attribute: {ID: 0xFF35, type: 0x21}, unit: "s", scale: 1,
+                valueMin: 5, valueMax: 3600, valueStep: 1,
+                description: "After a trip, if the relay's power-on behavior is On or Previous, it auto-reconnects after this delay (up to 5 times, then locks out)",
+                endpointName: "{{energy_ep_name}}",
+            }),
+            romasku.overloadAlarm("overload_alarm", "{{energy_ep_name}}"),
+            {% endif %}
             {% endif %}
             {% for switchName in device.switchNames %}
             romasku.pressAction("{{switchName}}_press_action", "{{switchName}}"),

@@ -141,6 +141,14 @@
 // Read/write string "V<mult>A<mult>W<mult>" mirroring the calibration
 // multipliers, for copying a reference device's calibration to others.
 #define ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES                   0xFF20
+// Overload protection config + status.
+#define ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_POWER_LIMIT                 0xFF30
+#define ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_CURRENT_LIMIT               0xFF31
+#define ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_TRIP_DELAY                  0xFF32
+#define ZCL_ATTR_ELEC_MEAS_CUST_OVERVOLTAGE_WARN                     0xFF33
+#define ZCL_ATTR_ELEC_MEAS_CUST_UNDERVOLTAGE_WARN                    0xFF34
+#define ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_RECONNECT_DELAY             0xFF35
+#define ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_ALARM                       0xFF36
 
 // Metering cluster (0x0702)
 #define ZCL_CLUSTER_METERING                                         0x0702

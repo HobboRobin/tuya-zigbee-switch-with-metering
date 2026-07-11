@@ -40,6 +40,7 @@ source:
 - {path: ../../base_components/relay.c}
 - {path: ../../base_components/energy_measurement/hlw8012.c}
 - {path: ../../base_components/energy_measurement/bl0942.c}
+- {path: ../../base_components/overload_protection.c}
 - {path: ../../base_components/battery.h}
 - {path: ../../base_components/button.h}
 - {path: ../../base_components/led.h}
@@ -48,6 +49,7 @@ source:
 - {path: ../../base_components/energy_meter.h}
 - {path: ../../base_components/energy_measurement/hlw8012.h}
 - {path: ../../base_components/energy_measurement/bl0942.h}
+- {path: ../../base_components/overload_protection.h}
 - {path: ../../device_config/config_nv.c}
 - {path: ../../device_config/config_nv.h}
 - {path: ../../device_config/config_parser.c}
