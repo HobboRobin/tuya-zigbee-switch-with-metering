@@ -8,6 +8,7 @@
 
 #include "stub/stub_app.h"
 #include "zigbee/consts.h"
+#include "base_components/overload_protection.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -217,6 +218,59 @@ static int cmd_zcl_write(int argc, char **argv) {
     return 0;
 }
 
+// Deterministic driver for the overload protection state machine, so its
+// timing (grace delay, reconnect, lockout) can be unit-tested with exact
+// inputs. `overload_sim reset` (re)initialises the instance; otherwise:
+//   overload_sim <now_ms> <v_cv> <i_ma> <p_w> <relay_on> <startup>
+// The relay state is tracked internally (updated by the returned action), so a
+// test can just advance <now_ms> and keep feeding measurements.
+static int cmd_overload_sim(int argc, char **argv) {
+    static overload_protection_t op;
+    static uint8_t initialized = 0;
+    static uint8_t relay_on    = 0;
+
+    if (argc == 2 && strcmp(argv[1], "reset") == 0) {
+        overload_protection_init(&op);
+        initialized = 1;
+        relay_on    = 0;
+        io_res_ok("reset");
+        return 0;
+    }
+    if (!initialized) {
+        overload_protection_init(&op);
+        initialized = 1;
+    }
+    if (argc != 7) {
+        fprintf(stderr, "Usage: overload_sim reset | <now_ms> <v_cv> <i_ma> "
+                "<p_w> <relay_on> <startup>\n");
+        io_res_err("usage");
+        return -1;
+    }
+
+    uint32_t now      = (uint32_t)strtoul(argv[1], NULL, 10);
+    uint16_t v_cv     = (uint16_t)strtoul(argv[2], NULL, 10);
+    uint16_t i_ma     = (uint16_t)strtoul(argv[3], NULL, 10);
+    int32_t  p_w      = (int32_t)strtol(argv[4], NULL, 10);
+    uint8_t  in_relay = (uint8_t)strtoul(argv[5], NULL, 10);
+    uint8_t  startup  = (uint8_t)strtoul(argv[6], NULL, 10);
+
+    // Let the caller force the relay state (e.g. to simulate a manual on),
+    // otherwise track it from the previous action.
+    relay_on = in_relay;
+
+    overload_action_t action = overload_protection_check(
+        &op, now, v_cv, i_ma, p_w, relay_on, startup);
+    if (action == OVERLOAD_ACTION_TURN_OFF)
+        relay_on = 0;
+    else if (action == OVERLOAD_ACTION_TURN_ON)
+        relay_on = 1;
+
+    io_res_ok("action=%d alarm=%d relay=%d tripped=%d locked=%d retries=%d",
+              (int)action, (int)op.alarm, (int)relay_on, (int)op.tripped,
+              (int)op.locked_out, (int)op.retry_count);
+    return 0;
+}
+
 static int cmd_read_pin(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "Usage: read_pin <pin>\n");
@@ -420,6 +474,7 @@ static const SimpleReplCommand kCmds[] = {
     { "step_time",           cmd_step_time           },
     { "set_battery_voltage", cmd_set_battery_voltage },
     { "set_counter",         cmd_set_counter         },
+    { "overload_sim",        cmd_overload_sim        },
     { "q",                   cmd_quit                },
     { "quit",                cmd_quit                },
 };

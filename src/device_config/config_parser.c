@@ -469,6 +469,12 @@ void parse_config() {
                                       &endpoints[switch_clusters_cnt + index]);
     }
 
+    // Overload protection guards the first relay on the metering device.
+    if (energy_monitoring_enabled && relay_clusters_cnt > 0) {
+        electrical_measurement_cluster_set_protected_relay(&elec_meas_cluster,
+                                                           &relay_clusters[0]);
+    }
+
     int cover_switch_base = switch_clusters_cnt + relay_clusters_cnt;
     for (int index = 0; index < cover_switch_clusters_cnt; index++) {
         if (cover_switch_base + index != 0) {
@@ -606,4 +612,7 @@ void energy_monitoring_tick(void) {
         return;
 
     hlw8012_tick(&hlw8012_device);
+    // Refresh the measurement mirror and run overload protection every tick,
+    // independent of network join, so the relay is protected even offline.
+    electrical_measurement_cluster_update(&elec_meas_cluster);
 }

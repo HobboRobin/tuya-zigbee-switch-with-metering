@@ -13,16 +13,18 @@ static void hlw8012_meter_get_calibration(void *ctx,
 static void hlw8012_meter_set_calibration(void *ctx, uint32_t voltage_mult,
                                           uint32_t current_mult,
                                           uint32_t power_mult);
+static int32_t hlw8012_meter_get_instant_power(void *ctx);
 void        _update_measurement_handler(void *arg);
 void        _cycle_sel_pin(hlw8012_t *dev);
 
 static const energy_meter_ops_t hlw8012_energy_meter_ops = {
-    .get_data        = hlw8012_meter_get_data,
-    .reset_energy    = hlw8012_meter_reset_energy,
-    .tick            = hlw8012_meter_tick,
-    .calibrate       = hlw8012_meter_calibrate,
-    .get_calibration = hlw8012_meter_get_calibration,
-    .set_calibration = hlw8012_meter_set_calibration,
+    .get_data          = hlw8012_meter_get_data,
+    .reset_energy      = hlw8012_meter_reset_energy,
+    .tick              = hlw8012_meter_tick,
+    .calibrate         = hlw8012_meter_calibrate,
+    .get_calibration   = hlw8012_meter_get_calibration,
+    .set_calibration   = hlw8012_meter_set_calibration,
+    .get_instant_power = hlw8012_meter_get_instant_power,
 };
 
 static uint32_t pulses_to_frequency(uint32_t pulse_count) {
@@ -252,6 +254,31 @@ void hlw8012_reset_energy(hlw8012_t *dev) {
     dev->data.energy_acc = 0;
     hal_gpio_counter_read_and_reset(dev->cf_counter);
     hal_gpio_counter_read_and_reset(dev->cf1_counter);
+}
+
+// Fast power estimate for overload protection: the CF pulse counter is peeked
+// (without resetting the 5 s accumulator) and its partial count extrapolated to
+// a full sample window. Reacts within ~1 s to a rising load instead of waiting
+// for the next 5 s sample. A minimum 1 s window keeps inrush transients from
+// causing a false trip; the result is clamped so a glitch cannot overflow.
+static int32_t hlw8012_meter_get_instant_power(void *ctx) {
+    hlw8012_t *dev = (hlw8012_t *)ctx;
+
+    if (!dev || !dev->initialized || !dev->data.valid)
+        return dev ? dev->data.power : 0;
+
+    uint32_t elapsed = hal_millis() - dev->data.last_sample_time;
+    if (elapsed < 1000u)
+        return dev->data.power;                                    // too early in the window to estimate
+
+    uint32_t partial     = hal_gpio_counter_read(dev->cf_counter); // peek only
+    uint32_t pulses_full = (partial * HLW8012_SAMPLE_INTERVAL_MS) / elapsed;
+    if (pulses_full > HLW8012_MAX_SANE_PULSES)
+        pulses_full = HLW8012_MAX_SANE_PULSES;
+
+    return (int32_t)((pulses_full * dev->cal.power_multiplier +
+                      HLW8012_FIXED_POINT_SCALE / 2) /
+                     HLW8012_FIXED_POINT_SCALE);
 }
 
 static void hlw8012_meter_get_data(void *ctx, energy_meter_data_t *data) {

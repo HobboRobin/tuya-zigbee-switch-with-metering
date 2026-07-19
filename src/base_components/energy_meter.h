@@ -50,6 +50,9 @@ typedef struct {
     // persisted calibration on boot.
     void (*set_calibration)(void *ctx, uint32_t voltage_mult,
                             uint32_t current_mult, uint32_t power_mult);
+    // Optional: fastest available power estimate (W), for overload protection.
+    // NULL means "no faster value than get_data()'s power".
+    int32_t (*get_instant_power)(void *ctx);
 } energy_meter_ops_t;
 
 struct energy_meter {
@@ -102,6 +105,20 @@ static inline void energy_meter_get_calibration(
     energy_meter_t *meter, energy_meter_calibration_t *cal) {
     if (meter && meter->ops && meter->ops->get_calibration && cal)
         meter->ops->get_calibration(meter->ctx, cal);
+}
+
+// Fastest available power reading (W) for protection; falls back to the last
+// get_data() power when the driver has no faster estimate.
+static inline int32_t energy_meter_get_instant_power(energy_meter_t *meter) {
+    if (meter && meter->ops && meter->ops->get_instant_power)
+        return meter->ops->get_instant_power(meter->ctx);
+
+    if (meter && meter->ops && meter->ops->get_data) {
+        energy_meter_data_t data;
+        meter->ops->get_data(meter->ctx, &data);
+        return data.valid ? data.power : 0;
+    }
+    return 0;
 }
 
 static inline void energy_meter_set_calibration(energy_meter_t *meter,

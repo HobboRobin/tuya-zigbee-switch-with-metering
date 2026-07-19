@@ -5,6 +5,7 @@
 #include "hal/nvm.h"
 #include "hal/timer.h"
 #include "hal/printf_selector.h"
+#include "relay_cluster.h"
 #include <string.h>
 
 #define MEAS_TYPE_AC_ACTIVE       (1 << 0)
@@ -22,6 +23,9 @@ typedef struct {
 
 // Single instance, used to route attribute-write callbacks to calibration.
 static electrical_measurement_cluster_t *g_elec_cluster = NULL;
+
+static void elec_meas_run_overload_protection(
+    electrical_measurement_cluster_t *cluster, const energy_meter_data_t *data);
 
 static void elec_meas_save_calibration(electrical_measurement_cluster_t *cluster) {
     energy_meter_calibration_t cal;
@@ -106,6 +110,68 @@ static void elec_meas_apply_calibration_values(
     elec_meas_save_calibration(cluster);
 }
 
+// ---- Overload protection ----------------------------------------------------
+
+// Keep the soft limits within the fixed manufacturer peak; a too-short
+// reconnect delay is bumped up. The hard peak tier is always enforced by the
+// state machine regardless of the soft settings, so protection can never be
+// fully disabled.
+static void elec_meas_overload_clamp(overload_config_t *c) {
+    if (c->power_limit_w > OVERLOAD_HARD_POWER_W)
+        c->power_limit_w = OVERLOAD_HARD_POWER_W;
+    if (c->current_limit_ma > OVERLOAD_HARD_CURRENT_MA)
+        c->current_limit_ma = OVERLOAD_HARD_CURRENT_MA;
+    if (c->reconnect_delay_s < 5)
+        c->reconnect_delay_s = 5;
+}
+
+static void elec_meas_overload_mirror_to_attrs(
+    electrical_measurement_cluster_t *cluster) {
+    cluster->overload_power_limit     = cluster->overload.cfg.power_limit_w;
+    cluster->overload_current_limit   = cluster->overload.cfg.current_limit_ma;
+    cluster->overload_trip_delay      = cluster->overload.cfg.trip_delay_s;
+    cluster->overvoltage_warn         = cluster->overload.cfg.overvoltage_cv;
+    cluster->undervoltage_warn        = cluster->overload.cfg.undervoltage_cv;
+    cluster->overload_reconnect_delay = cluster->overload.cfg.reconnect_delay_s;
+    cluster->overload_alarm           = (uint8_t)cluster->overload.alarm;
+}
+
+static void elec_meas_overload_save(electrical_measurement_cluster_t *cluster) {
+    hal_nvm_write(NV_ITEM_OVERLOAD_CONFIG, sizeof(cluster->overload.cfg),
+                  (uint8_t *)&cluster->overload.cfg);
+}
+
+static void elec_meas_overload_load(electrical_measurement_cluster_t *cluster) {
+    overload_config_t nv;
+
+    if (hal_nvm_read(NV_ITEM_OVERLOAD_CONFIG, sizeof(nv), (uint8_t *)&nv) ==
+        HAL_NVM_SUCCESS) {
+        cluster->overload.cfg = nv; // keep compile-time defaults on first boot
+    }
+    elec_meas_overload_clamp(&cluster->overload.cfg);
+}
+
+// Pull the mirror attributes back into the config after a ZCL write, clamp,
+// persist, and refresh the mirror to the canonical value.
+static void elec_meas_overload_apply_attrs(
+    electrical_measurement_cluster_t *cluster) {
+    cluster->overload.cfg.power_limit_w     = cluster->overload_power_limit;
+    cluster->overload.cfg.current_limit_ma  = cluster->overload_current_limit;
+    cluster->overload.cfg.trip_delay_s      = cluster->overload_trip_delay;
+    cluster->overload.cfg.overvoltage_cv    = cluster->overvoltage_warn;
+    cluster->overload.cfg.undervoltage_cv   = cluster->undervoltage_warn;
+    cluster->overload.cfg.reconnect_delay_s = cluster->overload_reconnect_delay;
+    elec_meas_overload_clamp(&cluster->overload.cfg);
+    elec_meas_overload_save(cluster);
+    elec_meas_overload_mirror_to_attrs(cluster);
+}
+
+void electrical_measurement_cluster_set_protected_relay(
+    electrical_measurement_cluster_t *cluster, void *relay_cluster) {
+    if (cluster)
+        cluster->protected_relay = relay_cluster;
+}
+
 void electrical_measurement_cluster_init(electrical_measurement_cluster_t *cluster,
                                          energy_meter_t *meter) {
     if (!cluster || !meter)
@@ -120,6 +186,9 @@ void electrical_measurement_cluster_init(electrical_measurement_cluster_t *clust
     cluster->ac_current_divisor    = 1000; // firmware reports current in mA
     cluster->ac_power_multiplier   = 1;
     cluster->ac_power_divisor      = 1;    // firmware reports power in whole watts
+
+    overload_protection_init(&cluster->overload);
+    elec_meas_overload_mirror_to_attrs(cluster);
 }
 
 void electrical_measurement_cluster_add_to_endpoint(
@@ -162,10 +231,24 @@ void electrical_measurement_cluster_add_to_endpoint(
     SETUP_ATTR(16, ZCL_ATTR_ELEC_MEAS_CUST_CALIBRATION_VALUES, ZCL_DATA_TYPE_CHAR_STR,
                ATTR_WRITABLE,
                cluster->calibration_values);
+    SETUP_ATTR(17, ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_POWER_LIMIT, ZCL_DATA_TYPE_UINT16,
+               ATTR_WRITABLE, cluster->overload_power_limit);
+    SETUP_ATTR(18, ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_CURRENT_LIMIT, ZCL_DATA_TYPE_UINT16,
+               ATTR_WRITABLE, cluster->overload_current_limit);
+    SETUP_ATTR(19, ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_TRIP_DELAY, ZCL_DATA_TYPE_UINT16,
+               ATTR_WRITABLE, cluster->overload_trip_delay);
+    SETUP_ATTR(20, ZCL_ATTR_ELEC_MEAS_CUST_OVERVOLTAGE_WARN, ZCL_DATA_TYPE_UINT16,
+               ATTR_WRITABLE, cluster->overvoltage_warn);
+    SETUP_ATTR(21, ZCL_ATTR_ELEC_MEAS_CUST_UNDERVOLTAGE_WARN, ZCL_DATA_TYPE_UINT16,
+               ATTR_WRITABLE, cluster->undervoltage_warn);
+    SETUP_ATTR(22, ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_RECONNECT_DELAY, ZCL_DATA_TYPE_UINT16,
+               ATTR_WRITABLE, cluster->overload_reconnect_delay);
+    SETUP_ATTR(23, ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_ALARM, ZCL_DATA_TYPE_ENUM8,
+               ATTR_READONLY, cluster->overload_alarm);
 
     endpoint->clusters[endpoint->cluster_count].cluster_id =
         ZCL_CLUSTER_ELECTRICAL_MEASUREMENT;
-    endpoint->clusters[endpoint->cluster_count].attribute_count = 17;
+    endpoint->clusters[endpoint->cluster_count].attribute_count = 24;
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->cluster_count++;
@@ -175,6 +258,9 @@ void electrical_measurement_cluster_add_to_endpoint(
     // Seed the readable multiplier string (defaults, config_str markers and
     // NVM-restored calibration are all applied by now).
     elec_meas_refresh_calibration_values(cluster);
+    // Restore persisted overload config (keeps defaults on first boot).
+    elec_meas_overload_load(cluster);
+    elec_meas_overload_mirror_to_attrs(cluster);
 }
 
 void electrical_measurement_cluster_load_calibration(
@@ -235,6 +321,16 @@ void electrical_measurement_cluster_callback_attr_write_trampoline(
         elec_meas_refresh_calibration_values(cluster);
         return;
 
+    case ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_POWER_LIMIT:
+    case ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_CURRENT_LIMIT:
+    case ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_TRIP_DELAY:
+    case ZCL_ATTR_ELEC_MEAS_CUST_OVERVOLTAGE_WARN:
+    case ZCL_ATTR_ELEC_MEAS_CUST_UNDERVOLTAGE_WARN:
+    case ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_RECONNECT_DELAY:
+        // Any overload setting changed: adopt, clamp, persist.
+        elec_meas_overload_apply_attrs(cluster);
+        return;
+
     default:
         return;
     }
@@ -258,6 +354,37 @@ void electrical_measurement_cluster_update(electrical_measurement_cluster_t *clu
         cluster->freq_cf      = data.freq_cf;
         cluster->freq_cf1     = data.freq_cf1;
         cluster->sel_state    = data.sel_state;
+    }
+
+    elec_meas_run_overload_protection(cluster, &data);
+}
+
+// Feed the latest measurement to the overload state machine and apply its
+// verdict to the guarded relay. Uses the fastest available power estimate so a
+// rising load trips quickly (see energy_meter_get_instant_power).
+static void elec_meas_run_overload_protection(
+    electrical_measurement_cluster_t *cluster, const energy_meter_data_t *data) {
+    zigbee_relay_cluster *relay = (zigbee_relay_cluster *)cluster->protected_relay;
+
+    if (!relay || !data->valid)
+        return;
+
+    int32_t           power  = energy_meter_get_instant_power(cluster->meter);
+    overload_action_t action = overload_protection_check(
+        &cluster->overload, hal_millis(), data->voltage, data->current, power,
+        relay->relay->on, relay->startup_mode);
+
+    if (action == OVERLOAD_ACTION_TURN_OFF && relay->relay->on) {
+        relay_cluster_off(relay);
+    } else if (action == OVERLOAD_ACTION_TURN_ON && !relay->relay->on) {
+        relay_cluster_on(relay);
+    }
+
+    if (cluster->overload_alarm != (uint8_t)cluster->overload.alarm) {
+        cluster->overload_alarm = (uint8_t)cluster->overload.alarm;
+        hal_zigbee_notify_attribute_changed(
+            cluster->endpoint, ZCL_CLUSTER_ELECTRICAL_MEASUREMENT,
+            ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_ALARM);
     }
 }
 

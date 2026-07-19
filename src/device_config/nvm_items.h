@@ -45,4 +45,7 @@
 // Relay LED dimming uses 45..49 (MAX_RELAYS), so the next free slot is 50.
 #define NV_ITEM_NET_LED_DIMMING    50
 
+// Overload protection configuration (single metering endpoint).
+#define NV_ITEM_OVERLOAD_CONFIG    51
+
 #endif /* DEVICE_CONFIG_NVM_ITEMS_H_ */
