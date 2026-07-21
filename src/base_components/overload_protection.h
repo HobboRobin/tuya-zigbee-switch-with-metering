@@ -21,10 +21,18 @@
 // measurements + the relay state and applies the returned action, so it is
 // unit-testable and reused by both meter drivers.
 
-// Fixed manufacturer peak limits (A1Z and BSEED PM are both 16 A / 3680 W).
-#define OVERLOAD_HARD_POWER_W       3680
+// Default manufacturer peak limits (A1Z and BSEED PM are both 16 A / 3680 W).
+// These are only the compile-time defaults: the actual per-device hard caps
+// live in overload_config_t and can be raised via the config_str `OL` token
+// (e.g. the TONGOU breaker is rated 16 A continuous / 20 A peak).
+#define OVERLOAD_HARD_POWER_W       3680u
 #define OVERLOAD_HARD_CURRENT_MA    16000u
 #define OVERLOAD_MAX_RETRIES        5u
+
+// Nominal mains voltage used to derive a power limit from a current limit
+// (P = I * V). The user configures the device by its rated current; the
+// matching wattage is computed at this reference voltage.
+#define OVERLOAD_NOMINAL_VOLTAGE_V    230u
 
 // Undervoltage below this (in cV) is treated as "no reading" (unplugged /
 // meter not up yet), not a brownout, so it does not raise a false alarm.
@@ -53,6 +61,11 @@ typedef struct {
     uint16_t overvoltage_cv;    // overvoltage warn threshold (cV); 0 disables
     uint16_t undervoltage_cv;   // undervoltage warn threshold (cV); 0 disables
     uint16_t reconnect_delay_s; // auto-reconnect delay after a trip
+    // Hard (peak) caps that trip instantly. These are the device's rating, not
+    // user-configurable from Z2M — they come from the firmware defaults or the
+    // config_str `OL` token and are never overwritten by persisted NVM.
+    uint16_t hard_power_w;      // peak power cap (W); 0 disables the power check
+    uint16_t hard_current_ma;   // peak current cap (mA); 0 disables
 } overload_config_t;
 
 typedef struct {
@@ -67,6 +80,14 @@ typedef struct {
 
 // Initialize with the factory-default thresholds.
 void overload_protection_init(overload_protection_t *op);
+
+// Set the soft (continuous) and hard (peak) current caps in mA and derive the
+// matching power caps at OVERLOAD_NOMINAL_VOLTAGE_V. A 0 argument leaves that
+// tier unchanged. Used by the config parser to apply a device's rated limits
+// from the config_str `OL` token before NVM is loaded.
+void overload_protection_set_current_limits(overload_protection_t *op,
+                                            uint16_t soft_current_ma,
+                                            uint16_t hard_current_ma);
 
 // Feed fresh measurements (voltage cV, current mA, power W — power should be
 // the fastest available estimate) plus the relay's current on-state and its

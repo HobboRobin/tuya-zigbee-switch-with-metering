@@ -384,6 +384,23 @@ void parse_config() {
                            rx_pin);
                 }
             }
+        } else if (entry[0] == 'O' && entry[1] == 'L') {
+            // Overload limits: OL[C<soft_mA>][P<peak_mA>]
+            // Sets the device's rated continuous (soft) and peak (hard) current
+            // caps; the matching wattages are derived at the nominal mains
+            // voltage. Must appear after the EP/EB token so the meter cluster is
+            // already initialised. Only meaningful with energy monitoring.
+            if (energy_monitoring_enabled) {
+                const char *c = seek_until((char *)(entry + 2), 'C');
+                const char *p = seek_until((char *)(entry + 2), 'P');
+                overload_protection_set_current_limits(
+                    &elec_meas_cluster.overload,
+                    (*c == 'C') ? (uint16_t)parse_int(c + 1) : 0,
+                    (*p == 'P') ? (uint16_t)parse_int(p + 1) : 0);
+                printf("Config: overload limits soft=%umA peak=%umA\r\n",
+                       elec_meas_cluster.overload.cfg.current_limit_ma,
+                       elec_meas_cluster.overload.cfg.hard_current_ma);
+            }
         }
     }
 

@@ -1,4 +1,5 @@
 import argparse
+import re
 from pathlib import Path
 
 import yaml
@@ -48,6 +49,11 @@ if __name__ == "__main__":
         has_dimmable_net_led = False
         has_battery_cluster = False
         has_energy_meter = False
+        # Default overload caps (A1Z / BSEED PM: 16 A / 3680 W peak). A device
+        # can raise them with the `OL` token (OLC<soft_mA>P<peak_mA>); the
+        # converter's configurable soft limit is then bounded by the peak cap.
+        overload_max_current_a = 16
+        overload_max_power_w = 3680
         for peripheral in peripherals:
             if peripheral == "SLP" or peripheral == "M":
                 continue
@@ -71,6 +77,15 @@ if __name__ == "__main__":
                 has_battery_cluster = True
             if peripheral[:2] in ("EP", "EB"):
                 has_energy_meter = True
+            if peripheral[:2] == "OL":
+                # OL[C<soft_mA>][P<peak_mA>]: the peak (P) current in mA sets the
+                # converter's max configurable soft limit; power = I * 230 V.
+                body = peripheral[2:]
+                for marker, value in re.findall(r"([CP])(\d+)", body):
+                    if marker == "P":
+                        peak_ma = int(value)
+                        overload_max_current_a = round(peak_ma / 1000)
+                        overload_max_power_w = round(peak_ma * 230 / 1000)
 
         if switch_cnt == 1:
             switch_names = ["switch"]
@@ -133,6 +148,8 @@ if __name__ == "__main__":
                 "has_dimmable_net_led": has_dimmable_net_led,
                 "has_battery_cluster": has_battery_cluster,
                 "has_energy_meter": has_energy_meter,
+                "overload_max_current": overload_max_current_a,
+                "overload_max_power": overload_max_power_w,
             }
         )
 
