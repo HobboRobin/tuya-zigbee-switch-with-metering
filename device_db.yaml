@@ -275,8 +275,9 @@ DIN_RELAY_TONGOU_TS011F_PM_JZT:
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
-  stock_manufacturer_id: null
-  stock_image_type: null
+  stock_manufacturer_id: 4098
+  stock_image_type: 5634
+  stock_ota_experiment: yes
   firmware_image_type: 47115
   build: yes
   status: in_progress
