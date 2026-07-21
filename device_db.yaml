@@ -256,6 +256,33 @@ DIN_RELAY_TUYA_TS011F_PM:
   info: Power monitoring not implemented
   threads: https://github.com/romasku/tuya-zigbee-switch/pull/428
   store: https://www.aliexpress.com/item/1005008782778996.html
+DIN_RELAY_TONGOU_TS011F_PM_JZT:
+  human_name: Tongou TO-Q-SY1-JZT breaker PM
+  category: din_relay
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3000_qeuvnohg
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS011F_din_smart_relay
+  override_z2m_device: TO-Q-SY1-JZT
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: qeuvnohg;TS011F-TO;LC3p;SD1u;RA4;IC2p;EBB1B7;OLC16000P20000;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47115
+  build: yes
+  status: in_progress
+  info: "Tongou DIN-rail smart circuit breaker with metering. Relay PA4 (monostable, active-high), button PD1, dimmable network LED PC3, dimmable relay LED PC2. Energy metering via BL0942 on the module's UART pads (EBB1B7: MCU TX=B1, RX=B7 — the ZTU 'TX/B1' and 'RX/B7' pads; default 4800 baud, override with e.g. S9600). Rated 16 A continuous / 20 A peak, applied via the OL token (OLC16000P20000: soft 16 A, hard 20 A; wattages derived at 230 V). If a LED is inverted (stuck on), add 'i' to its token (LC3ip / IC2ip); if the meter stays silent, swap the pins to EBB7B1. Calibrate the meter via the calibrate fields or import multipliers via calibration_values."
+  threads: https://github.com/Koenkk/zigbee-herdsman-converters/pull/5555
+  store: https://zigbee.blakadder.com/Tongou_TO-Q-SY1-JZT.html
 MODULE_AUBESS_TS0001:
   human_name: Aubess WHD02
   category: module

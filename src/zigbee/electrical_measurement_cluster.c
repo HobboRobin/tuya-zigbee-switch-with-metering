@@ -117,10 +117,15 @@ static void elec_meas_apply_calibration_values(
 // state machine regardless of the soft settings, so protection can never be
 // fully disabled.
 static void elec_meas_overload_clamp(overload_config_t *c) {
-    if (c->power_limit_w > OVERLOAD_HARD_POWER_W)
-        c->power_limit_w = OVERLOAD_HARD_POWER_W;
-    if (c->current_limit_ma > OVERLOAD_HARD_CURRENT_MA)
-        c->current_limit_ma = OVERLOAD_HARD_CURRENT_MA;
+    // The soft limit can never exceed the device's hard (peak) cap, so
+    // protection can't be weakened past the rating. Fall back to the compiled
+    // defaults if a cap is unset.
+    uint16_t hp = c->hard_power_w ? c->hard_power_w : OVERLOAD_HARD_POWER_W;
+    uint16_t hc = c->hard_current_ma ? c->hard_current_ma : OVERLOAD_HARD_CURRENT_MA;
+    if (c->power_limit_w > hp)
+        c->power_limit_w = hp;
+    if (c->current_limit_ma > hc)
+        c->current_limit_ma = hc;
     if (c->reconnect_delay_s < 5)
         c->reconnect_delay_s = 5;
 }
@@ -144,10 +149,18 @@ static void elec_meas_overload_save(electrical_measurement_cluster_t *cluster) {
 static void elec_meas_overload_load(electrical_measurement_cluster_t *cluster) {
     overload_config_t nv;
 
+    // Hard caps are the device's rating (from firmware defaults or the
+    // config_str `OL` token, applied before this load). Never let a persisted
+    // copy — which may predate a cap change — override them.
+    uint16_t hard_power   = cluster->overload.cfg.hard_power_w;
+    uint16_t hard_current = cluster->overload.cfg.hard_current_ma;
+
     if (hal_nvm_read(NV_ITEM_OVERLOAD_CONFIG, sizeof(nv), (uint8_t *)&nv) ==
         HAL_NVM_SUCCESS) {
         cluster->overload.cfg = nv; // keep compile-time defaults on first boot
     }
+    cluster->overload.cfg.hard_power_w    = hard_power;
+    cluster->overload.cfg.hard_current_ma = hard_current;
     elec_meas_overload_clamp(&cluster->overload.cfg);
 }
 

@@ -22,6 +22,9 @@ SU_OFF, SU_ON, SU_PREV = 0x00, 0x01, 0xFF
 
 # HLW metering + relay on EP1: relay D2, CF=A1, CF1=C2, SEL=B1.
 CONFIG = "Stub;Stub;RD2;EPA1C2B1;M;"
+# Same, but with per-device overload limits (16 A continuous / 20 A peak, as
+# the TONGOU breaker) applied via the OL token.
+CONFIG_OL = "Stub;Stub;RD2;EPA1C2B1;OLC16000P20000;M;"
 CF_PIN = "A1"
 RELAY_PIN = "D2"
 
@@ -131,6 +134,57 @@ def test_sim_voltage_is_warn_only():
         # A 0 V reading (unplugged / meter not up) must not warn.
         r = _sim(d, 2000, 0, 0, 0, 1, SU_OFF)
         assert r["alarm"] == NONE
+
+
+def test_sim_limits_derive_power_from_current():
+    with StubProc(device_config=CONFIG) as proc:
+        d = Device(proc)
+        _sim(d, "reset")
+        # 16 A soft / 20 A peak -> 3680 W soft / 4600 W peak at 230 V nominal.
+        r = d.p.exec("overload_sim limits 16000 20000")
+        assert r.ok, r.payload
+        assert r.payload["soft_ma"] == "16000"
+        assert r.payload["peak_ma"] == "20000"
+        assert r.payload["soft_w"] == "3680"
+        assert r.payload["peak_w"] == "4600"
+
+
+def test_sim_raised_peak_cap_does_not_trip_early():
+    """With the TONGOU 20 A peak, a 17 A load (which would peak-trip on the
+    default 16 A device) only soft-warns and trips after the grace delay."""
+    with StubProc(device_config=CONFIG) as proc:
+        d = Device(proc)
+        _sim(d, "reset")
+        d.p.exec("overload_sim limits 16000 20000")
+        # 17 A (over the 16 A soft limit, under the 20 A peak) at 3600 W (under
+        # the 3680 W soft power). On the default 16 A device this current would
+        # already peak-trip; here it only soft-warns on current, no trip.
+        r = _sim(d, 1000, 23000, 17000, 3600, 1, SU_ON)
+        assert r["action"] == ACT_NONE and r["alarm"] == CURRENT
+        # Still within grace 10 s later.
+        r = _sim(d, 11000, 23000, 17000, 3600, 1, SU_ON)
+        assert r["action"] == ACT_NONE and r["alarm"] == CURRENT
+        # 21 A is above the raised peak -> instant trip.
+        r = _sim(d, 12000, 23000, 21000, 4830, 1, SU_ON)
+        assert r["action"] == ACT_OFF and r["alarm"] == PEAK and r["relay"] == 0
+
+
+def test_config_ol_token_sets_and_clamps_limits():
+    with StubProc(device_config=CONFIG_OL) as proc:
+        d = Device(proc)
+        read = lambda a: d.read_zigbee_attr(1, ZCL_CLUSTER_ELECTRICAL_MEASUREMENT, a)
+        # The OL token makes 16 A / 3680 W the default soft limit.
+        assert read(ATTR_POWER_LIMIT) == "3680"
+        assert read(ATTR_CURRENT_LIMIT) == "16000"
+        # Soft limits are now clamped to the raised 20 A / 4600 W peak cap.
+        d.write_zigbee_attr(
+            1, ZCL_CLUSTER_ELECTRICAL_MEASUREMENT, ATTR_CURRENT_LIMIT, "50000"
+        )
+        d.write_zigbee_attr(
+            1, ZCL_CLUSTER_ELECTRICAL_MEASUREMENT, ATTR_POWER_LIMIT, "9000"
+        )
+        assert read(ATTR_CURRENT_LIMIT) == "20000"
+        assert read(ATTR_POWER_LIMIT) == "4600"
 
 
 def test_config_defaults_write_and_persist():

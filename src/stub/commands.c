@@ -220,7 +220,9 @@ static int cmd_zcl_write(int argc, char **argv) {
 
 // Deterministic driver for the overload protection state machine, so its
 // timing (grace delay, reconnect, lockout) can be unit-tested with exact
-// inputs. `overload_sim reset` (re)initialises the instance; otherwise:
+// inputs. `overload_sim reset` (re)initialises the instance;
+// `overload_sim limits <soft_ma> <hard_ma>` applies per-device rated caps (as
+// the config_str OL token does); otherwise:
 //   overload_sim <now_ms> <v_cv> <i_ma> <p_w> <relay_on> <startup>
 // The relay state is tracked internally (updated by the returned action), so a
 // test can just advance <now_ms> and keep feeding measurements.
@@ -239,6 +241,15 @@ static int cmd_overload_sim(int argc, char **argv) {
     if (!initialized) {
         overload_protection_init(&op);
         initialized = 1;
+    }
+    if (argc == 4 && strcmp(argv[1], "limits") == 0) {
+        overload_protection_set_current_limits(
+            &op, (uint16_t)strtoul(argv[2], NULL, 10),
+            (uint16_t)strtoul(argv[3], NULL, 10));
+        io_res_ok("soft_ma=%u peak_ma=%u soft_w=%u peak_w=%u",
+                  op.cfg.current_limit_ma, op.cfg.hard_current_ma,
+                  op.cfg.power_limit_w, op.cfg.hard_power_w);
+        return 0;
     }
     if (argc != 7) {
         fprintf(stderr, "Usage: overload_sim reset | <now_ms> <v_cv> <i_ma> "

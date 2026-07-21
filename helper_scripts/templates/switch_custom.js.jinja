@@ -669,17 +669,17 @@ const definitions = [
             }),
             romasku.calibrationValues("calibration_values", "{{energy_ep_name}}"),
             {% if device.relayNames %}
-            // Overload protection (always active; the hard 3680 W / 16 A peak
+            // Overload protection (always active; the hard {{device.overload_max_power}} W / {{device.overload_max_current}} A peak
             // cannot be disabled or raised above the manufacturer maximum).
             romasku.overloadSetting({
                 name: "overload_power_limit", attribute: {ID: 0xFF30, type: 0x21}, unit: "W", scale: 1,
-                valueMin: 100, valueMax: 3680, valueStep: 10,
+                valueMin: 100, valueMax: {{device.overload_max_power}}, valueStep: 10,
                 description: "Soft power limit: over this for longer than the trip delay switches the relay off",
                 endpointName: "{{energy_ep_name}}",
             }),
             romasku.overloadSetting({
                 name: "overload_current_limit", attribute: {ID: 0xFF31, type: 0x21}, unit: "A", scale: 1000,
-                valueMin: 1, valueMax: 16, valueStep: 0.5,
+                valueMin: 1, valueMax: {{device.overload_max_current}}, valueStep: 0.5,
                 description: "Soft current limit: over this for longer than the trip delay switches the relay off",
                 endpointName: "{{energy_ep_name}}",
             }),

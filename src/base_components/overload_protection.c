@@ -14,6 +14,8 @@ void overload_protection_init(overload_protection_t *op) {
     op->cfg.overvoltage_cv    = 26000; // 260 V
     op->cfg.undervoltage_cv   = 21000; // 210 V
     op->cfg.reconnect_delay_s = 60;
+    op->cfg.hard_power_w      = OVERLOAD_HARD_POWER_W;    // 3680 W peak
+    op->cfg.hard_current_ma   = OVERLOAD_HARD_CURRENT_MA; // 16 A peak
 
     op->alarm           = OVERLOAD_ALARM_NONE;
     op->tripped         = 0;
@@ -21,6 +23,26 @@ void overload_protection_init(overload_protection_t *op) {
     op->retry_count     = 0;
     op->over_since_ms   = 0;
     op->reconnect_at_ms = 0;
+}
+
+void overload_protection_set_current_limits(overload_protection_t *op,
+                                            uint16_t soft_current_ma,
+                                            uint16_t hard_current_ma) {
+    if (!op)
+        return;
+
+    // P = I * V; current in mA * V / 1000 = W (result fits uint16 for mains
+    // loads: 20 A * 230 V = 4600 W).
+    if (soft_current_ma) {
+        op->cfg.current_limit_ma = soft_current_ma;
+        op->cfg.power_limit_w    = (uint16_t)((uint32_t)soft_current_ma *
+                                           OVERLOAD_NOMINAL_VOLTAGE_V / 1000u);
+    }
+    if (hard_current_ma) {
+        op->cfg.hard_current_ma = hard_current_ma;
+        op->cfg.hard_power_w    = (uint16_t)((uint32_t)hard_current_ma *
+                                          OVERLOAD_NOMINAL_VOLTAGE_V / 1000u);
+    }
 }
 
 static uint32_t stamp(uint32_t now) {
@@ -97,9 +119,11 @@ overload_action_t overload_protection_check(overload_protection_t *op,
         return OVERLOAD_ACTION_NONE;
     }
 
-    // Relay is on: evaluate the load.
-    uint8_t peak = (power_w >= OVERLOAD_HARD_POWER_W) ||
-                   (current_ma >= OVERLOAD_HARD_CURRENT_MA);
+    // Relay is on: evaluate the load against the device's peak caps (0 = off).
+    uint8_t peak = (op->cfg.hard_power_w != 0 &&
+                    power_w >= (int32_t)op->cfg.hard_power_w) ||
+                   (op->cfg.hard_current_ma != 0 &&
+                    current_ma >= op->cfg.hard_current_ma);
     if (peak) {
         return trip(op, now_ms, OVERLOAD_ALARM_PEAK, startup_mode);
     }
