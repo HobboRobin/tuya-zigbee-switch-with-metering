@@ -1,5 +1,7 @@
 #include "hal/uart.h"
 
+#include <stddef.h>
+
 #include "em_cmu.h"
 #include "em_core.h"
 #include "em_gpio.h"
