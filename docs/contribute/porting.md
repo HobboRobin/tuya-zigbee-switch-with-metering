@@ -118,7 +118,8 @@ Additional options:
 | **`BT<pin>`** | Battery mode                | • Enables battery-powered behavior <br> • Adds battery measurement/reporting using the selected ADC pin |
 | **`SLP`**    | Simultaneous Latching Pulses |  • Enable simultaneous pulses for latching relays (they are disallowed by default)|
 | **`EP<CF><CF1><SEL>`** | Energy monitoring (HLW8012/BL0937) | • Adds power/voltage/current/energy on EP1 <br> • 3 pins: CF (power), CF1 (voltage+current, time-multiplexed), SEL (mode select) <br> • Example: `EPC0C2C1` (CF=C0, CF1=C2, SEL=C1) |
-| **`EB<TX><RX>`** | Energy monitoring (BL0942, UART) | • Adds power/voltage/current/energy on EP1 <br> • 2 pins from the MCU's point of view: TX (poll command out), RX (data in) <br> • Optional `S<baud>` overrides the 4800 default (e.g. `EBB0B7S9600`) <br> • On TLSR825x RX must be a UART RX pin (A0/B0/B7/C3/C5/D6); TX may be any pin (bit-banged if not A2/B1/C2/D0/D3/D7) |
+| **`EB<TX><RX>`** | Energy monitoring (BL0942, UART) | • Adds power/voltage/current/energy on EP1 <br> • 2 pins from the MCU's point of view: TX (poll command out), RX (data in) <br> • Optional `S<baud>` overrides the 4800 default (e.g. `EBB0B7S9600`) <br> • On TLSR825x RX must be a UART RX pin (A0/B0/B7/C3/C5/D6); TX may be any pin (bit-banged if not A2/B1/C2/D0/D3/D7) <br> • On EFR32 (Silabs) any two pins work (flexible routing) |
+| **`OL[C<mA>][P<mA>]`** | Overload limits | • Sets the device's rated overload-protection caps (defaults: 10 A continuous / 16 A peak) <br> • `C`: continuous (soft) current in mA — warn, then trip after the configurable delay <br> • `P`: peak (hard) current in mA — instant trip <br> • Matching wattages are derived at 230 V <br> • Example: `OLC16000P20000` = 16 A soft / 20 A hard <br> • Only meaningful after an `EP`/`EB` token |
 
 The `EP` and `EB` tokens may be followed by optional calibration multipliers, in any
 order, to override the compiled-in defaults **without a rebuild** — useful when

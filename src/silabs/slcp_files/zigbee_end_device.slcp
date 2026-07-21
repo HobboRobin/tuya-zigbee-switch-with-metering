@@ -91,6 +91,10 @@ component:
   id: cli
 - {id: gpiointerrupt}
 - {id: emlib_iadc}
+- {id: emlib_cmu}
+- {id: emlib_core}
+- {id: emlib_timer}
+- {id: emlib_usart}
 - {id: iostream_recommended_stream}
 - { instance: [inst], id: iostream_usart}
 - {id: toolchain_gcc}
