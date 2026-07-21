@@ -146,14 +146,36 @@ generate-normal-ota:
 		OTA_IMAGE_TYPE=$(FIRMWARE_IMAGE_TYPE) \
 		OTA_FILE=../../$(OTA_FILE)
 
+# Build a stock-fingerprint OTA for boards whose stock ids are known. On
+# telink this is the regular migration path (and it is listed in the public
+# index below). On silabs Tuya's Gecko bootloader may enforce GBL signatures,
+# so the file is only built for boards that explicitly opt in with
+# `stock_ota_experiment: yes` in the device db — an at-your-own-risk
+# experiment served via a local Z2M override index, never the public one.
+# Its GBL is left uncompressed (the stock bootloader's decompression support
+# is unknown; a plain GBL always works).
+STOCK_OTA_EXPERIMENT := $(filter-out null,$(shell yq -r .$(BOARD).stock_ota_experiment $(DEVICE_DB_FILE)))
+ifeq ($(PLATFORM_PREFIX),silabs)
+TUYA_OTA_ENABLED := $(STOCK_OTA_EXPERIMENT)
+TUYA_OTA_EXTRA := GBL_COMPRESS=none
+else
+TUYA_OTA_ENABLED := yes
+TUYA_OTA_EXTRA :=
+endif
+
 generate-tuya-ota:
-ifneq ($(PLATFORM_PREFIX),silabs)  # Silabs platform does not support Tuya migration OTAs
+ifneq ($(FROM_STOCK_MANUFACTURER_ID),null)
+ifneq ($(FROM_STOCK_IMAGE_TYPE),null)
+ifneq ($(TUYA_OTA_ENABLED),)
 	$(MAKE) $(PLATFORM_PREFIX)/ota \
 		OTA_VERSION=0xFFFFFFFF \
 		DEVICE_TYPE=$(DEVICE_TYPE) \
 		OTA_IMAGE_TYPE=$(FROM_STOCK_IMAGE_TYPE) \
 		OTA_MANUFACTURER_ID=$(FROM_STOCK_MANUFACTURER_ID) \
+		$(TUYA_OTA_EXTRA) \
 		OTA_FILE=../../$(FROM_TUYA_OTA_FILE)
+endif
+endif
 endif
 
 generate-force-ota:
