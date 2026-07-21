@@ -158,9 +158,14 @@ STOCK_OTA_EXPERIMENT := $(filter-out null,$(shell yq -r .$(BOARD).stock_ota_expe
 ifeq ($(PLATFORM_PREFIX),silabs)
 TUYA_OTA_ENABLED := $(STOCK_OTA_EXPERIMENT)
 TUYA_OTA_EXTRA := GBL_COMPRESS=none
+# The Gecko SDK OTA client treats fileVersion 0xFFFFFFFF as invalid (erased
+# flash reads all-FF), so the stock device silently drops such offers — use
+# the real firmware version instead (far above any stock version).
+TUYA_OTA_VERSION := $(FILE_VERSION)
 else
 TUYA_OTA_ENABLED := yes
 TUYA_OTA_EXTRA :=
+TUYA_OTA_VERSION := 0xFFFFFFFF
 endif
 
 generate-tuya-ota:
@@ -168,7 +173,7 @@ ifneq ($(FROM_STOCK_MANUFACTURER_ID),null)
 ifneq ($(FROM_STOCK_IMAGE_TYPE),null)
 ifneq ($(TUYA_OTA_ENABLED),)
 	$(MAKE) $(PLATFORM_PREFIX)/ota \
-		OTA_VERSION=0xFFFFFFFF \
+		OTA_VERSION=$(TUYA_OTA_VERSION) \
 		DEVICE_TYPE=$(DEVICE_TYPE) \
 		OTA_IMAGE_TYPE=$(FROM_STOCK_IMAGE_TYPE) \
 		OTA_MANUFACTURER_ID=$(FROM_STOCK_MANUFACTURER_ID) \
