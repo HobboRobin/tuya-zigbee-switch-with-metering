@@ -8,11 +8,11 @@ void overload_protection_init(overload_protection_t *op) {
     if (!op)
         return;
 
-    op->cfg.power_limit_w     = 2500;  // ~10 A continuous rating
-    op->cfg.current_limit_ma  = 10000; // 10 A continuous rating
+    op->cfg.power_limit_w     = 2500;                     // ~10 A continuous rating
+    op->cfg.current_limit_ma  = 10000;                    // 10 A continuous rating
     op->cfg.trip_delay_s      = 30;
-    op->cfg.overvoltage_cv    = 26000; // 260 V
-    op->cfg.undervoltage_cv   = 21000; // 210 V
+    op->cfg.overvoltage_cv    = 26000;                    // 260 V
+    op->cfg.undervoltage_cv   = 21000;                    // 210 V
     op->cfg.reconnect_delay_s = 60;
     op->cfg.hard_power_w      = OVERLOAD_HARD_POWER_W;    // 3680 W peak
     op->cfg.hard_current_ma   = OVERLOAD_HARD_CURRENT_MA; // 16 A peak
@@ -36,12 +36,12 @@ void overload_protection_set_current_limits(overload_protection_t *op,
     if (soft_current_ma) {
         op->cfg.current_limit_ma = soft_current_ma;
         op->cfg.power_limit_w    = (uint16_t)((uint32_t)soft_current_ma *
-                                           OVERLOAD_NOMINAL_VOLTAGE_V / 1000u);
+                                              OVERLOAD_NOMINAL_VOLTAGE_V / 1000u);
     }
     if (hard_current_ma) {
         op->cfg.hard_current_ma = hard_current_ma;
         op->cfg.hard_power_w    = (uint16_t)((uint32_t)hard_current_ma *
-                                          OVERLOAD_NOMINAL_VOLTAGE_V / 1000u);
+                                             OVERLOAD_NOMINAL_VOLTAGE_V / 1000u);
     }
 }
 

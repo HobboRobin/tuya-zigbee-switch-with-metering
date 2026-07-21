@@ -32,7 +32,7 @@
 // Nominal mains voltage used to derive a power limit from a current limit
 // (P = I * V). The user configures the device by its rated current; the
 // matching wattage is computed at this reference voltage.
-#define OVERLOAD_NOMINAL_VOLTAGE_V  230u
+#define OVERLOAD_NOMINAL_VOLTAGE_V    230u
 
 // Undervoltage below this (in cV) is treated as "no reading" (unplugged /
 // meter not up yet), not a brownout, so it does not raise a false alarm.

@@ -122,6 +122,7 @@ static void elec_meas_overload_clamp(overload_config_t *c) {
     // defaults if a cap is unset.
     uint16_t hp = c->hard_power_w ? c->hard_power_w : OVERLOAD_HARD_POWER_W;
     uint16_t hc = c->hard_current_ma ? c->hard_current_ma : OVERLOAD_HARD_CURRENT_MA;
+
     if (c->power_limit_w > hp)
         c->power_limit_w = hp;
     if (c->current_limit_ma > hc)
