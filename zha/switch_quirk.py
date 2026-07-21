@@ -239,6 +239,7 @@ CONFIGS = [
     "nuenzetq1;TS0002-SC;LC3i;SD7u;RD4;SC0u;RA0;M;",
     "TUYA;DEV-ZTU2;LD7;SA0u;RC1;IB6;M;",
     "vbfp8eyv;TS011F-TD;LC4i;SC1u;RD4;IB6i;M;",
+    "qeuvnohg;TS011F-TO;LC3p;SD1u;RA4;IC2p;EBA5A6;OLC16000P20000;M;",
     "46t1rvdu;WHD02-Aubess;BC4u;LD2i;SB4u;RB5;",
     "46t1rvdu;WHD02-Aubess-ED;BC4u;LD2i;SB4u;RB5;",
     "WHD02-Aubess;WHD02-Aubess;BC4u;LD2i;SB4u;RB5;",

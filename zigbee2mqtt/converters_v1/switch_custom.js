@@ -1323,6 +1323,199 @@ const definitions = [
     },
     {
         zigbeeModel: [
+            "TS011F-TO",
+        ],
+        model: "TO-Q-SY1-JZT",
+        vendor: "Tuya-custom",
+        description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
+        extend: [
+            deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.deviceConfig("device_config", "switch"),
+            romasku.multiPressResetCount("multi_press_reset_count", "switch"),
+            romasku.networkIndicator("network_led", "switch"),
+            romasku.networkLedBrightness("network_led_brightness", "switch"),
+            romasku.networkLedTransition("network_led_transition", "switch"),
+            onOff({ endpointNames: ["relay"] }),
+            romasku.scaledMeasurement({
+                name: "voltage",
+                cluster: "haElectricalMeasurement",
+                attribute: "rmsVoltage",
+                unit: "V",
+                divisor: 100, // firmware reports centivolts
+                precision: 2,
+                endpointName: "switch",
+            }),
+            romasku.scaledMeasurement({
+                name: "current",
+                cluster: "haElectricalMeasurement",
+                attribute: "rmsCurrent",
+                unit: "A",
+                divisor: 1000, // firmware reports milliamps
+                precision: 3,
+                endpointName: "switch",
+            }),
+            numeric({
+                name: "power",
+                cluster: "haElectricalMeasurement",
+                attribute: "activePower",
+                description: "Instantaneous measured power",
+                unit: "W",
+                access: "STATE",
+                endpointName: "switch",
+            }),
+            romasku.scaledMeasurement({
+                name: "energy",
+                cluster: "seMetering",
+                attribute: "currentSummDelivered",
+                unit: "kWh",
+                divisor: 1000, // firmware reports watt-hours
+                precision: 3,
+                endpointName: "switch",
+            }),
+            binary({
+                name: "reset_energy",
+                cluster: "seMetering",
+                attribute: {ID: 0xF000, type: 0x20}, // uint8
+                valueOn: ["RESET", 1],
+                valueOff: ["OFF", 0],
+                description: "Set to RESET to zero the accumulated energy counter",
+                access: "ALL",
+                entityCategory: "config",
+                endpointName: "switch",
+            }),
+            romasku.calibrate({
+                name: "calibrate_voltage",
+                attribute: {ID: 0xFF10, type: 0x21}, // uint16
+                unit: "V",
+                multiplier: 100, // firmware wants centivolts
+                valueMax: 655,
+                valueStep: 0.01, // allow e.g. 236.54 V
+                description: "Measure the real voltage and enter it here to calibrate; the device computes and stores the multiplier",
+                endpointName: "switch",
+            }),
+            romasku.calibrate({
+                name: "calibrate_current",
+                attribute: {ID: 0xFF11, type: 0x21}, // uint16
+                unit: "A",
+                multiplier: 1000, // firmware wants milliamps
+                valueMax: 65,
+                valueStep: 0.001, // allow e.g. 0.523 A
+                description: "Measure the real current (under a steady load) and enter it here to calibrate",
+                endpointName: "switch",
+            }),
+            romasku.calibrate({
+                name: "calibrate_power",
+                attribute: {ID: 0xFF12, type: 0x21}, // uint16
+                unit: "W",
+                multiplier: 1, // firmware wants whole watts
+                valueMax: 65535,
+                valueStep: 1,
+                description: "Measure the real power (under a steady load) and enter it here to calibrate",
+                endpointName: "switch",
+            }),
+            romasku.calibrationValues("calibration_values", "switch"),
+            // Overload protection (always active; the hard 4600 W / 20 A peak
+            // cannot be disabled or raised above the manufacturer maximum).
+            romasku.overloadSetting({
+                name: "overload_power_limit", attribute: {ID: 0xFF30, type: 0x21}, unit: "W", scale: 1,
+                valueMin: 100, valueMax: 4600, valueStep: 10,
+                description: "Soft power limit: over this for longer than the trip delay switches the relay off",
+                endpointName: "switch",
+            }),
+            romasku.overloadSetting({
+                name: "overload_current_limit", attribute: {ID: 0xFF31, type: 0x21}, unit: "A", scale: 1000,
+                valueMin: 1, valueMax: 20, valueStep: 0.5,
+                description: "Soft current limit: over this for longer than the trip delay switches the relay off",
+                endpointName: "switch",
+            }),
+            romasku.overloadSetting({
+                name: "overload_trip_delay", attribute: {ID: 0xFF32, type: 0x21}, unit: "s", scale: 1,
+                valueMin: 0, valueMax: 3600, valueStep: 1,
+                description: "How long the load may stay above the soft limit before the relay is switched off (the hard peak trips instantly regardless)",
+                endpointName: "switch",
+            }),
+            romasku.overloadSetting({
+                name: "overvoltage_warn", attribute: {ID: 0xFF33, type: 0x21}, unit: "V", scale: 100,
+                valueMin: 230, valueMax: 280, valueStep: 1,
+                description: "Overvoltage warning threshold (raises the alarm only, does not switch off)",
+                endpointName: "switch",
+            }),
+            romasku.overloadSetting({
+                name: "undervoltage_warn", attribute: {ID: 0xFF34, type: 0x21}, unit: "V", scale: 100,
+                valueMin: 150, valueMax: 240, valueStep: 1,
+                description: "Undervoltage warning threshold (raises the alarm only, does not switch off)",
+                endpointName: "switch",
+            }),
+            romasku.overloadSetting({
+                name: "overload_reconnect_delay", attribute: {ID: 0xFF35, type: 0x21}, unit: "s", scale: 1,
+                valueMin: 5, valueMax: 3600, valueStep: 1,
+                description: "After a trip, if the relay's power-on behavior is On or Previous, it auto-reconnects after this delay (up to 5 times, then locks out)",
+                endpointName: "switch",
+            }),
+            romasku.overloadAlarm("overload_alarm", "switch"),
+            romasku.pressAction("switch_press_action", "switch"),
+            romasku.switchMode("switch_mode", "switch"),
+            romasku.switchAction("switch_action_mode", "switch"),
+            romasku.relayMode("switch_relay_mode", "switch"),
+            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.bindedMode("switch_binded_mode", "switch"),
+            romasku.longPressDuration("switch_long_press_duration", "switch"),
+            romasku.levelMoveRate("switch_level_move_rate", "switch"),
+            romasku.relayIndicatorMode("relay_indicator_mode", "relay"),
+            romasku.relayIndicator("relay_indicator", "relay"),
+            romasku.ledBrightness("relay_led_brightness", "relay"),
+            romasku.ledTransition("relay_led_transition", "relay"),
+        ],
+        meta: { multiEndpoint: true },
+        configure: async (device, coordinatorEndpoint, logger) => {
+            const endpoint1 = device.getEndpoint(1);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            // switch action:
+            await endpoint1.configureReporting("genMultistateInput", [
+                {
+                    attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
+                    minimumReportInterval: 0,
+                    maximumReportInterval: constants.repInterval.MAX,
+                    reportableChange: 1,
+                },
+            ]);
+            const endpoint2 = device.getEndpoint(2);
+            await reporting.onOff(endpoint2, {
+                min: 0,
+                max: constants.repInterval.MAX,
+                change: 1,
+            });
+
+            await endpoint2.configureReporting("genOnOff", [
+                {
+                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
+                    minimumReportInterval: 0,
+                    maximumReportInterval: constants.repInterval.MAX,
+                    reportableChange: 1,
+                },
+            ]);
+
+            const emEndpoint = device.getEndpoint(1);
+            await reporting.bind(emEndpoint, coordinatorEndpoint, ["haElectricalMeasurement", "seMetering"]);
+            await emEndpoint.configureReporting("haElectricalMeasurement", [
+                // reportableChange is in the attribute's raw units: voltage in
+                // centivolts (500 = 5 V), current in mA (50 = 0.05 A), power in W.
+                // Long max intervals (10 h) keep idle devices quiet on the mesh;
+                // changes still report within the min interval.
+                {attribute: "rmsVoltage", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 500},
+                {attribute: "rmsCurrent", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 50},
+                {attribute: "activePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
+            ]);
+            await emEndpoint.configureReporting("seMetering", [
+                {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
+            ]);
+
+
+        },
+        ota: ota.zigbeeOTA,
+    },
+    {
+        zigbeeModel: [
             "WHD02-Aubess",
             "WHD02-Aubess-ED",
         ],
