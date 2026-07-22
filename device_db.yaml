@@ -284,6 +284,33 @@ DIN_RELAY_TONGOU_TS011F_PM_JZT:
   info: "Tongou DIN-rail smart circuit breaker with metering, on the Silabs ZSU module (EFR32MG21, ARM Cortex-M33 — initial flash by wire, no stock-to-custom OTA). Relay PA4 (monostable, active-high), button PD1, dimmable network LED PC3, dimmable relay LED PC2. Energy metering via BL0942 on the module's UART pads (EBA5A6: MCU TX=PA05/TXD0 pad, RX=PA06/RXD0 pad; default 4800 baud, override with e.g. S9600). Rated 16 A continuous / 20 A peak, applied via the OL token (OLC16000P20000: soft 16 A, hard 20 A; wattages derived at 230 V). If a LED is inverted (stuck on), add 'i' to its token (LC3ip / IC2ip); if the meter stays silent, swap the pins to EBA6A5. Calibrate the meter via the calibrate fields or import multipliers via calibration_values."
   threads: https://github.com/Koenkk/zigbee-herdsman-converters/pull/5555
   store: https://zigbee.blakadder.com/Tongou_TO-Q-SY1-JZT.html
+OUTLET_USEELINK_SM0306E_TS011F:
+  human_name: UseeLink SM-0306E-2W power strip
+  category: outlet
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3000_cfnprab5
+  stock_converter_manufacturer: UseeLink
+  stock_converter_model: SM-0306E-2W
+  override_z2m_device: SM-0306E-2W
+  tuya_module: ZS3L
+  mcu_family: Silabs
+  mcu: EFR32MG21A020F768IM32
+  config_str: cfnprab5;TS011F-SM;LC2i;SB1u;RB0i;RA4i;RA3i;RA0i;RC0;IA6i;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: null
+  stock_image_type: null
+  firmware_image_type: 47116
+  build: yes
+  status: in_progress
+  info: "UseeLink 4-AC + USB power strip on the Silabs ZS3L module (EFR32MG21, marking LC-TZS3LN-P — initial flash by wire via SWD, no stock-to-custom OTA). 5 switchable outputs: Relay 1 PB0, Relay 2 PA4, Relay 3 PA3, Relay 4 PA0 (all active-low, each with a hardware-wired status LED), USB PC0 (active-high). Single momentary button PB1. Network LED PC2 (blue, active-low). Red master LED PA6 (active-low) is wired here as the Relay-1 indicator — the firmware has no 'any-output-on' aggregate LED. No energy metering on this model."
+  threads: https://www.zigbee2mqtt.io/devices/SM-0306E-2W.html
+  store: https://www.zigbee2mqtt.io/devices/SM-0306E-2W.html
 MODULE_AUBESS_TS0001:
   human_name: Aubess WHD02
   category: module

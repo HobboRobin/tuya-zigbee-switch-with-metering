@@ -57,7 +57,9 @@ zigbee_group_cluster group_cluster = {};
 zigbee_switch_cluster switch_clusters[4];
 uint8_t switch_clusters_cnt = 0;
 
-zigbee_relay_cluster relay_clusters[4];
+// Up to 6 relay endpoints (e.g. the UseeLink 4-AC + USB strip has 5). One
+// zigbee endpoint each, so this must stay within endpoints[]/clusters[] below.
+zigbee_relay_cluster relay_clusters[6];
 uint8_t relay_clusters_cnt = 0;
 
 zigbee_cover_switch_cluster cover_switch_clusters[3];
@@ -185,7 +187,7 @@ void parse_config() {
             led_apply_flags(&leds[leds_cnt], entry + 3);
             led_init(&leds[leds_cnt]);
 
-            for (int index = 0; index < 4; index++) {
+            for (int index = 0; index < relay_clusters_cnt; index++) {
                 if (relay_clusters[index].indicator_led == NULL) {
                     relay_clusters[index].indicator_led = &leds[leds_cnt];
                     break;
