@@ -4143,7 +4143,7 @@ SWITCH_BSEED_TOUCH_LATCHING_TS0011:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: aetquff4;BSLR1;LC3;SB4u;RC0B6;IC2;M;SLP;
+  config_str: aetquff4;BSLR1;LC3;SB4u;RC0B6;IC2;M;SLP;2EP;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4457,7 +4457,7 @@ SWITCH_BSEED_TOUCH_TS0011:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: hafsqare;TS0011-BS-T;LC2;SA0u;RD3;IB4;M;
+  config_str: hafsqare;TS0011-BS-T;LC2;SA0u;RD3;IB4;M;2EP;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
