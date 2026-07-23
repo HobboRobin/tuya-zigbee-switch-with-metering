@@ -364,7 +364,14 @@ const romasku = {
                 if (parts.length < 2) throw new Error("Model and/or manufacturer missing");
                 for (const part of parts.slice(2)) {
                     if (part == 'SLP') {
-                        continue;   
+                        continue;
+                    } else if (part == '2EP') {
+                        continue;
+                    } else if (part.startsWith('OL')) {
+                        // Overload limits: OL[C<soft_mA>][P<peak_mA>]
+                        if (!/^OL(C\d+)?(P\d+)?$/.test(part)) {
+                            throw new Error(`Overload option ${part} is invalid. Use OLC<soft_mA>P<peak_mA>, e.g. OLC16000P20000`);
+                        }
                     } else if (part[0] == 'D') {
                         if (!/^D\d+$/.test(part)) {
                             throw new Error(`Debounce option ${part} is invalid. Use D<N>, e.g. D100 or D0`);
@@ -400,7 +407,7 @@ const romasku = {
                         validatePin(part.slice(2,4));
                         validatePin(part.slice(4,6));
                     } else {
-                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, R, S, SLP, X, i`);
+                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, OL, R, S, SLP, X, i, 2EP`);
                     }
                 }
             },
