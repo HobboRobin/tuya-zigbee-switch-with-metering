@@ -146,14 +146,49 @@ generate-normal-ota:
 		OTA_IMAGE_TYPE=$(FIRMWARE_IMAGE_TYPE) \
 		OTA_FILE=../../$(OTA_FILE)
 
+# Build a stock-fingerprint OTA for boards whose stock ids are known. On
+# telink this is the regular migration path (and it is listed in the public
+# index below). On silabs Tuya's Gecko bootloader may enforce GBL signatures,
+# so the file is only built for boards that explicitly opt in with
+# `stock_ota_experiment: yes` in the device db — an at-your-own-risk
+# experiment served via a local Z2M override index, never the public one.
+# Its GBL is left uncompressed (the stock bootloader's decompression support
+# is unknown; a plain GBL always works).
+STOCK_OTA_EXPERIMENT := $(filter-out null,$(shell yq -r .$(BOARD).stock_ota_experiment $(DEVICE_DB_FILE)))
+ifeq ($(PLATFORM_PREFIX),silabs)
+TUYA_OTA_ENABLED := $(STOCK_OTA_EXPERIMENT)
+# LZ4-compress the experiment image. History: the 313 KB uncompressed GBL was
+# rejected with INSUFFICIENT_SPACE (slot too small); the 195 KB LZMA GBL
+# downloaded fully but was rejected at UpgradeEnd with INVALID_IMAGE. LZ4 is the
+# decisive test: Gecko bootloaders often ship the LZ4 decompressor even when
+# LZMA is compiled out, and LZ4 stays well under the ~256 KB slot. If LZ4
+# installs, the stock bootloader simply lacked LZMA (fleet OTA becomes possible);
+# if LZ4 also returns INVALID_IMAGE, the bootloader enforces signed images and
+# OTA is closed for good (wire flashing remains).
+TUYA_OTA_EXTRA := GBL_COMPRESS=lz4
+# The Gecko SDK OTA client treats fileVersion 0xFFFFFFFF as invalid (erased
+# flash reads all-FF), so the stock device silently drops such offers — use
+# the real firmware version instead (far above any stock version).
+TUYA_OTA_VERSION := $(FILE_VERSION)
+else
+TUYA_OTA_ENABLED := yes
+TUYA_OTA_EXTRA :=
+TUYA_OTA_VERSION := 0xFFFFFFFF
+endif
+
 generate-tuya-ota:
-ifneq ($(PLATFORM_PREFIX),silabs)  # Silabs platform does not support Tuya migration OTAs
+ifneq ($(FROM_STOCK_MANUFACTURER_ID),null)
+ifneq ($(FROM_STOCK_IMAGE_TYPE),null)
+ifneq ($(TUYA_OTA_ENABLED),)
 	$(MAKE) $(PLATFORM_PREFIX)/ota \
-		OTA_VERSION=0xFFFFFFFF \
+		OTA_VERSION=$(TUYA_OTA_VERSION) \
 		DEVICE_TYPE=$(DEVICE_TYPE) \
 		OTA_IMAGE_TYPE=$(FROM_STOCK_IMAGE_TYPE) \
 		OTA_MANUFACTURER_ID=$(FROM_STOCK_MANUFACTURER_ID) \
+		$(TUYA_OTA_EXTRA) \
 		OTA_FILE=../../$(FROM_TUYA_OTA_FILE)
+endif
+endif
 endif
 
 generate-force-ota:

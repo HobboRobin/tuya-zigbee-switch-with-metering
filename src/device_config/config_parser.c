@@ -57,7 +57,9 @@ zigbee_group_cluster group_cluster = {};
 zigbee_switch_cluster switch_clusters[4];
 uint8_t switch_clusters_cnt = 0;
 
-zigbee_relay_cluster relay_clusters[4];
+// Up to 6 relay endpoints (e.g. the UseeLink 4-AC + USB strip has 5). One
+// zigbee endpoint each, so this must stay within endpoints[]/clusters[] below.
+zigbee_relay_cluster relay_clusters[6];
 uint8_t relay_clusters_cnt = 0;
 
 zigbee_cover_switch_cluster cover_switch_clusters[3];
@@ -66,10 +68,16 @@ uint8_t cover_switch_clusters_cnt = 0;
 zigbee_cover_cluster cover_clusters[3];
 uint8_t cover_clusters_cnt = 0;
 
-hal_zigbee_cluster  clusters[32];
-hal_zigbee_endpoint endpoints[10];
+// Sized for the largest supported layout, including the optional per-switch
+// long-press binding endpoints (2EP token): a 4-gang switch with 2EP uses
+// 4 switch + 4 relay + 4 long-press = 12 endpoints.
+hal_zigbee_cluster  clusters[40];
+hal_zigbee_endpoint endpoints[12];
 
 uint8_t allow_simultaneous_latching_pulses = 0;
+
+// `2EP` token: give every switch a companion long-press binding endpoint.
+uint8_t long_press_bind_endpoints = 0;
 
 battery_t battery = {
     .pin         = HAL_INVALID_PIN,
@@ -142,6 +150,9 @@ void parse_config() {
         if (entry[0] == 'S' && entry[1] == 'L' && entry[2] == 'P') {
             // Simultaneous Latching Pulses == SLP
             allow_simultaneous_latching_pulses = 1;
+        } else if (entry[0] == '2' && entry[1] == 'E' && entry[2] == 'P') {
+            // 2EP: add a per-switch long-press binding endpoint.
+            long_press_bind_endpoints = 1;
         } else if (entry[0] == 'D' && entry[1] >= '0' && entry[1] <= '9') {
             // D<N> sets the global debounce duration in milliseconds.
             debounce_ms = (uint16_t)parse_int(entry + 1);
@@ -185,7 +196,7 @@ void parse_config() {
             led_apply_flags(&leds[leds_cnt], entry + 3);
             led_init(&leds[leds_cnt]);
 
-            for (int index = 0; index < 4; index++) {
+            for (int index = 0; index < relay_clusters_cnt; index++) {
                 if (relay_clusters[index].indicator_led == NULL) {
                     relay_clusters[index].indicator_led = &leds[leds_cnt];
                     break;
@@ -411,8 +422,13 @@ void parse_config() {
            switch_clusters_cnt, relay_clusters_cnt, cover_switch_clusters_cnt,
            cover_clusters_cnt);
 
+    // Each switch gets a trailing long-press binding endpoint when 2EP is set.
+    uint8_t long_press_ep_cnt =
+        long_press_bind_endpoints ? switch_clusters_cnt : 0;
+
     uint8_t total_endpoints = switch_clusters_cnt + relay_clusters_cnt +
-                              cover_switch_clusters_cnt + cover_clusters_cnt;
+                              cover_switch_clusters_cnt + cover_clusters_cnt +
+                              long_press_ep_cnt;
 
     hal_zigbee_cluster *cluster_ptr = clusters;
 
@@ -519,6 +535,25 @@ void parse_config() {
             &elec_meas_cluster, &endpoints[energy_monitoring_endpoint - 1]);
         metering_cluster_add_to_endpoint(
             &metering_cluster_inst, &endpoints[energy_monitoring_endpoint - 1]);
+    }
+
+    // Long-press binding endpoints (2EP): one trailing endpoint per switch,
+    // each carrying just an OnOff *client* cluster so it can be bound in Z2M.
+    // A long press toggles this endpoint's own bindings (see
+    // switch_cluster_on_button_long_press), so short and long press can drive
+    // two independent targets.
+    int long_press_base = switch_clusters_cnt + relay_clusters_cnt +
+                          cover_switch_clusters_cnt + cover_clusters_cnt;
+    for (int index = 0; index < long_press_ep_cnt; index++) {
+        int ep_i = long_press_base + index;
+        cluster_ptr += endpoints[ep_i - 1].cluster_count;
+        endpoints[ep_i].clusters = cluster_ptr;
+        endpoints[ep_i].clusters[0].cluster_id      = ZCL_CLUSTER_ON_OFF;
+        endpoints[ep_i].clusters[0].attribute_count = 0;
+        endpoints[ep_i].clusters[0].attributes      = NULL;
+        endpoints[ep_i].clusters[0].is_server       = 0;
+        endpoints[ep_i].cluster_count = 1;
+        switch_clusters[index].long_press_endpoint = endpoints[ep_i].endpoint;
     }
 
     hal_zigbee_init(endpoints, total_endpoints);

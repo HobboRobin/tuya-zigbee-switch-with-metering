@@ -38,7 +38,7 @@ void relay_cluster_save_dimming(zigbee_relay_cluster *cluster);
 
 void sync_indicator_led(zigbee_relay_cluster *cluster);
 
-zigbee_relay_cluster *relay_cluster_by_endpoint[10];
+zigbee_relay_cluster *relay_cluster_by_endpoint[12];
 
 void relay_cluster_callback_attr_write_trampoline(uint8_t endpoint,
                                                   uint16_t attribute_id) {

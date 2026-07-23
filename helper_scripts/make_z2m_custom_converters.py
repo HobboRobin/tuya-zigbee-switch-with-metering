@@ -49,12 +49,16 @@ if __name__ == "__main__":
         has_dimmable_net_led = False
         has_battery_cluster = False
         has_energy_meter = False
+        has_long_press_endpoints = False
         # Default overload caps (A1Z / BSEED PM: 16 A / 3680 W peak). A device
         # can raise them with the `OL` token (OLC<soft_mA>P<peak_mA>); the
         # converter's configurable soft limit is then bounded by the peak cap.
         overload_max_current_a = 16
         overload_max_power_w = 3680
         for peripheral in peripherals:
+            if peripheral == "2EP":
+                has_long_press_endpoints = True
+                continue
             if peripheral == "SLP" or peripheral == "M":
                 continue
             if peripheral[0] == "R":
@@ -148,6 +152,7 @@ if __name__ == "__main__":
                 "has_dimmable_net_led": has_dimmable_net_led,
                 "has_battery_cluster": has_battery_cluster,
                 "has_energy_meter": has_energy_meter,
+                "has_long_press_endpoints": has_long_press_endpoints,
                 "overload_max_current": overload_max_current_a,
                 "overload_max_power": overload_max_power_w,
             }

@@ -31,6 +31,11 @@ typedef struct {
     uint8_t              level_move_rate;
     uint8_t              level_move_direction;
     led_t *              indicator_led;
+    // Optional companion endpoint (0 = none) that carries its own OnOff client
+    // cluster. On a long press the switch sends an OnOff toggle to this
+    // endpoint's bindings, so a short press and a long press can drive two
+    // different bound targets. Enabled per device with the `2EP` config token.
+    uint8_t              long_press_endpoint;
 } zigbee_switch_cluster;
 
 void switch_cluster_add_to_endpoint(zigbee_switch_cluster *cluster,

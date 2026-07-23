@@ -32,7 +32,7 @@ void switch_cluster_on_button_long_press(zigbee_switch_cluster *cluster);
 static bool switch_cluster_has_valid_relay(
     const zigbee_switch_cluster *cluster);
 
-zigbee_switch_cluster *switch_cluster_by_endpoint[10];
+zigbee_switch_cluster *switch_cluster_by_endpoint[12];
 
 static void sync_switch_indicator_led(zigbee_switch_cluster *cluster) {
     if (cluster->indicator_led == NULL) {
@@ -423,6 +423,15 @@ void switch_cluster_on_button_long_press(zigbee_switch_cluster *cluster) {
 
     if (cluster->binded_mode == ZCL_ONOFF_CONFIGURATION_BINDED_MODE_LONG) {
         switch_cluster_binding_action_on(cluster);
+    }
+
+    // Companion long-press endpoint (2EP): toggle its own separate bindings, so
+    // a short press and a long press can control two different bound targets.
+    if (cluster->long_press_endpoint != 0 &&
+        hal_zigbee_get_network_status() == HAL_ZIGBEE_NETWORK_JOINED) {
+        hal_zigbee_cmd c =
+            build_onoff_cmd(cluster->long_press_endpoint, ZCL_CMD_ONOFF_TOGGLE);
+        hal_zigbee_send_cmd_to_bindings(&c);
     }
 
     switch_cluster_level_control(cluster);

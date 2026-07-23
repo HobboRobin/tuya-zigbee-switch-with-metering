@@ -164,12 +164,22 @@ else
 OTA_VERSION_ARG := --firmware-version "$(FILE_VERSION)"
 endif
 
+# GBL compression: lzma for our own bootloader; "none" produces a plain GBL
+# (used for the stock-bootloader OTA experiment, where decompression support
+# is unknown).
+GBL_COMPRESS ?= lzma
+ifeq ($(GBL_COMPRESS),none)
+GBL_COMPRESS_ARG :=
+else
+GBL_COMPRESS_ARG := --compress $(GBL_COMPRESS)
+endif
+
 ota:
 	@mkdir -p $(dir $(OTA_FILE))
 	$(COMMANDER_DIR)/commander-cli gbl create \
 		"$(ZIGBEE_BUILD_DIR)/build/release/$(ZIGBEE_PROJECT_NAME).gbl" \
 		--app "$(ZIGBEE_BUILD_DIR)/build/release/$(ZIGBEE_PROJECT_NAME).s37" \
-		--compress lzma
+		$(GBL_COMPRESS_ARG)
 	$(COMMANDER_DIR)/commander-cli ota create \
 		--upgrade-image "$(ZIGBEE_BUILD_DIR)/build/release/$(ZIGBEE_PROJECT_NAME).gbl" \
 		$(OTA_VERSION_ARG) \
