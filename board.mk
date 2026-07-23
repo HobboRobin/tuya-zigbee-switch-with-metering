@@ -157,12 +157,15 @@ generate-normal-ota:
 STOCK_OTA_EXPERIMENT := $(filter-out null,$(shell yq -r .$(BOARD).stock_ota_experiment $(DEVICE_DB_FILE)))
 ifeq ($(PLATFORM_PREFIX),silabs)
 TUYA_OTA_ENABLED := $(STOCK_OTA_EXPERIMENT)
-# LZMA-compress the experiment image: the stock Tongou rejected the 313 KB
-# uncompressed GBL with INSUFFICIENT_SPACE (its OTA download slot is smaller),
-# so it must be shrunk to fit. lzma is what our own bootloader uses too
-# (~195 KB); the Gecko bootloader's standard LZMA decompressor should handle
-# it if Tuya's build included it.
-TUYA_OTA_EXTRA := GBL_COMPRESS=lzma
+# LZ4-compress the experiment image. History: the 313 KB uncompressed GBL was
+# rejected with INSUFFICIENT_SPACE (slot too small); the 195 KB LZMA GBL
+# downloaded fully but was rejected at UpgradeEnd with INVALID_IMAGE. LZ4 is the
+# decisive test: Gecko bootloaders often ship the LZ4 decompressor even when
+# LZMA is compiled out, and LZ4 stays well under the ~256 KB slot. If LZ4
+# installs, the stock bootloader simply lacked LZMA (fleet OTA becomes possible);
+# if LZ4 also returns INVALID_IMAGE, the bootloader enforces signed images and
+# OTA is closed for good (wire flashing remains).
+TUYA_OTA_EXTRA := GBL_COMPRESS=lz4
 # The Gecko SDK OTA client treats fileVersion 0xFFFFFFFF as invalid (erased
 # flash reads all-FF), so the stock device silently drops such offers — use
 # the real firmware version instead (far above any stock version).
