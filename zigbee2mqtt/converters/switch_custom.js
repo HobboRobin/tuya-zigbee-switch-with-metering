@@ -620,25 +620,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -743,25 +743,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -866,25 +866,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -989,25 +989,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1055,7 +1055,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1122,13 +1122,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1195,13 +1195,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1251,7 +1251,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1259,7 +1259,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -1309,7 +1309,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1317,7 +1317,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -1488,7 +1488,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1496,7 +1496,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -1560,31 +1560,31 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1592,7 +1592,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -1641,7 +1641,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1708,13 +1708,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1800,19 +1800,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1917,25 +1917,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -1985,7 +1985,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2054,13 +2054,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2148,19 +2148,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2267,25 +2267,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2371,19 +2371,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2488,25 +2488,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2554,7 +2554,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2603,7 +2603,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2671,13 +2671,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2744,13 +2744,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2836,19 +2836,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2915,13 +2915,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -2988,13 +2988,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3042,7 +3042,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3109,13 +3109,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3182,13 +3182,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3237,7 +3237,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3324,19 +3324,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3384,7 +3384,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3451,13 +3451,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3505,7 +3505,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3553,7 +3553,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3621,13 +3621,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3866,7 +3866,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3914,7 +3914,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -3962,7 +3962,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4010,7 +4010,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4058,7 +4058,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4106,7 +4106,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4193,19 +4193,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4310,25 +4310,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4376,7 +4376,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4424,7 +4424,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4472,7 +4472,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4539,13 +4539,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4630,19 +4630,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4690,7 +4690,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4757,13 +4757,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4849,19 +4849,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -4966,25 +4966,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5032,7 +5032,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5080,7 +5080,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5128,7 +5128,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5176,7 +5176,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5243,13 +5243,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5335,19 +5335,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5395,7 +5395,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5443,7 +5443,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5511,13 +5511,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5622,25 +5622,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5726,19 +5726,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5786,7 +5786,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5834,7 +5834,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5882,7 +5882,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5930,7 +5930,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -5978,7 +5978,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6026,7 +6026,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6095,13 +6095,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6188,19 +6188,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6248,7 +6248,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6296,7 +6296,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6363,13 +6363,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6455,19 +6455,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6515,7 +6515,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6582,13 +6582,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6636,7 +6636,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6703,13 +6703,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6873,19 +6873,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -6933,7 +6933,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7000,13 +7000,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7073,13 +7073,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7127,7 +7127,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7175,7 +7175,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7223,7 +7223,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7328,25 +7328,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7413,13 +7413,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7486,13 +7486,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7541,7 +7541,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7712,7 +7712,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7720,7 +7720,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -7905,7 +7905,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -7913,7 +7913,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8098,7 +8098,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8106,7 +8106,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8170,7 +8170,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8178,7 +8178,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8346,7 +8346,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8354,7 +8354,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8439,13 +8439,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8453,7 +8453,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8461,7 +8461,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8510,7 +8510,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8518,7 +8518,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8567,7 +8567,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8575,7 +8575,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8624,7 +8624,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8632,7 +8632,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8681,7 +8681,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8689,7 +8689,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -8738,7 +8738,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -8746,7 +8746,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -10376,7 +10376,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10443,13 +10443,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10536,19 +10536,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10653,25 +10653,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10722,7 +10722,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10730,7 +10730,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -10802,13 +10802,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10816,7 +10816,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -10824,7 +10824,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -10911,19 +10911,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10973,7 +10973,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -10981,7 +10981,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11054,13 +11054,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11068,7 +11068,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11076,7 +11076,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11169,19 +11169,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11189,7 +11189,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11197,7 +11197,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11205,7 +11205,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11255,7 +11255,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11324,13 +11324,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11417,19 +11417,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11535,25 +11535,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11603,7 +11603,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11611,7 +11611,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11661,7 +11661,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11669,7 +11669,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11738,13 +11738,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11752,7 +11752,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11821,13 +11821,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11835,7 +11835,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11885,7 +11885,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11893,7 +11893,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11965,13 +11965,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -11979,7 +11979,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -11987,7 +11987,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12058,13 +12058,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12072,7 +12072,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12080,7 +12080,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12172,19 +12172,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12192,7 +12192,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12200,7 +12200,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12208,7 +12208,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12258,7 +12258,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12266,7 +12266,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12337,13 +12337,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12351,7 +12351,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12359,7 +12359,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12451,19 +12451,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12471,7 +12471,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12479,7 +12479,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12487,7 +12487,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12601,25 +12601,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12627,7 +12627,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12635,7 +12635,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12643,7 +12643,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12651,7 +12651,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12701,7 +12701,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12709,7 +12709,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12780,13 +12780,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12794,7 +12794,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12802,7 +12802,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12894,19 +12894,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12914,7 +12914,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12922,7 +12922,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12930,7 +12930,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -12979,7 +12979,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -12987,7 +12987,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13035,7 +13035,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13102,13 +13102,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13194,19 +13194,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13254,7 +13254,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13321,13 +13321,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13413,19 +13413,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13495,13 +13495,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13509,7 +13509,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13517,7 +13517,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13608,19 +13608,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13628,7 +13628,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13636,7 +13636,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13644,7 +13644,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13771,7 +13771,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13779,7 +13779,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13849,13 +13849,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13863,7 +13863,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13871,7 +13871,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13962,19 +13962,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -13982,7 +13982,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13990,7 +13990,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -13998,7 +13998,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14047,7 +14047,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14055,7 +14055,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14125,13 +14125,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14139,7 +14139,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14147,7 +14147,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14238,19 +14238,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14258,7 +14258,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14266,7 +14266,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14274,7 +14274,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14324,7 +14324,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14332,7 +14332,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14403,13 +14403,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14417,7 +14417,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14425,7 +14425,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14517,19 +14517,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14537,7 +14537,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14545,7 +14545,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14553,7 +14553,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14645,19 +14645,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14665,7 +14665,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14673,7 +14673,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14681,7 +14681,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14794,25 +14794,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14820,7 +14820,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14828,7 +14828,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14836,7 +14836,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14844,7 +14844,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14894,7 +14894,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14902,7 +14902,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14973,13 +14973,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -14987,7 +14987,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -14995,7 +14995,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15087,19 +15087,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15107,7 +15107,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15115,7 +15115,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15123,7 +15123,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15235,25 +15235,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15261,7 +15261,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15269,7 +15269,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15277,7 +15277,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15285,7 +15285,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15397,25 +15397,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15423,7 +15423,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15431,7 +15431,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15439,7 +15439,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15447,7 +15447,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15538,19 +15538,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15558,7 +15558,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15566,7 +15566,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15574,7 +15574,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15624,7 +15624,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15632,7 +15632,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15703,13 +15703,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15717,7 +15717,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15725,7 +15725,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15776,7 +15776,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15784,7 +15784,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15856,13 +15856,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15870,7 +15870,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15878,7 +15878,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15970,19 +15970,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -15990,7 +15990,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -15998,7 +15998,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16006,7 +16006,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16055,7 +16055,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16063,7 +16063,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16112,7 +16112,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16120,7 +16120,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16190,13 +16190,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16204,7 +16204,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16212,7 +16212,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16303,19 +16303,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16323,7 +16323,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16331,7 +16331,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16339,7 +16339,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16430,19 +16430,19 @@ const definitions = [
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16450,7 +16450,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16458,7 +16458,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16466,7 +16466,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16578,25 +16578,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16604,7 +16604,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16612,7 +16612,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16620,7 +16620,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16628,7 +16628,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16676,7 +16676,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16781,25 +16781,25 @@ const definitions = [
             const endpoint5 = device.getEndpoint(5);
             await reporting.onOff(endpoint5, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint6 = device.getEndpoint(6);
             await reporting.onOff(endpoint6, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint7 = device.getEndpoint(7);
             await reporting.onOff(endpoint7, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint8 = device.getEndpoint(8);
             await reporting.onOff(endpoint8, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16848,7 +16848,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16856,7 +16856,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16927,13 +16927,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -16941,7 +16941,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16949,7 +16949,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -16998,7 +16998,7 @@ const definitions = [
             const endpoint2 = device.getEndpoint(2);
             await reporting.onOff(endpoint2, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -17006,7 +17006,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -17076,13 +17076,13 @@ const definitions = [
             const endpoint3 = device.getEndpoint(3);
             await reporting.onOff(endpoint3, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
             const endpoint4 = device.getEndpoint(4);
             await reporting.onOff(endpoint4, {
                 min: 0,
-                max: constants.repInterval.MAX,
+                max: 300, // 5 min heartbeat re-syncs a lost report
                 change: 1,
             });
 
@@ -17090,7 +17090,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
@@ -17098,7 +17098,7 @@ const definitions = [
                 {
                     attribute: {ID: 0xff02, type: 0x10}, // Boolean
                     minimumReportInterval: 0,
-                    maximumReportInterval: constants.repInterval.MAX,
+                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
                     reportableChange: 1,
                 },
             ]);
