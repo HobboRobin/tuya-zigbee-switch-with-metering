@@ -8,6 +8,7 @@
 
 #include "stub/stub_app.h"
 #include "zigbee/consts.h"
+#include "zigbee/electrical_measurement_cluster.h"
 #include "base_components/overload_protection.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -467,6 +468,27 @@ static int cmd_set_counter(int argc, char **argv) {
     return 0;
 }
 
+// Exercise the pure VA / power-factor / var derivation with exact inputs:
+//   elec_meas_derive <voltage_cv> <current_ma> <power_w>
+static int cmd_elec_meas_derive(int argc, char **argv) {
+    if (argc != 4) {
+        fprintf(stderr, "Usage: elec_meas_derive <voltage_cv> <current_ma> <power_w>\n");
+        io_res_err("usage");
+        return -1;
+    }
+    uint16_t v_cv = (uint16_t)strtoul(argv[1], NULL, 10);
+    uint16_t i_ma = (uint16_t)strtoul(argv[2], NULL, 10);
+    int16_t  p_w  = (int16_t)strtol(argv[3], NULL, 10);
+
+    uint16_t va  = 0;
+    int16_t  var = 0;
+    int8_t   pf  = 0;
+    elec_meas_derive_power(v_cv, i_ma, p_w, &va, &var, &pf);
+
+    io_res_ok("apparent_va=%u reactive_var=%d power_factor=%d", va, (int)var, (int)pf);
+    return 0;
+}
+
 /* Command table */
 static const SimpleReplCommand kCmds[] = {
     { "machine",             cmd_machine             },
@@ -486,6 +508,7 @@ static const SimpleReplCommand kCmds[] = {
     { "set_battery_voltage", cmd_set_battery_voltage },
     { "set_counter",         cmd_set_counter         },
     { "overload_sim",        cmd_overload_sim        },
+    { "elec_meas_derive",    cmd_elec_meas_derive    },
     { "q",                   cmd_quit                },
     { "quit",                cmd_quit                },
 };

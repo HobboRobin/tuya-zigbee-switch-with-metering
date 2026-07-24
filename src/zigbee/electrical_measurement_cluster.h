@@ -13,6 +13,13 @@ typedef struct {
     uint16_t              rms_voltage;
     uint16_t              rms_current;
     int16_t               active_power;
+    // Derived (computed from V, I, P — the BL0942/HLW give no phase, so these
+    // are the true/total quantities): apparent power S = Vrms*Irms in VA,
+    // reactive power Q = sqrt(S^2 - P^2) magnitude in var, and power factor
+    // P/S as a signed percentage (equals cos φ only for linear loads).
+    uint16_t              apparent_power;
+    int16_t               reactive_power;
+    int8_t                power_factor;
     uint16_t              ac_voltage_multiplier;
     uint16_t              ac_voltage_divisor;
     uint16_t              ac_current_multiplier;
@@ -48,12 +55,20 @@ typedef struct {
     uint16_t              undervoltage_warn;
     uint16_t              overload_reconnect_delay;
     uint8_t               overload_alarm;
-    hal_zigbee_attribute  attr_infos[24];
+    hal_zigbee_attribute  attr_infos[27];
     uint32_t              last_report_time;
     uint16_t              last_reported_voltage;
     uint16_t              last_reported_current;
     int16_t               last_reported_power;
 } electrical_measurement_cluster_t;
+
+// Derive apparent power (VA), reactive power (var, magnitude) and power factor
+// (signed %) from the RMS voltage (cV), RMS current (mA) and active power (W).
+// Pure integer math (no float, no phase input), factored out so it is unit-
+// testable. Any output pointer may be NULL.
+void elec_meas_derive_power(uint16_t voltage_cv, uint16_t current_ma,
+                            int16_t active_power_w, uint16_t *out_apparent_va,
+                            int16_t *out_reactive_var, int8_t *out_power_factor);
 
 void electrical_measurement_cluster_init(electrical_measurement_cluster_t *cluster,
                                          energy_meter_t *meter);
