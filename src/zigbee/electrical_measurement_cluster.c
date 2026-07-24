@@ -8,8 +8,74 @@
 #include "relay_cluster.h"
 #include <string.h>
 
-#define MEAS_TYPE_AC_ACTIVE       (1 << 0)
-#define MEAS_TYPE_PHASE_A         (1 << 3)
+#define MEAS_TYPE_AC_ACTIVE      (1 << 0)
+#define MEAS_TYPE_AC_REACTIVE    (1 << 1)
+#define MEAS_TYPE_AC_APPARENT    (1 << 2)
+#define MEAS_TYPE_PHASE_A        (1 << 3)
+
+// Bit-by-bit integer square root (no float / libm on the target M0/M33).
+static uint32_t isqrt_u32(uint32_t x) {
+    uint32_t res = 0;
+    uint32_t bit = 1u << 30;
+
+    while (bit > x)
+        bit >>= 2;
+    while (bit != 0) {
+        if (x >= res + bit) {
+            x  -= res + bit;
+            res = (res >> 1) + bit;
+        } else {
+            res >>= 1;
+        }
+        bit >>= 2;
+    }
+    return res;
+}
+
+void elec_meas_derive_power(uint16_t voltage_cv, uint16_t current_ma,
+                            int16_t active_power_w, uint16_t *out_apparent_va,
+                            int16_t *out_reactive_var, int8_t *out_power_factor) {
+    // Apparent power S = Vrms * Irms. Voltage is in cV, current in mA, so
+    // S[VA] = voltage_cv * current_ma / 100000. Clamp to the uint16 attribute
+    // range (comfortably above any single-socket mains load).
+    uint32_t s_va = (uint32_t)voltage_cv * (uint32_t)current_ma / 100000u;
+
+    if (s_va > 0xFFFFu)
+        s_va = 0xFFFFu;
+
+    int32_t p     = active_power_w;
+    int32_t p_abs = p < 0 ? -p : p;
+
+    // Power factor = P / S as a signed percentage, clamped to [-100, 100]
+    // (calibration/rounding can make |P| edge slightly past S).
+    int8_t pf = 0;
+    if (s_va > 0) {
+        int32_t pf32 = p * 100 / (int32_t)s_va;
+        if (pf32 > 100)
+            pf32 = 100;
+        else if (pf32 < -100)
+            pf32 = -100;
+        pf = (int8_t)pf32;
+    }
+
+    // Reactive power Q = sqrt(S^2 - P^2), magnitude only — the lead/lag sign is
+    // not observable from RMS magnitudes without a phase reference. Clamp the
+    // radicand at 0 so meter noise (|P| just over S) never yields a bogus root.
+    uint32_t q_var = 0;
+    uint32_t s2    = s_va * s_va;
+    uint32_t p2    = (uint32_t)(p_abs * p_abs);
+    if (s2 > p2)
+        q_var = isqrt_u32(s2 - p2);
+    if (q_var > 0x7FFFu)
+        q_var = 0x7FFFu;
+
+    if (out_apparent_va)
+        *out_apparent_va = (uint16_t)s_va;
+    if (out_reactive_var)
+        *out_reactive_var = (int16_t)q_var;
+    if (out_power_factor)
+        *out_power_factor = pf;
+}
 
 // Marks a valid persisted-calibration record.
 #define ELEC_MEAS_CAL_NV_MAGIC    0x484C5743u // "HLWC"
@@ -192,8 +258,9 @@ void electrical_measurement_cluster_init(electrical_measurement_cluster_t *clust
         return;
 
     memset(cluster, 0, sizeof(electrical_measurement_cluster_t));
-    cluster->meter                 = meter;
-    cluster->measurement_type      = MEAS_TYPE_AC_ACTIVE | MEAS_TYPE_PHASE_A;
+    cluster->meter            = meter;
+    cluster->measurement_type = MEAS_TYPE_AC_ACTIVE | MEAS_TYPE_AC_REACTIVE |
+                                MEAS_TYPE_AC_APPARENT | MEAS_TYPE_PHASE_A;
     cluster->ac_voltage_multiplier = 1;
     cluster->ac_voltage_divisor    = 100;  // firmware reports voltage in centivolts
     cluster->ac_current_multiplier = 1;
@@ -259,10 +326,16 @@ void electrical_measurement_cluster_add_to_endpoint(
                ATTR_WRITABLE, cluster->overload_reconnect_delay);
     SETUP_ATTR(23, ZCL_ATTR_ELEC_MEAS_CUST_OVERLOAD_ALARM, ZCL_DATA_TYPE_ENUM8,
                ATTR_READONLY, cluster->overload_alarm);
+    SETUP_ATTR(24, ZCL_ATTR_ELEC_MEAS_APPARENT_POWER, ZCL_DATA_TYPE_UINT16,
+               ATTR_READONLY, cluster->apparent_power);
+    SETUP_ATTR(25, ZCL_ATTR_ELEC_MEAS_REACTIVE_POWER, ZCL_DATA_TYPE_INT16,
+               ATTR_READONLY, cluster->reactive_power);
+    SETUP_ATTR(26, ZCL_ATTR_ELEC_MEAS_POWER_FACTOR, ZCL_DATA_TYPE_INT8,
+               ATTR_READONLY, cluster->power_factor);
 
     endpoint->clusters[endpoint->cluster_count].cluster_id =
         ZCL_CLUSTER_ELECTRICAL_MEASUREMENT;
-    endpoint->clusters[endpoint->cluster_count].attribute_count = 24;
+    endpoint->clusters[endpoint->cluster_count].attribute_count = 27;
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->cluster_count++;
@@ -368,6 +441,9 @@ void electrical_measurement_cluster_update(electrical_measurement_cluster_t *clu
         cluster->freq_cf      = data.freq_cf;
         cluster->freq_cf1     = data.freq_cf1;
         cluster->sel_state    = data.sel_state;
+        elec_meas_derive_power(data.voltage, data.current, data.power,
+                               &cluster->apparent_power,
+                               &cluster->reactive_power, &cluster->power_factor);
     }
 
     elec_meas_run_overload_protection(cluster, &data);

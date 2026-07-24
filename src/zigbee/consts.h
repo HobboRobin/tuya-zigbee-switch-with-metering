@@ -124,6 +124,9 @@
 #define ZCL_ATTR_ELEC_MEAS_RMS_VOLTAGE                               0x0505
 #define ZCL_ATTR_ELEC_MEAS_RMS_CURRENT                               0x0508
 #define ZCL_ATTR_ELEC_MEAS_ACTIVE_POWER                              0x050B
+#define ZCL_ATTR_ELEC_MEAS_REACTIVE_POWER                            0x050E
+#define ZCL_ATTR_ELEC_MEAS_APPARENT_POWER                            0x050F
+#define ZCL_ATTR_ELEC_MEAS_POWER_FACTOR                              0x0510
 #define ZCL_ATTR_ELEC_MEAS_AC_VOLTAGE_MULTIPLIER                     0x0600
 #define ZCL_ATTR_ELEC_MEAS_AC_VOLTAGE_DIVISOR                        0x0601
 #define ZCL_ATTR_ELEC_MEAS_AC_CURRENT_MULTIPLIER                     0x0602
