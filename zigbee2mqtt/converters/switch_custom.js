@@ -618,30 +618,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -741,30 +736,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -864,30 +854,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -987,30 +972,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1053,12 +1033,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1120,18 +1098,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1193,18 +1168,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1249,19 +1221,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -1307,19 +1269,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -1486,19 +1438,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
             const emEndpoint = device.getEndpoint(1);
@@ -1558,43 +1500,29 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
+            const endpoint3 = device.getEndpoint(3);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -1639,12 +1567,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1706,18 +1632,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1798,24 +1721,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1915,30 +1834,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -1983,12 +1897,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2052,18 +1964,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2146,24 +2055,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2265,30 +2170,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2369,24 +2269,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2486,30 +2382,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2552,12 +2443,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2601,12 +2490,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2669,18 +2556,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2742,18 +2626,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2834,24 +2715,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2913,18 +2790,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -2986,18 +2860,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3040,12 +2911,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3107,18 +2976,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3180,18 +3046,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3235,12 +3098,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3322,24 +3183,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3382,12 +3239,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3449,18 +3304,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3503,12 +3355,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3551,12 +3401,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3619,18 +3467,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3688,7 +3533,6 @@ const definitions = [
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
-
 
 
             const coverSwitch1 = device.getEndpoint(1);
@@ -3783,7 +3627,6 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
 
 
-
             const coverSwitch1 = device.getEndpoint(1);
             await reporting.bind(coverSwitch1, coordinatorEndpoint, ["genMultistateInput"]);
             await coverSwitch1.configureReporting("genMultistateInput", [
@@ -3864,12 +3707,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3912,12 +3753,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -3960,12 +3799,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4008,12 +3845,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4056,12 +3891,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4104,12 +3937,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4191,24 +4022,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4308,30 +4135,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4374,12 +4196,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4422,12 +4242,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4470,12 +4288,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4537,18 +4353,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4628,24 +4441,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4688,12 +4497,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4755,18 +4562,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4847,24 +4651,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -4964,30 +4764,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5030,12 +4825,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5078,12 +4871,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5126,12 +4917,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5174,12 +4963,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5241,18 +5028,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5333,24 +5117,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5393,12 +5173,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5441,12 +5219,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5509,18 +5285,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5620,30 +5393,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5724,24 +5492,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5784,12 +5548,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5832,12 +5594,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5880,12 +5640,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5928,12 +5686,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -5976,12 +5732,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6024,12 +5778,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6093,18 +5845,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6186,24 +5935,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6246,12 +5991,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6294,12 +6037,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6361,18 +6102,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6453,24 +6191,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6513,12 +6247,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6580,18 +6312,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6634,12 +6363,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6701,18 +6428,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6770,7 +6494,6 @@ const definitions = [
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
-
 
 
             const coverSwitch1 = device.getEndpoint(1);
@@ -6871,24 +6594,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6931,12 +6650,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -6998,18 +6715,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7071,18 +6785,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7125,12 +6836,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7173,12 +6882,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7221,12 +6928,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7326,30 +7031,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7411,18 +7111,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7484,18 +7181,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7539,12 +7233,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -7710,19 +7402,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
             const emEndpoint = device.getEndpoint(1);
@@ -7903,19 +7585,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
             const emEndpoint = device.getEndpoint(1);
@@ -8096,19 +7768,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
             const emEndpoint = device.getEndpoint(1);
@@ -8168,19 +7830,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -8344,19 +7996,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
             const emEndpoint = device.getEndpoint(1);
@@ -8437,33 +8079,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -8508,19 +8131,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -8565,19 +8178,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -8622,19 +8225,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -8679,19 +8272,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -8736,19 +8319,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -8854,7 +8427,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -8905,7 +8477,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -8953,7 +8524,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -9059,7 +8629,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -9161,7 +8730,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -9212,7 +8780,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -9260,7 +8827,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -9328,7 +8894,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -9413,7 +8978,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -9518,7 +9082,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -9620,7 +9183,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -9668,7 +9230,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -9722,7 +9283,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -9770,7 +9330,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -9838,7 +9397,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -9926,7 +9484,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -10008,7 +9565,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -10113,7 +9669,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -10181,7 +9736,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -10229,7 +9783,6 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
-
 
 
 
@@ -10334,7 +9887,6 @@ const definitions = [
 
 
 
-
         },
         ota: true,
     },
@@ -10374,12 +9926,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -10441,18 +9991,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -10534,24 +10081,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -10651,30 +10194,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -10720,19 +10258,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -10800,33 +10328,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -10909,24 +10418,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -10971,19 +10476,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11052,33 +10547,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11167,47 +10643,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11253,12 +10701,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -11322,18 +10768,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -11415,24 +10858,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -11533,30 +10972,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -11601,19 +11035,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11659,19 +11083,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11736,25 +11150,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11819,25 +11222,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11883,19 +11275,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -11963,33 +11345,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12056,33 +11419,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12170,47 +11514,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12256,19 +11572,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12335,33 +11641,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12449,47 +11736,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12599,61 +11858,24 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint7 = device.getEndpoint(7);
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
             await endpoint7.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint8 = device.getEndpoint(8);
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
             await endpoint8.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12699,19 +11921,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12778,33 +11990,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12892,47 +12085,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -12977,19 +12142,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -13033,12 +12188,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -13100,18 +12253,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -13192,24 +12342,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -13252,12 +12398,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -13319,18 +12463,15 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint3.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -13411,24 +12552,20 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint4.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -13493,33 +12630,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -13606,47 +12724,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -13705,7 +12795,6 @@ const definitions = [
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
-
 
 
             const coverSwitch1 = device.getEndpoint(1);
@@ -13769,19 +12858,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -13847,33 +12926,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -13960,47 +13020,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14045,19 +13077,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14123,33 +13145,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14236,47 +13239,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14322,19 +13297,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14401,33 +13366,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14515,47 +13461,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14643,47 +13561,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14792,61 +13682,24 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint7 = device.getEndpoint(7);
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
             await endpoint7.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint8 = device.getEndpoint(8);
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
             await endpoint8.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14892,19 +13745,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -14971,33 +13814,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15085,47 +13909,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15233,61 +14029,24 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint7 = device.getEndpoint(7);
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
             await endpoint7.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint8 = device.getEndpoint(8);
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
             await endpoint8.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15395,61 +14154,24 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint7 = device.getEndpoint(7);
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
             await endpoint7.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint8 = device.getEndpoint(8);
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
             await endpoint8.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15536,47 +14258,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15622,19 +14316,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15701,33 +14385,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15774,19 +14439,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15854,33 +14509,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -15968,47 +14604,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16053,19 +14661,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16110,19 +14708,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16188,33 +14776,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16301,47 +14870,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16428,47 +14969,19 @@ const definitions = [
                 },
             ]);
             const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint5 = device.getEndpoint(5);
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16576,61 +15089,24 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
             await endpoint5.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint6 = device.getEndpoint(6);
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint7 = device.getEndpoint(7);
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
             await endpoint7.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint8 = device.getEndpoint(8);
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
             await endpoint8.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16674,12 +15150,10 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint2.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -16779,30 +15253,25 @@ const definitions = [
                 },
             ]);
             const endpoint5 = device.getEndpoint(5);
-            await reporting.onOff(endpoint5, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint5, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint5.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint6 = device.getEndpoint(6);
-            await reporting.onOff(endpoint6, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint6.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint7 = device.getEndpoint(7);
-            await reporting.onOff(endpoint7, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
+            await reporting.bind(endpoint7, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint7.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
             const endpoint8 = device.getEndpoint(8);
-            await reporting.onOff(endpoint8, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint8, coordinatorEndpoint, ["genOnOff"]);
+            await endpoint8.configureReporting("genOnOff", [
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
 
 
 
@@ -16846,19 +15315,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16925,33 +15384,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -16996,19 +15436,9 @@ const definitions = [
                 },
             ]);
             const endpoint2 = device.getEndpoint(2);
-            await reporting.onOff(endpoint2, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff"]);
             await endpoint2.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
@@ -17074,33 +15504,14 @@ const definitions = [
                 },
             ]);
             const endpoint3 = device.getEndpoint(3);
-            await reporting.onOff(endpoint3, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            const endpoint4 = device.getEndpoint(4);
-            await reporting.onOff(endpoint4, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff"]);
             await endpoint3.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+            const endpoint4 = device.getEndpoint(4);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff"]);
             await endpoint4.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
 
 
