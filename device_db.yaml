@@ -4228,7 +4228,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0001:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: ysdv91bk;TS0001-BSMN;LA0ip;SC3u;RC2;M;
+  config_str: ysdv91bk;TS0001-BSMN;LA0ip;SC3u;RC2;M;2EP;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4258,7 +4258,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0002:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: mklgayek;TS0002-BSMN;LA0ip;SC3u;RC2;SB7u;RB4;M;
+  config_str: mklgayek;TS0002-BSMN;LA0ip;SC3u;RC2;SB7u;RB4;M;2EP;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4288,7 +4288,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0003:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 7aqaupa9;TS0003-BSMN;LA0i;SC3u;RC2;SB7u;RB4;SB5u;RC0;M;
+  config_str: 7aqaupa9;TS0003-BSMN;LA0i;SC3u;RC2;SB7u;RB4;SB5u;RC0;M;2EP;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models:
@@ -4319,7 +4319,7 @@ SWITCH_BSEED_TOUCH_MELODY_TS0004:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: s6ma1nh4;TS0004-BSMN;LA0i;SC3u;RC2;SB7u;RB4;SB5u;RC0;SD7u;RD2;M;
+  config_str: s6ma1nh4;TS0004-BSMN;LA0i;SC3u;RC2;SB7u;RB4;SB5u;RC0;SD7u;RD2;M;2EP;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models:
