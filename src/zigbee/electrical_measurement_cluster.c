@@ -8,10 +8,10 @@
 #include "relay_cluster.h"
 #include <string.h>
 
-#define MEAS_TYPE_AC_ACTIVE       (1 << 0)
-#define MEAS_TYPE_AC_REACTIVE     (1 << 1)
-#define MEAS_TYPE_AC_APPARENT     (1 << 2)
-#define MEAS_TYPE_PHASE_A         (1 << 3)
+#define MEAS_TYPE_AC_ACTIVE      (1 << 0)
+#define MEAS_TYPE_AC_REACTIVE    (1 << 1)
+#define MEAS_TYPE_AC_APPARENT    (1 << 2)
+#define MEAS_TYPE_PHASE_A        (1 << 3)
 
 // Bit-by-bit integer square root (no float / libm on the target M0/M33).
 static uint32_t isqrt_u32(uint32_t x) {
@@ -22,8 +22,8 @@ static uint32_t isqrt_u32(uint32_t x) {
         bit >>= 2;
     while (bit != 0) {
         if (x >= res + bit) {
-            x   -= res + bit;
-            res  = (res >> 1) + bit;
+            x  -= res + bit;
+            res = (res >> 1) + bit;
         } else {
             res >>= 1;
         }
@@ -39,6 +39,7 @@ void elec_meas_derive_power(uint16_t voltage_cv, uint16_t current_ma,
     // S[VA] = voltage_cv * current_ma / 100000. Clamp to the uint16 attribute
     // range (comfortably above any single-socket mains load).
     uint32_t s_va = (uint32_t)voltage_cv * (uint32_t)current_ma / 100000u;
+
     if (s_va > 0xFFFFu)
         s_va = 0xFFFFu;
 
@@ -257,9 +258,9 @@ void electrical_measurement_cluster_init(electrical_measurement_cluster_t *clust
         return;
 
     memset(cluster, 0, sizeof(electrical_measurement_cluster_t));
-    cluster->meter                 = meter;
-    cluster->measurement_type      = MEAS_TYPE_AC_ACTIVE | MEAS_TYPE_AC_REACTIVE |
-                                     MEAS_TYPE_AC_APPARENT | MEAS_TYPE_PHASE_A;
+    cluster->meter            = meter;
+    cluster->measurement_type = MEAS_TYPE_AC_ACTIVE | MEAS_TYPE_AC_REACTIVE |
+                                MEAS_TYPE_AC_APPARENT | MEAS_TYPE_PHASE_A;
     cluster->ac_voltage_multiplier = 1;
     cluster->ac_voltage_divisor    = 100;  // firmware reports voltage in centivolts
     cluster->ac_current_multiplier = 1;
