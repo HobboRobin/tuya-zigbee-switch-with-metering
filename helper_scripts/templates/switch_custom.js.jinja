@@ -795,25 +795,18 @@ const definitions = [
             {% endif %}
             {% for relayName in device.relayNames %}
             const endpoint{{loop.index  + (device.switchNames | length)}} = device.getEndpoint({{loop.index  + (device.switchNames | length)}});
-            {# A change is reported immediately (min 0); the finite 5-min max is a
-               heartbeat so that if the single report sent on a physical toggle is
-               lost in the mesh, Z2M re-syncs within 5 min instead of staying stale
-               until the ~18 h MAX interval. #}
-            await reporting.onOff(endpoint{{loop.index  + (device.switchNames | length)}}, {
-                min: 0,
-                max: 300, // 5 min heartbeat re-syncs a lost report
-                change: 1,
-            });
-            {% endfor %}
-
-            {% for relayName in device.relayIndicatorNames %}
+            await reporting.bind(endpoint{{loop.index  + (device.switchNames | length)}}, coordinatorEndpoint, ["genOnOff"]);
+            {# The onOff change is reported immediately (min 0); the finite 5-min max
+               is a heartbeat so that if the single report sent on a physical toggle
+               is lost in the mesh, Z2M re-syncs within 5 min instead of staying stale
+               until the ~18 h MAX interval. Configured explicitly (not via the
+               reporting.onOff helper) so it is re-applied on every Z2M "Reconfigure"
+               — the helper skips devices that already have a report config, which
+               left onOff stuck at the old max. The indicator LED (0xff02) is
+               deliberately NOT reported: it only mirrors the relay, so it would just
+               add a nameless entry and needless traffic. #}
             await endpoint{{loop.index  + (device.switchNames | length)}}.configureReporting("genOnOff", [
-                {
-                    attribute: {ID: 0xff02, type: 0x10}, // Boolean
-                    minimumReportInterval: 0,
-                    maximumReportInterval: 300, // 5 min heartbeat, re-syncs a lost report
-                    reportableChange: 1,
-                },
+                {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
             {% endfor %}
 
