@@ -9,6 +9,7 @@
 #include "device_config/nvm_items.h"
 #include "device_config/reset.h"
 #include "hal/nvm.h"
+#include "hal/printf_selector.h"
 #include "hal/tasks.h"
 #include <stddef.h>
 
@@ -25,11 +26,13 @@ const uint8_t hwVersion    = 0x00;
 uint8_t powerSource = POWER_SOURCE_MAINS_1_PHASE; // 0x01 default
 
 const uint16_t cluster_revision = 0x01;
-// swBuildId carries an energy-monitoring runtime diagnostic suffix " E?M?":
-// E<x> = haElectricalMeasurement registered in stack (1/0, '-' if disabled),
-// M<y> = seMetering registered in stack. Filled in by
-// basic_cluster_set_energy_diag() after the stack finishes registration.
-DEF_STR_NON_CONST(STRINGIFY_VALUE(VERSION_STR) " E?M?", swBuildId);
+// swBuildId must stay short: Z2M reads ~9 genBasic attributes in a single ZCL
+// response during the interview, and swBuildId is the last one. A long value
+// pushes the response past what fits in one (unfragmented) Zigbee packet, so
+// the attribute is dropped and Z2M reports the firmware ID as "unknown".
+// It therefore carries the plain version only — the former " E?M?" energy
+// diagnostic suffix cost 5 extra characters and caused exactly that.
+DEF_STR_NON_CONST(STRINGIFY_VALUE(VERSION_STR), swBuildId);
 extern network_indicator_t network_indicator;
 
 void basic_cluster_store_attrs_to_nv();
@@ -102,17 +105,13 @@ void basic_cluster_callback_attr_write_trampoline(uint16_t attribute_id) {
 
 void basic_cluster_set_energy_diag(uint8_t energy_enabled, uint8_t elec_meas_ok,
                                    uint8_t metering_ok) {
-    // Replace the two '?' markers in swBuildId (" E?M?") in order.
-    char    em    = !energy_enabled ? '-' : (elec_meas_ok ? '1' : '0');
-    char    met   = !energy_enabled ? '-' : (metering_ok ? '1' : '0');
-    uint8_t which = 0;
+    // Reported to the debug log only. This used to be appended to swBuildId,
+    // but that made the firmware ID too long to survive the interview read
+    // (see the swBuildId definition above).
+    char em  = !energy_enabled ? '-' : (elec_meas_ok ? '1' : '0');
+    char met = !energy_enabled ? '-' : (metering_ok ? '1' : '0');
 
-    for (unsigned i = 0; i < sizeof(swBuildId.str); i++) {
-        if (swBuildId.str[i] == '?') {
-            swBuildId.str[i] = (which == 0) ? em : met;
-            which++;
-        }
-    }
+    printf("Energy diag: E%c M%c\r\n", em, met);
 }
 
 void basic_cluster_add_to_endpoint(zigbee_basic_cluster *cluster,

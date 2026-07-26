@@ -218,6 +218,8 @@ hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
            "Sending attribute report: ep=%d, cluster=0x%04x, attr=0x%04x, "
            "type=0x%02x, len=%d",
            endpoint, cluster_id, attr_id, zcl_type_id, value_len);
+    io_evt("zcl_report ep=%u cluster=0x%04X attr=0x%04X", endpoint, cluster_id,
+           attr_id);
 
     return HAL_ZIGBEE_OK;
 }

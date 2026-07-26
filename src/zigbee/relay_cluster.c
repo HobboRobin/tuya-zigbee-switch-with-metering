@@ -47,9 +47,25 @@ void relay_cluster_callback_attr_write_trampoline(uint8_t endpoint,
 }
 
 void update_relay_clusters() {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 12; i++) {
         if (relay_cluster_by_endpoint[i] != NULL) {
             sync_indicator_led(relay_cluster_by_endpoint[i]);
+        }
+    }
+}
+
+// Proactively push every relay's on/off state to the coordinator. Called on a
+// timer from app_task so the state self-heals even if the single on-change
+// report was lost in the mesh: the Telink stack does not emit a periodic
+// max-interval heartbeat for a discrete (boolean) attribute, so the Z2M-side
+// reporting config alone cannot recover a lost onOff report.
+void relay_clusters_report_state(void) {
+    for (int i = 0; i < 12; i++) {
+        zigbee_relay_cluster *cluster = relay_cluster_by_endpoint[i];
+        if (cluster != NULL && cluster->relay != NULL) {
+            hal_zigbee_send_report_attr(cluster->endpoint, ZCL_CLUSTER_ON_OFF,
+                                        ZCL_ATTR_ONOFF, ZCL_DATA_TYPE_BOOLEAN,
+                                        &cluster->relay->on, 1);
         }
     }
 }

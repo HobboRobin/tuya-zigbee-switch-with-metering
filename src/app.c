@@ -5,10 +5,12 @@
 #include "hal/nvm.h"
 #include "hal/printf_selector.h"
 #include "hal/system.h"
+#include "hal/timer.h"
 #include "hal/zigbee.h"
 #include "hal/zigbee_ota.h"
 #include "zigbee/battery_cluster.h"
 #include "zigbee/general_commands.h"
+#include "zigbee/relay_cluster.h"
 #ifdef END_DEVICE
 #include "zigbee/poll_control_cluster.h"
 #endif
@@ -55,6 +57,13 @@ void app_init(void) {
 
 static bool boot_announce_sent = false;
 
+// Firmware-side relay-state heartbeat: the Telink stack sends no periodic
+// max-interval report for a boolean attribute, so a single lost onOff report
+// would leave Z2M showing the wrong state indefinitely (observed: relay on,
+// >500 W flowing, Z2M stuck "off"). Re-push every relay's state on this
+// interval so the coordinator re-syncs within it regardless of the mesh.
+#define RELAY_HEARTBEAT_INTERVAL_MS    (5u * 60u * 1000u)
+
 void app_task() {
     energy_monitoring_tick();
 
@@ -74,5 +83,20 @@ void app_task() {
     }
     if (hal_zigbee_get_network_status() == HAL_ZIGBEE_NETWORK_JOINED) {
         init_energy_reporting();
+
+        // Start the interval at the first tick after joining rather than
+        // reporting immediately: joining already syncs the state, so the
+        // heartbeat only needs to cover losses from then on.
+        static uint8_t  heartbeat_armed         = 0;
+        static uint32_t last_relay_heartbeat_ms = 0;
+        uint32_t        now                     = hal_millis();
+        if (!heartbeat_armed) {
+            heartbeat_armed         = 1;
+            last_relay_heartbeat_ms = now;
+        } else if ((now - last_relay_heartbeat_ms) >=
+                   RELAY_HEARTBEAT_INTERVAL_MS) {
+            last_relay_heartbeat_ms = now;
+            relay_clusters_report_state();
+        }
     }
 }
