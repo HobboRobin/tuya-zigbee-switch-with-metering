@@ -89,7 +89,7 @@ void app_task() {
         // heartbeat only needs to cover losses from then on.
         static uint8_t  heartbeat_armed         = 0;
         static uint32_t last_relay_heartbeat_ms = 0;
-        uint32_t        now                     = hal_millis();
+        uint32_t        now = hal_millis();
         if (!heartbeat_armed) {
             heartbeat_armed         = 1;
             last_relay_heartbeat_ms = now;
