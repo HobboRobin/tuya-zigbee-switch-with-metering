@@ -31,6 +31,10 @@ void relay_cluster_report(zigbee_relay_cluster *cluster);
 
 void update_relay_clusters();
 
+// Push every relay's current on/off state to the coordinator (firmware-side
+// heartbeat; see relay_cluster.c). Safe to call when not joined.
+void relay_clusters_report_state(void);
+
 void relay_cluster_callback_attr_write_trampoline(uint8_t endpoint,
                                                   uint16_t attribute_id);
 
