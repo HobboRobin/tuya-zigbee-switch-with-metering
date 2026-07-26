@@ -194,6 +194,27 @@
           ],
           "description": "Optional per-board override for HLW8012_POWER_MULTIPLIER"
         },
+        "bl0942_voltage_multiplier": {
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "null"}
+          ],
+          "description": "Optional per-board override for BL0942_VOLTAGE_MULTIPLIER. Ships the factory calibration in the firmware itself, so a freshly flashed device reads correctly without writing calibration_values by hand (and without lengthening the config_str)"
+        },
+        "bl0942_current_multiplier": {
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "null"}
+          ],
+          "description": "Optional per-board override for BL0942_CURRENT_MULTIPLIER"
+        },
+        "bl0942_power_multiplier": {
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "null"}
+          ],
+          "description": "Optional per-board override for BL0942_POWER_MULTIPLIER"
+        },
         "build": {
           "type": "string",
           "enum": ["yes", "no"],
