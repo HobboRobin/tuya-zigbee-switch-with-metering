@@ -3109,7 +3109,7 @@ OUTLET_BSEED_PM_TS011F_2uollq9d:
   firmware_image_type: 47117
   build: yes
   status: in_progress
-  info: "Same board and pinout as the _TZ3000_4ux0ondb revision (network LED C3, switch B5, relay D2, relay indicator B4, both PWM-dimmable, energy CF=C0 CF1=C2 SEL=C1) but fitted with a BL0937 instead of an HLW8012. The two chips use opposite SEL-pin polarity to select what CF1 carries, so if voltage and current come out swapped (voltage showing a current-like value and vice versa), append `I` to the EP token: EPC0C2C1I. The BL0937 also has a different internal reference, so the compiled-in multipliers will be off: calibrate via the calibrate fields, then copy the resulting calibration_values to other units of this revision. Keep the config_str short — it must stay readable over Zigbee in one packet."
+  info: "Same board and pinout as the _TZ3000_4ux0ondb revision (network LED C3, switch B5, relay D2, relay indicator B4, both PWM-dimmable, energy CF=C0 CF1=C2 SEL=C1) but fitted with a BL0937 instead of an HLW8012. CALIBRATION: write V162302A148576W17237 once to the calibration_values field (measured against a reference meter on hardware). Hardware-confirmed working with the default SEL polarity, i.e. no `I` flag needed — the BL0937 here maps CF1 the same way the HLW8012 does. Should a unit ever report voltage and current swapped, append `I` to the EP token (EPC0C2C1I) to flip that mapping. Keep the config_str short: the calibration deliberately lives in calibration_values (which persists in NVM and takes precedence) because inline V/A/W markers push the config_str past what can be read or written over Zigbee in one packet."
   threads: null
   store: null
 OUTLET_BSEED_TS011F:
