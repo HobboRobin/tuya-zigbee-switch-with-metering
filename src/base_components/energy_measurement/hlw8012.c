@@ -77,6 +77,15 @@ int hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin, hal_gpio_pin_t cf1_pin,
     return 0;
 }
 
+void hlw8012_set_sel_inverted(hlw8012_t *dev, uint8_t inverted) {
+    if (!dev)
+        return;
+
+    dev->sel_inverted = inverted ? 1 : 0;
+    printf("HLW8012: SEL polarity %s\r\n",
+           dev->sel_inverted ? "inverted (BL0937)" : "normal (HLW8012)");
+}
+
 void hlw8012_set_calibration(hlw8012_t *dev, uint32_t voltage_mult,
                              uint32_t current_mult, uint32_t power_mult) {
     if (!dev)
@@ -204,7 +213,11 @@ void _update_measurement_handler(void *arg) {
     // Skip the sample right after a SEL toggle (cycle_count == 0): CF1 needs
     // time to settle to the newly selected measurement.
     if (dev->cycle_count != 0) {
-        if (dev->data.sel_state) {
+        // SEL high selects voltage on the HLW8012 and current on the BL0937,
+        // so an inverted board swaps the two branches.
+        uint8_t reading_voltage =
+            dev->sel_inverted ? !dev->data.sel_state : dev->data.sel_state;
+        if (reading_voltage) {
             dev->data.voltage = (uint16_t)(((uint32_t)cf1_pulses *
                                             dev->cal.voltage_multiplier) /
                                            HLW8012_FIXED_POINT_SCALE); // cV
