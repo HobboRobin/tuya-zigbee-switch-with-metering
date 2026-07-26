@@ -90,11 +90,19 @@ typedef struct {
     hal_task_t            update_task;
     uint8_t               cycle_count;
     uint8_t               initialized;
+    // The SEL pin selects which quantity CF1 carries. The HLW8012 and the
+    // BL0937 use opposite polarity for that choice, so a board fitted with the
+    // other chip reads voltage and current swapped. Set this to 1 to flip the
+    // mapping (config_str `EP...I`).
+    uint8_t               sel_inverted;
     energy_meter_t        meter;
 } hlw8012_t;
 
 int            hlw8012_init(hlw8012_t *dev, hal_gpio_pin_t cf_pin,
                             hal_gpio_pin_t cf1_pin, hal_gpio_pin_t sel_pin);
+
+// Flip the SEL-pin meaning (HLW8012 vs BL0937). Call right after init.
+void           hlw8012_set_sel_inverted(hlw8012_t *dev, uint8_t inverted);
 
 // Override calibration multipliers. A zero argument keeps the current value,
 // so callers can set only the multipliers they have a reference for.

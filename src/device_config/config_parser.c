@@ -329,12 +329,15 @@ void parse_config() {
             }
         } else if (entry[0] == 'E' && entry[1] == 'P') {
             // HLW8012/BL0937 energy monitoring:
-            //   EP<CF_PIN><CF1_PIN><SEL_PIN>[V<volt_mult>][A<curr_mult>][W<pow_mult>]
+            //   EP<CF_PIN><CF1_PIN><SEL_PIN>[I][V<volt_mult>][A<curr_mult>][W<pow_mult>]
             // Pins are 2 chars each (port letter + digit). The optional V/A/W
             // markers (decimal, any order, after the pins) override the
             // compiled-in calibration multipliers, so a board revision with a
             // different sense resistor/divider can be calibrated from the
-            // config_str without a firmware rebuild.
+            // config_str without a firmware rebuild. An `I` inverts the SEL-pin
+            // polarity: the HLW8012 and the BL0937 disagree on which level puts
+            // voltage on CF1, so a board with the other chip reads voltage and
+            // current swapped until this is set.
             printf("Config: Found energy monitoring entry: '%s'\r\n", entry);
             hal_gpio_pin_t cf_pin  = hal_gpio_parse_pin(entry + 2);
             hal_gpio_pin_t cf1_pin = hal_gpio_parse_pin(entry + 4);
@@ -348,6 +351,8 @@ void parse_config() {
                     const char *v   = seek_until((char *)cal, 'V');
                     const char *a   = seek_until((char *)cal, 'A');
                     const char *w   = seek_until((char *)cal, 'W');
+                    hlw8012_set_sel_inverted(
+                        &hlw8012_device, *seek_until((char *)cal, 'I') == 'I');
                     hlw8012_set_calibration(
                         &hlw8012_device,
                         (*v == 'V') ? parse_int(v + 1) : 0,

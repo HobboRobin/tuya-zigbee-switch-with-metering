@@ -3085,6 +3085,33 @@ OUTLET_BSEED_PM_TS011F_4ux0ondb:
   - https://github.com/romasku/tuya-zigbee-switch/pull/397
   store:
   - https://www.aliexpress.com/item/1005005714480181.html
+OUTLET_BSEED_PM_TS011F_2uollq9d:
+  human_name: BSEED PM outlet 🅳 (BL0937)
+  category: outlet
+  power: mains
+  neutral: required
+  output: relay
+  device_type: router
+  stock_model_name: TS011F
+  stock_manufacturer_name: _TZ3000_2uollq9d
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS011F_plug_1
+  override_z2m_device: TS011F_plug_1_2
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: 2uollq9d;TS011F-BS-PM-3;LC3p;SB5u;RD2;IB4p;EPC0C2C1;M;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: 4417
+  stock_image_type: 54179
+  firmware_image_type: 47117
+  build: yes
+  status: in_progress
+  info: "Same board and pinout as the _TZ3000_4ux0ondb revision (network LED C3, switch B5, relay D2, relay indicator B4, both PWM-dimmable, energy CF=C0 CF1=C2 SEL=C1) but fitted with a BL0937 instead of an HLW8012. The two chips use opposite SEL-pin polarity to select what CF1 carries, so if voltage and current come out swapped (voltage showing a current-like value and vice versa), append `I` to the EP token: EPC0C2C1I. The BL0937 also has a different internal reference, so the compiled-in multipliers will be off: calibrate via the calibrate fields, then copy the resulting calibration_values to other units of this revision. Keep the config_str short — it must stay readable over Zigbee in one packet."
+  threads: null
+  store: null
 OUTLET_BSEED_TS011F:
   human_name: BSEED outlet
   category: outlet
