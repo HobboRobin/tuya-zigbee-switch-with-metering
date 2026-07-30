@@ -67,6 +67,7 @@ Some quick links:
 - 🛠️ [contribute/](./docs/contribute/)
 - ⚙️ [usage/](./docs/usage/)
   - [endpoints.md](./docs/usage/endpoints.md) 
+  - [actions.md](./docs/usage/actions.md)
   - [change_device_type.md](./docs/usage/change_device_type.md)
 
 ## 💬 Chat

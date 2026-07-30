@@ -9,6 +9,7 @@ const {
     deviceAddCustomCluster,
 } = require("zigbee-herdsman-converters/lib/modernExtend");
 const {assertString} = require("zigbee-herdsman-converters/lib/utils");
+const e = require("zigbee-herdsman-converters/lib/exposes").presets;
 const reporting = require("zigbee-herdsman-converters/lib/reporting");
 const constants = require("zigbee-herdsman-converters/lib/constants");
 const Zcl = require('zigbee-herdsman').Zcl;
@@ -118,6 +119,114 @@ const romasku = {
             description: "Action of the switch: 'released' or 'press' or 'long_press'",
             entityCategory: "diagnostic",
         }),
+    // Publishes the physical button activity as a Z2M `action`, which Home
+    // Assistant turns into an *event* entity (the same way the Hue remotes
+    // work). The `*_press_action` sensors above stay untouched, so existing
+    // automations keep working and both representations arrive in HA.
+    //
+    // Two independent sources feed the same action, on purpose: whichever
+    // path survives the mesh wins, and neither needs the other.
+    //  - genMultistateInput reports (bound in `configure`): what the button
+    //    did. The firmware already picks the value by switch mode, so a toggle
+    //    switch emits position_on/position_off while a momentary one emits
+    //    press/long_press/release - the action follows automatically.
+    //  - the commands the switch sends to its bindings: genOnOff, genLevelCtrl
+    //    (dimming) and closuresWindowCovering (covers). These arrive because
+    //    `configure` binds the coordinator alongside the user's own bindings,
+    //    so the action says what the bound devices were actually told to do.
+    //
+    // Endpoint names differ per gang count (switch_left, switch_right, ...),
+    // so the action prefix is deliberately positional and stable instead:
+    // switch_0, switch_1, ... and cover_switch_0, cover_switch_1, ...
+    actionEvent: ({switches = [], longSwitches = [], coverSwitches = []}) => {
+        const switchStates = {
+            0: "release", 1: "press", 2: "long_press",
+            3: "position_on", 4: "position_off",
+        };
+        const coverStates = {
+            0: "release", 1: "open", 2: "close",
+            3: "stop", 4: "long_open", 5: "long_close",
+        };
+        const onOffCommands = {commandOn: "on", commandOff: "off", commandToggle: "toggle"};
+        const coverCommands = {
+            commandUpOpen: "cover_open",
+            commandDownClose: "cover_close",
+            commandStop: "cover_stop",
+        };
+        const levelSuffixes = ["brightness_move_up", "brightness_move_down", "brightness_stop"];
+
+        const byEndpoint = (list) => Object.fromEntries(list.map((s) => [s.endpoint, s.prefix]));
+        const multistatePrefixes = byEndpoint([...switches, ...coverSwitches]);
+        const multistateStates = Object.fromEntries([
+            ...switches.map((s) => [s.endpoint, switchStates]),
+            ...coverSwitches.map((s) => [s.endpoint, coverStates]),
+        ]);
+        // A long-press companion endpoint (2EP) only ever toggles its own
+        // bindings, so it has no multistate of its own - just the command.
+        const onOffPrefixes = byEndpoint([...switches, ...longSwitches]);
+        const levelPrefixes = byEndpoint(switches);
+        const coverPrefixes = byEndpoint(coverSwitches);
+
+        const actions = [];
+        const add = (prefix, suffixes) => actions.push(...suffixes.map((s) => `${prefix}_${s}`));
+        for (const s of switches) {
+            add(s.prefix, Object.values(switchStates));
+            add(s.prefix, Object.values(onOffCommands));
+            add(s.prefix, levelSuffixes);
+        }
+        for (const s of longSwitches) {
+            add(s.prefix, Object.values(onOffCommands));
+        }
+        for (const s of coverSwitches) {
+            add(s.prefix, Object.values(coverStates));
+            add(s.prefix, Object.values(coverCommands));
+        }
+
+        const lookupAction = (prefixes, msg, suffix) => {
+            const prefix = prefixes[msg.endpoint.ID];
+            if (prefix === undefined || suffix === undefined) return;
+            return {action: `${prefix}_${suffix}`};
+        };
+
+        return {
+            isModernExtend: true,
+            exposes: [e.action(actions)],
+            fromZigbee: [
+                {
+                    cluster: "genMultistateInput",
+                    type: ["attributeReport", "readResponse"],
+                    convert: (model, msg) => {
+                        const states = multistateStates[msg.endpoint.ID];
+                        if (states === undefined) return;
+                        return lookupAction(multistatePrefixes, msg, states[msg.data.presentValue]);
+                    },
+                },
+                {
+                    cluster: "genOnOff",
+                    type: Object.keys(onOffCommands),
+                    convert: (model, msg) => lookupAction(onOffPrefixes, msg, onOffCommands[msg.type]),
+                },
+                {
+                    cluster: "genLevelCtrl",
+                    type: ["commandMove", "commandMoveWithOnOff", "commandStop", "commandStopWithOnOff"],
+                    convert: (model, msg) => {
+                        const stop = msg.type === "commandStop" || msg.type === "commandStopWithOnOff";
+                        // movemode 0 = up, 1 = down (the firmware alternates it
+                        // so each long press dims the other way).
+                        const suffix = stop
+                            ? "brightness_stop"
+                            : `brightness_move_${msg.data.movemode === 0 ? "up" : "down"}`;
+                        return lookupAction(levelPrefixes, msg, suffix);
+                    },
+                },
+                {
+                    cluster: "closuresWindowCovering",
+                    type: Object.keys(coverCommands),
+                    convert: (model, msg) => lookupAction(coverPrefixes, msg, coverCommands[msg.type]),
+                },
+            ],
+        };
+    },
     relayIndicatorMode: (name, endpointName) =>
         enumLookup({
             name,
@@ -588,6 +697,31 @@ const definitions = [
                 {%- endif -%}
             } }),
             {% set first_endpoint = device.switchNames[0] if device.switchNames else (device.relayNames[0] if device.relayNames else (device.coverSwitchNames[0] if device.coverSwitchNames else device.coverNames[0])) %}
+            {% set n_switch = device.switchNames | length %}
+            {% set n_relay = device.relayNames | length %}
+            {% set n_cover_switch = device.coverSwitchNames | length %}
+            {% set n_cover = device.coverNames | length %}
+            {% if device.switchNames or device.coverSwitchNames %}
+            romasku.actionEvent({
+                switches: [
+                {% for switchName in device.switchNames %}
+                    {endpoint: {{loop.index}}, prefix: "switch_{{loop.index0}}"},
+                {% endfor %}
+                ],
+                longSwitches: [
+                {% if device.has_long_press_endpoints %}
+                {% for switchName in device.switchNames %}
+                    {endpoint: {{loop.index + n_switch + n_relay + n_cover_switch + n_cover}}, prefix: "switch_{{loop.index0}}_long"},
+                {% endfor %}
+                {% endif %}
+                ],
+                coverSwitches: [
+                {% for coverSwitchName in device.coverSwitchNames %}
+                    {endpoint: {{loop.index + n_switch + n_relay}}, prefix: "cover_switch_{{loop.index0}}"},
+                {% endfor %}
+                ],
+            }),
+            {% endif %}
             romasku.deviceConfig("device_config", "{{first_endpoint}}"),
             romasku.multiPressResetCount("multi_press_reset_count", "{{first_endpoint}}"),
             {% if device.has_dedicated_net_led %}
@@ -796,6 +930,12 @@ const definitions = [
             {% for switchName in device.switchNames %}
             const endpoint{{loop.index}} = device.getEndpoint({{loop.index}});
             await reporting.bind(endpoint{{loop.index}}, coordinatorEndpoint, ["genMultistateInput"]);
+            {# The switch sends its ON/OFF/TOGGLE and dim commands to whatever is
+               bound to it. Binding the coordinator too (next to the user's own
+               bindings, which are unaffected) is what makes those commands
+               reach Z2M and become `action` events, so the events keep working
+               even if a multistate report is lost. #}
+            await reporting.bind(endpoint{{loop.index}}, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint{{loop.index}}.configureReporting("genMultistateInput", [
                 {
@@ -860,6 +1000,9 @@ const definitions = [
             {% for coverSwitchName in device.coverSwitchNames %}
             const coverSwitch{{loop.index}} = device.getEndpoint({{loop.index + (device.switchNames | length) + (device.relayNames | length)}});
             await reporting.bind(coverSwitch{{loop.index}}, coordinatorEndpoint, ["genMultistateInput"]);
+            // Same as for the switches: bind the coordinator so the UP/DOWN/STOP
+            // commands sent to the bindings also surface as `action` events.
+            await reporting.bind(coverSwitch{{loop.index}}, coordinatorEndpoint, ["closuresWindowCovering"]);
             await coverSwitch{{loop.index}}.configureReporting("genMultistateInput", [
                 {
                     attribute: "presentValue",
@@ -882,6 +1025,16 @@ const definitions = [
                 },
             ]);
             {% endfor %}
+
+            {% if device.has_long_press_endpoints %}
+            {# 2EP companion endpoints carry only an OnOff *client* cluster: a
+               long press toggles their bindings. Binding the coordinator makes
+               that toggle show up as a `switch_N_long_toggle` action. #}
+            {% for switchName in device.switchNames %}
+            const longPress{{loop.index}} = device.getEndpoint({{loop.index + (device.switchNames | length) + (device.relayNames | length) + (device.coverSwitchNames | length) + (device.coverNames | length)}});
+            await reporting.bind(longPress{{loop.index}}, coordinatorEndpoint, ["genOnOff"]);
+            {% endfor %}
+            {% endif %}
         },
         {% if z2m_v1 %}
         ota: ota.zigbeeOTA,
