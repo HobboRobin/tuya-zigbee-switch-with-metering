@@ -5,10 +5,11 @@ for an expose literally named `action`. The per-endpoint `*_press_action`
 enums are plain sensors and stay for backwards compatibility, so both
 representations have to be present at once.
 
-The interesting part is pure JavaScript, so where node is available the
-converter is really loaded (against stubbed zigbee-herdsman-converters
-modules) and its fromZigbee converters are driven with fake messages. Where it
-is not - the CI test job has no node - the structural checks still run.
+The interesting part is pure JavaScript, so the converter is really loaded
+(against stubbed zigbee-herdsman-converters modules) and its fromZigbee
+converters are driven with fake messages. The GitHub runner ships node, so
+this runs in CI too; where node is missing those two tests skip and the
+structural checks still run.
 """
 
 import json
@@ -178,7 +179,7 @@ def _node_run(tmp_path):
 @pytest.fixture(scope="module")
 def converter_run(tmp_path_factory):
     if not shutil.which("node"):
-        pytest.skip("node is not available; structural checks still run")
+        pytest.skip("node is not available; the structural checks still run")
     return _node_run(tmp_path_factory.mktemp("z2m"))
 
 
