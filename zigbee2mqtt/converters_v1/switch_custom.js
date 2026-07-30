@@ -9,6 +9,7 @@ const {
     deviceAddCustomCluster,
 } = require("zigbee-herdsman-converters/lib/modernExtend");
 const {assertString} = require("zigbee-herdsman-converters/lib/utils");
+const e = require("zigbee-herdsman-converters/lib/exposes").presets;
 const reporting = require("zigbee-herdsman-converters/lib/reporting");
 const constants = require("zigbee-herdsman-converters/lib/constants");
 const Zcl = require('zigbee-herdsman').Zcl;
@@ -116,6 +117,114 @@ const romasku = {
             description: "Action of the switch: 'released' or 'press' or 'long_press'",
             entityCategory: "diagnostic",
         }),
+    // Publishes the physical button activity as a Z2M `action`, which Home
+    // Assistant turns into an *event* entity (the same way the Hue remotes
+    // work). The `*_press_action` sensors above stay untouched, so existing
+    // automations keep working and both representations arrive in HA.
+    //
+    // Two independent sources feed the same action, on purpose: whichever
+    // path survives the mesh wins, and neither needs the other.
+    //  - genMultistateInput reports (bound in `configure`): what the button
+    //    did. The firmware already picks the value by switch mode, so a toggle
+    //    switch emits position_on/position_off while a momentary one emits
+    //    press/long_press/release - the action follows automatically.
+    //  - the commands the switch sends to its bindings: genOnOff, genLevelCtrl
+    //    (dimming) and closuresWindowCovering (covers). These arrive because
+    //    `configure` binds the coordinator alongside the user's own bindings,
+    //    so the action says what the bound devices were actually told to do.
+    //
+    // Endpoint names differ per gang count (switch_left, switch_right, ...),
+    // so the action prefix is deliberately positional and stable instead:
+    // switch_0, switch_1, ... and cover_switch_0, cover_switch_1, ...
+    actionEvent: ({switches = [], longSwitches = [], coverSwitches = []}) => {
+        const switchStates = {
+            0: "release", 1: "press", 2: "long_press",
+            3: "position_on", 4: "position_off",
+        };
+        const coverStates = {
+            0: "release", 1: "open", 2: "close",
+            3: "stop", 4: "long_open", 5: "long_close",
+        };
+        const onOffCommands = {commandOn: "on", commandOff: "off", commandToggle: "toggle"};
+        const coverCommands = {
+            commandUpOpen: "cover_open",
+            commandDownClose: "cover_close",
+            commandStop: "cover_stop",
+        };
+        const levelSuffixes = ["brightness_move_up", "brightness_move_down", "brightness_stop"];
+
+        const byEndpoint = (list) => Object.fromEntries(list.map((s) => [s.endpoint, s.prefix]));
+        const multistatePrefixes = byEndpoint([...switches, ...coverSwitches]);
+        const multistateStates = Object.fromEntries([
+            ...switches.map((s) => [s.endpoint, switchStates]),
+            ...coverSwitches.map((s) => [s.endpoint, coverStates]),
+        ]);
+        // A long-press companion endpoint (2EP) only ever toggles its own
+        // bindings, so it has no multistate of its own - just the command.
+        const onOffPrefixes = byEndpoint([...switches, ...longSwitches]);
+        const levelPrefixes = byEndpoint(switches);
+        const coverPrefixes = byEndpoint(coverSwitches);
+
+        const actions = [];
+        const add = (prefix, suffixes) => actions.push(...suffixes.map((s) => `${prefix}_${s}`));
+        for (const s of switches) {
+            add(s.prefix, Object.values(switchStates));
+            add(s.prefix, Object.values(onOffCommands));
+            add(s.prefix, levelSuffixes);
+        }
+        for (const s of longSwitches) {
+            add(s.prefix, Object.values(onOffCommands));
+        }
+        for (const s of coverSwitches) {
+            add(s.prefix, Object.values(coverStates));
+            add(s.prefix, Object.values(coverCommands));
+        }
+
+        const lookupAction = (prefixes, msg, suffix) => {
+            const prefix = prefixes[msg.endpoint.ID];
+            if (prefix === undefined || suffix === undefined) return;
+            return {action: `${prefix}_${suffix}`};
+        };
+
+        return {
+            isModernExtend: true,
+            exposes: [e.action(actions)],
+            fromZigbee: [
+                {
+                    cluster: "genMultistateInput",
+                    type: ["attributeReport", "readResponse"],
+                    convert: (model, msg) => {
+                        const states = multistateStates[msg.endpoint.ID];
+                        if (states === undefined) return;
+                        return lookupAction(multistatePrefixes, msg, states[msg.data.presentValue]);
+                    },
+                },
+                {
+                    cluster: "genOnOff",
+                    type: Object.keys(onOffCommands),
+                    convert: (model, msg) => lookupAction(onOffPrefixes, msg, onOffCommands[msg.type]),
+                },
+                {
+                    cluster: "genLevelCtrl",
+                    type: ["commandMove", "commandMoveWithOnOff", "commandStop", "commandStopWithOnOff"],
+                    convert: (model, msg) => {
+                        const stop = msg.type === "commandStop" || msg.type === "commandStopWithOnOff";
+                        // movemode 0 = up, 1 = down (the firmware alternates it
+                        // so each long press dims the other way).
+                        const suffix = stop
+                            ? "brightness_stop"
+                            : `brightness_move_${msg.data.movemode === 0 ? "up" : "down"}`;
+                        return lookupAction(levelPrefixes, msg, suffix);
+                    },
+                },
+                {
+                    cluster: "closuresWindowCovering",
+                    type: Object.keys(coverCommands),
+                    convert: (model, msg) => lookupAction(coverPrefixes, msg, coverCommands[msg.type]),
+                },
+            ],
+        };
+    },
     relayIndicatorMode: (name, endpointName) =>
         enumLookup({
             name,
@@ -535,6 +644,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -576,6 +697,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -587,6 +709,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -598,6 +721,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -609,6 +733,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -638,6 +763,7 @@ const definitions = [
             await endpoint8.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -653,6 +779,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -694,6 +832,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -705,6 +844,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -716,6 +856,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -727,6 +868,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -756,6 +898,7 @@ const definitions = [
             await endpoint8.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -771,6 +914,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -812,6 +967,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -823,6 +979,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -834,6 +991,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -845,6 +1003,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -874,6 +1033,7 @@ const definitions = [
             await endpoint8.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -889,6 +1049,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -930,6 +1102,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -941,6 +1114,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -952,6 +1126,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -963,6 +1138,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -995,6 +1171,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1007,6 +1184,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -1024,6 +1210,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1041,6 +1228,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1053,6 +1241,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -1078,6 +1276,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1089,6 +1288,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -1111,6 +1311,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1123,6 +1324,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -1148,6 +1359,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1159,6 +1371,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -1178,6 +1391,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -1193,6 +1407,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -1212,6 +1435,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1226,6 +1450,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -1241,6 +1466,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -1260,6 +1494,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1277,6 +1512,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1289,6 +1525,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -1456,6 +1701,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1490,6 +1736,7 @@ const definitions = [
             ]);
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1502,6 +1749,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay_0": 2, "relay_1": 3, "relay_2": 4, "relay_3": 5, "relay_4": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -1521,6 +1777,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1558,6 +1815,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1571,6 +1829,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -1588,6 +1855,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1605,6 +1873,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1617,6 +1886,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -1642,6 +1921,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1653,6 +1933,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -1675,6 +1956,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1687,6 +1969,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -1720,6 +2013,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1731,6 +2025,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -1742,6 +2037,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -1769,6 +2065,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -1781,6 +2078,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -1822,6 +2131,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1833,6 +2143,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -1844,6 +2155,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -1855,6 +2167,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -1884,6 +2197,7 @@ const definitions = [
             await endpoint8.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -1901,6 +2215,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -1918,6 +2241,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1932,6 +2256,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -1949,6 +2274,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -1974,6 +2309,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -1985,6 +2321,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2004,6 +2341,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -2021,6 +2359,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2054,6 +2403,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2065,6 +2415,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2076,6 +2427,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -2100,6 +2452,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -2117,6 +2470,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -2158,6 +2523,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2169,6 +2535,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2180,6 +2547,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -2191,6 +2559,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -2223,6 +2592,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -2235,6 +2605,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2268,6 +2649,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2279,6 +2661,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2290,6 +2673,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -2317,6 +2701,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -2329,6 +2714,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -2370,6 +2767,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2381,6 +2779,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2392,6 +2791,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -2403,6 +2803,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -2435,6 +2836,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -2447,6 +2849,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -2464,6 +2875,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2478,6 +2890,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -2494,6 +2907,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -2511,6 +2933,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2525,6 +2948,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -2541,6 +2965,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2566,6 +3000,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2577,6 +3012,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2596,6 +3032,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -2611,6 +3048,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2636,6 +3083,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2647,6 +3095,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2669,6 +3118,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -2681,6 +3131,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2714,6 +3175,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2725,6 +3187,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2736,6 +3199,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -2763,6 +3227,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -2775,6 +3240,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2800,6 +3275,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2811,6 +3287,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2830,6 +3307,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -2845,6 +3323,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2870,6 +3358,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2881,6 +3370,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -2903,6 +3393,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -2915,6 +3406,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -2932,6 +3432,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2949,6 +3450,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -2961,6 +3463,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -2986,6 +3498,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -2997,6 +3510,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -3016,6 +3530,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3031,6 +3546,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -3056,6 +3581,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3067,6 +3593,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -3086,6 +3613,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3102,6 +3630,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3119,6 +3656,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3136,6 +3674,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -3149,6 +3688,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -3182,6 +3732,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3193,6 +3744,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -3204,6 +3756,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -3231,6 +3784,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -3243,6 +3797,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3260,6 +3823,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3277,6 +3841,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -3289,6 +3854,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -3314,6 +3889,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3325,6 +3901,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -3347,6 +3924,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -3359,6 +3937,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3376,6 +3963,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3390,6 +3978,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3405,6 +3994,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3422,6 +4020,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3436,6 +4035,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3452,6 +4052,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -3477,6 +4087,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3488,6 +4099,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -3507,6 +4119,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3543,6 +4156,15 @@ const definitions = [
                 },
             }),
             deviceEndpoints({ endpoints: {"cover_switch": 1, "cover": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                    {endpoint: 1, prefix: "cover_switch_0"},
+                ],
+            }),
             romasku.deviceConfig("device_config", "cover_switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "cover_switch"),
             romasku.networkIndicator("network_led", "cover_switch"),
@@ -3568,6 +4190,9 @@ const definitions = [
 
             const coverSwitch1 = device.getEndpoint(1);
             await reporting.bind(coverSwitch1, coordinatorEndpoint, ["genMultistateInput"]);
+            // Same as for the switches: bind the coordinator so the UP/DOWN/STOP
+            // commands sent to the bindings also surface as `action` events.
+            await reporting.bind(coverSwitch1, coordinatorEndpoint, ["closuresWindowCovering"]);
             await coverSwitch1.configureReporting("genMultistateInput", [
                 {
                     attribute: "presentValue",
@@ -3587,6 +4212,7 @@ const definitions = [
                     reportableChange: 1,
                 },
             ]);
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -3620,6 +4246,16 @@ const definitions = [
                 },
             }),
             deviceEndpoints({ endpoints: {"cover_switch_left": 1, "cover_switch_right": 2, "cover_left": 3, "cover_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                    {endpoint: 1, prefix: "cover_switch_0"},
+                    {endpoint: 2, prefix: "cover_switch_1"},
+                ],
+            }),
             romasku.deviceConfig("device_config", "cover_switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "cover_switch_left"),
             romasku.networkIndicator("network_led", "cover_switch_left"),
@@ -3660,6 +4296,9 @@ const definitions = [
 
             const coverSwitch1 = device.getEndpoint(1);
             await reporting.bind(coverSwitch1, coordinatorEndpoint, ["genMultistateInput"]);
+            // Same as for the switches: bind the coordinator so the UP/DOWN/STOP
+            // commands sent to the bindings also surface as `action` events.
+            await reporting.bind(coverSwitch1, coordinatorEndpoint, ["closuresWindowCovering"]);
             await coverSwitch1.configureReporting("genMultistateInput", [
                 {
                     attribute: "presentValue",
@@ -3670,6 +4309,9 @@ const definitions = [
             ]);
             const coverSwitch2 = device.getEndpoint(2);
             await reporting.bind(coverSwitch2, coordinatorEndpoint, ["genMultistateInput"]);
+            // Same as for the switches: bind the coordinator so the UP/DOWN/STOP
+            // commands sent to the bindings also surface as `action` events.
+            await reporting.bind(coverSwitch2, coordinatorEndpoint, ["closuresWindowCovering"]);
             await coverSwitch2.configureReporting("genMultistateInput", [
                 {
                     attribute: "presentValue",
@@ -3699,6 +4341,7 @@ const definitions = [
                     reportableChange: 1,
                 },
             ]);
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -3711,6 +4354,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3728,6 +4380,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3742,6 +4395,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3757,6 +4411,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3774,6 +4437,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3788,6 +4452,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3803,6 +4468,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3820,6 +4494,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3834,6 +4509,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3849,6 +4525,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3866,6 +4551,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3880,6 +4566,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3895,6 +4582,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3912,6 +4608,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3926,6 +4623,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3941,6 +4639,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -3958,6 +4665,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -3972,6 +4680,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -3988,6 +4697,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -4021,6 +4741,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4032,6 +4753,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -4043,6 +4765,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -4067,6 +4790,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4082,6 +4806,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -4123,6 +4859,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4134,6 +4871,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -4145,6 +4883,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -4156,6 +4895,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -4185,6 +4925,7 @@ const definitions = [
             await endpoint8.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4200,6 +4941,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4217,6 +4967,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4231,6 +4982,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4246,6 +4998,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4263,6 +5024,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4277,6 +5039,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4292,6 +5055,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4309,6 +5081,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4323,6 +5096,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4338,6 +5112,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -4363,6 +5147,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4374,6 +5159,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -4396,6 +5182,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -4408,6 +5195,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -4440,6 +5238,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4451,6 +5250,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -4462,6 +5262,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -4489,6 +5290,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -4501,6 +5303,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4518,6 +5329,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4535,6 +5347,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -4547,6 +5360,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -4572,6 +5395,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4583,6 +5407,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -4605,6 +5430,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -4617,6 +5443,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -4650,6 +5487,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4661,6 +5499,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -4672,6 +5511,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -4699,6 +5539,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -4711,6 +5552,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -4752,6 +5605,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4763,6 +5617,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -4774,6 +5629,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -4785,6 +5641,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -4817,6 +5674,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -4829,6 +5687,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4846,6 +5713,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4860,6 +5728,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4875,6 +5744,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4892,6 +5770,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4906,6 +5785,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4921,6 +5801,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4938,6 +5827,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -4952,6 +5842,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -4967,6 +5858,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -4984,6 +5884,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5001,6 +5902,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5013,6 +5915,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -5038,6 +5950,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5049,6 +5962,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -5071,6 +5985,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5083,6 +5998,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -5116,6 +6042,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5127,6 +6054,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -5138,6 +6066,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -5165,6 +6094,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5177,6 +6107,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5194,6 +6133,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5208,6 +6148,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5223,6 +6164,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5240,6 +6190,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5254,6 +6205,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5270,6 +6222,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -5295,6 +6257,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5306,6 +6269,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -5328,6 +6292,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5340,6 +6305,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -5381,6 +6358,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5392,6 +6370,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -5403,6 +6382,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -5414,6 +6394,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -5446,6 +6427,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5458,6 +6440,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -5491,6 +6484,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5502,6 +6496,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -5513,6 +6508,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -5540,6 +6536,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5552,6 +6549,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5569,6 +6575,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5586,6 +6593,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5598,6 +6606,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5615,6 +6632,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5632,6 +6650,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -5644,6 +6663,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5661,6 +6689,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5675,6 +6704,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5690,6 +6720,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5707,6 +6746,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5721,6 +6761,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5736,6 +6777,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5753,6 +6803,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5767,6 +6818,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5782,6 +6834,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -5799,6 +6860,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5813,6 +6875,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5830,6 +6893,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -5855,6 +6928,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5866,6 +6940,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -5885,6 +6960,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5901,6 +6977,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -5934,6 +7021,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -5945,6 +7033,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -5956,6 +7045,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -5980,6 +7070,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -5995,6 +7086,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6012,6 +7112,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6026,6 +7127,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -6041,6 +7143,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6058,6 +7169,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6075,6 +7187,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6087,6 +7200,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -6112,6 +7235,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6123,6 +7247,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -6145,6 +7270,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6157,6 +7283,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -6190,6 +7327,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6201,6 +7339,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -6212,6 +7351,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -6239,6 +7379,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6251,6 +7392,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6268,6 +7418,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6282,6 +7433,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -6297,6 +7449,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -6322,6 +7484,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6333,6 +7496,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -6355,6 +7519,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6367,6 +7532,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6384,6 +7558,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6401,6 +7576,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6413,6 +7589,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -6438,6 +7624,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6449,6 +7636,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -6468,6 +7656,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -6504,6 +7693,15 @@ const definitions = [
                 },
             }),
             deviceEndpoints({ endpoints: {"cover_switch": 1, "cover": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                    {endpoint: 1, prefix: "cover_switch_0"},
+                ],
+            }),
             romasku.deviceConfig("device_config", "cover_switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "cover_switch"),
             romasku.networkIndicator("network_led", "cover_switch"),
@@ -6529,6 +7727,9 @@ const definitions = [
 
             const coverSwitch1 = device.getEndpoint(1);
             await reporting.bind(coverSwitch1, coordinatorEndpoint, ["genMultistateInput"]);
+            // Same as for the switches: bind the coordinator so the UP/DOWN/STOP
+            // commands sent to the bindings also surface as `action` events.
+            await reporting.bind(coverSwitch1, coordinatorEndpoint, ["closuresWindowCovering"]);
             await coverSwitch1.configureReporting("genMultistateInput", [
                 {
                     attribute: "presentValue",
@@ -6548,6 +7749,7 @@ const definitions = [
                     reportableChange: 1,
                 },
             ]);
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6560,6 +7762,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -6593,6 +7806,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6604,6 +7818,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -6615,6 +7830,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -6642,6 +7858,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6654,6 +7871,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6671,6 +7897,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6685,6 +7912,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -6700,6 +7928,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -6725,6 +7963,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6736,6 +7975,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -6755,6 +7995,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -6770,6 +8011,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -6795,6 +8046,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6806,6 +8058,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -6828,6 +8081,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6840,6 +8094,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6857,6 +8120,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6871,6 +8135,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -6886,6 +8151,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6903,6 +8177,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6917,6 +8192,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -6932,6 +8208,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -6949,6 +8234,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -6966,6 +8252,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -6978,6 +8265,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -7019,6 +8318,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -7030,6 +8330,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -7041,6 +8342,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -7052,6 +8354,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -7084,6 +8387,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -7096,6 +8400,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -7121,6 +8435,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -7132,6 +8447,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -7151,6 +8467,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -7166,6 +8483,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -7191,6 +8518,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -7202,6 +8530,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -7221,6 +8550,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -7237,6 +8567,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -7254,6 +8593,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -7268,6 +8608,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -7283,6 +8624,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -7450,6 +8800,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -7482,6 +8833,7 @@ const definitions = [
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
+
 
 
         },
@@ -7496,6 +8848,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -7663,6 +9024,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -7695,6 +9057,7 @@ const definitions = [
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
+
 
 
         },
@@ -7709,6 +9072,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -7876,6 +9248,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -7908,6 +9281,7 @@ const definitions = [
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
+
 
 
         },
@@ -7922,6 +9296,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -8089,6 +9472,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8123,6 +9507,7 @@ const definitions = [
             ]);
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -8135,6 +9520,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -8154,6 +9548,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8168,6 +9563,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -8183,6 +9579,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -8347,6 +9752,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8381,6 +9787,7 @@ const definitions = [
             ]);
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -8393,6 +9800,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -8422,6 +9839,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8433,6 +9851,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -8455,6 +9874,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -8467,6 +9887,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -8485,6 +9914,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8499,6 +9929,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -8514,6 +9945,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -8532,6 +9972,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8546,6 +9987,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -8561,6 +10003,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -8579,6 +10030,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8593,6 +10045,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -8608,6 +10061,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -8626,6 +10088,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8640,6 +10103,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -8655,6 +10119,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -8673,6 +10146,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8687,6 +10161,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -8703,6 +10178,18 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.pressAction("switch_0_press_action", "switch_0"),
@@ -8734,6 +10221,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8745,6 +10233,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -8756,6 +10245,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -8767,6 +10257,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -8791,6 +10282,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -8804,6 +10296,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -8817,6 +10318,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8838,6 +10340,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -8854,6 +10357,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -8867,6 +10379,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8891,6 +10404,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -8904,6 +10418,18 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -8936,6 +10462,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -8947,6 +10474,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -8958,6 +10486,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -8969,6 +10498,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -8990,6 +10520,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9006,6 +10537,18 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.pressAction("switch_0_press_action", "switch_0"),
@@ -9037,6 +10580,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9048,6 +10592,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9059,6 +10604,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -9070,6 +10616,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -9091,6 +10638,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9107,6 +10655,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -9120,6 +10677,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9141,6 +10699,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9157,6 +10716,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -9170,6 +10738,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9191,6 +10760,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9207,6 +10777,16 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.pressAction("switch_left_press_action", "switch_left"),
@@ -9226,6 +10806,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9237,6 +10818,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9258,6 +10840,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9274,6 +10857,17 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.pressAction("switch_left_press_action", "switch_left"),
@@ -9299,6 +10893,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9310,6 +10905,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9321,6 +10917,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -9342,6 +10939,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9358,6 +10956,18 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.pressAction("switch_0_press_action", "switch_0"),
@@ -9389,6 +10999,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9400,6 +11011,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9411,6 +11023,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -9422,6 +11035,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -9443,6 +11057,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9459,6 +11074,18 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.pressAction("switch_0_press_action", "switch_0"),
@@ -9490,6 +11117,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9501,6 +11129,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9512,6 +11141,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -9523,6 +11153,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -9544,6 +11175,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9560,6 +11192,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -9573,6 +11214,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9594,6 +11236,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9610,6 +11253,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -9623,6 +11275,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9644,6 +11297,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9660,6 +11314,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -9673,6 +11336,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9694,6 +11358,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9710,6 +11375,16 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.pressAction("switch_left_press_action", "switch_left"),
@@ -9729,6 +11404,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9740,6 +11416,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9761,6 +11438,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9777,6 +11455,17 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.pressAction("switch_left_press_action", "switch_left"),
@@ -9802,6 +11491,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9813,6 +11503,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9824,6 +11515,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -9845,6 +11537,7 @@ const definitions = [
                 },
             ]);
             await batteryEndpoint.read("genPowerCfg", [0x0021, 0x0020]);
+
 
 
 
@@ -9861,6 +11554,17 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.pressAction("switch_left_press_action", "switch_left"),
@@ -9886,6 +11590,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9897,6 +11602,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9908,6 +11614,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -9932,6 +11639,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -9945,6 +11653,18 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.pressAction("switch_0_press_action", "switch_0"),
@@ -9976,6 +11696,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -9987,6 +11708,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -9998,6 +11720,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -10009,6 +11732,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -10033,6 +11757,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10046,6 +11771,16 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.pressAction("switch_left_press_action", "switch_left"),
@@ -10065,6 +11800,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10076,6 +11812,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10100,6 +11837,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10113,6 +11851,15 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch": 1, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.pressAction("switch_press_action", "switch"),
@@ -10126,6 +11873,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10150,6 +11898,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10163,6 +11912,18 @@ const definitions = [
         extend: [
             romasku.batteryPercentage(),
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.pressAction("switch_0_press_action", "switch_0"),
@@ -10194,6 +11955,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10205,6 +11967,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10216,6 +11979,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -10227,6 +11991,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -10251,6 +12016,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10263,6 +12029,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -10280,6 +12055,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10297,6 +12073,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10309,6 +12086,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -10334,6 +12121,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10345,6 +12133,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10367,6 +12156,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10380,6 +12170,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -10413,6 +12214,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10424,6 +12226,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10435,6 +12238,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -10462,6 +12266,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10474,6 +12279,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -10515,6 +12332,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10526,6 +12344,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10537,6 +12356,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -10548,6 +12368,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -10580,6 +12401,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10593,6 +12415,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -10612,6 +12443,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10629,6 +12461,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10642,6 +12475,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -10671,6 +12514,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10682,6 +12526,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10704,6 +12549,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10717,6 +12563,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -10750,6 +12607,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10761,6 +12619,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10772,6 +12631,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -10799,6 +12659,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10811,6 +12672,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                    {endpoint: 3, prefix: "switch_0_long"},
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -10830,6 +12701,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10847,6 +12719,9 @@ const definitions = [
 
 
 
+
+            const longPress1 = device.getEndpoint(3);
+            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
         },
         ota: ota.zigbeeOTA,
     },
@@ -10861,6 +12736,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -10890,6 +12775,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10901,6 +12787,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10923,6 +12810,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -10936,6 +12824,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -10975,6 +12874,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -10986,6 +12886,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -10997,6 +12898,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -11024,6 +12926,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -11036,6 +12939,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                    {endpoint: 3, prefix: "switch_0_long"},
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -11055,6 +12968,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11072,6 +12986,9 @@ const definitions = [
 
 
 
+
+            const longPress1 = device.getEndpoint(3);
+            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
         },
         ota: ota.zigbeeOTA,
     },
@@ -11084,6 +13001,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, "switch_left_long": 5, "switch_right_long": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                    {endpoint: 5, prefix: "switch_0_long"},
+                    {endpoint: 6, prefix: "switch_1_long"},
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11111,6 +13040,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11122,6 +13052,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11144,6 +13075,11 @@ const definitions = [
 
 
 
+
+            const longPress1 = device.getEndpoint(5);
+            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            const longPress2 = device.getEndpoint(6);
+            await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
         },
         ota: ota.zigbeeOTA,
     },
@@ -11157,6 +13093,20 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, "switch_left_long": 7, "switch_middle_long": 8, "switch_right_long": 9, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                    {endpoint: 7, prefix: "switch_0_long"},
+                    {endpoint: 8, prefix: "switch_1_long"},
+                    {endpoint: 9, prefix: "switch_2_long"},
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11190,6 +13140,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11201,6 +13152,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11212,6 +13164,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -11239,6 +13192,13 @@ const definitions = [
 
 
 
+
+            const longPress1 = device.getEndpoint(7);
+            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            const longPress2 = device.getEndpoint(8);
+            await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            const longPress3 = device.getEndpoint(9);
+            await reporting.bind(longPress3, coordinatorEndpoint, ["genOnOff"]);
         },
         ota: ota.zigbeeOTA,
     },
@@ -11252,6 +13212,22 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, "switch_0_long": 9, "switch_1_long": 10, "switch_2_long": 11, "switch_3_long": 12, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                    {endpoint: 9, prefix: "switch_0_long"},
+                    {endpoint: 10, prefix: "switch_1_long"},
+                    {endpoint: 11, prefix: "switch_2_long"},
+                    {endpoint: 12, prefix: "switch_3_long"},
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -11293,6 +13269,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11304,6 +13281,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11315,6 +13293,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -11326,6 +13305,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -11358,6 +13338,15 @@ const definitions = [
 
 
 
+
+            const longPress1 = device.getEndpoint(9);
+            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            const longPress2 = device.getEndpoint(10);
+            await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            const longPress3 = device.getEndpoint(11);
+            await reporting.bind(longPress3, coordinatorEndpoint, ["genOnOff"]);
+            const longPress4 = device.getEndpoint(12);
+            await reporting.bind(longPress4, coordinatorEndpoint, ["genOnOff"]);
         },
         ota: ota.zigbeeOTA,
     },
@@ -11370,6 +13359,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -11389,6 +13387,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11403,6 +13402,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -11418,6 +13418,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -11437,6 +13446,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11451,6 +13461,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -11466,6 +13477,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11493,6 +13514,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11504,6 +13526,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11523,6 +13546,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -11538,6 +13562,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11565,6 +13599,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11576,6 +13611,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11595,6 +13631,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -11610,6 +13647,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                    {endpoint: 3, prefix: "switch_0_long"},
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -11629,6 +13676,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11646,6 +13694,9 @@ const definitions = [
 
 
 
+
+            const longPress1 = device.getEndpoint(3);
+            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
         },
         ota: ota.zigbeeOTA,
     },
@@ -11659,6 +13710,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11688,6 +13749,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11699,6 +13761,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11718,6 +13781,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -11733,6 +13797,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11762,6 +13836,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11773,6 +13848,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11795,6 +13871,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -11807,6 +13884,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11846,6 +13934,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11857,6 +13946,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -11868,6 +13958,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -11895,6 +13986,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -11907,6 +13999,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -11926,6 +14027,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11943,6 +14045,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -11955,6 +14058,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -11984,6 +14097,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -11995,6 +14109,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12017,6 +14132,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12029,6 +14145,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -12068,6 +14195,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12079,6 +14207,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12090,6 +14219,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -12114,6 +14244,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -12130,6 +14261,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -12179,6 +14322,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12190,6 +14334,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12201,6 +14346,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -12212,6 +14358,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -12244,6 +14391,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12256,6 +14404,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -12275,6 +14432,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12289,6 +14447,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -12304,6 +14463,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -12333,6 +14502,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12344,6 +14514,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12366,6 +14537,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12378,6 +14550,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -12417,6 +14600,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12428,6 +14612,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12439,6 +14624,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -12466,6 +14652,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12478,6 +14665,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -12496,6 +14692,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12510,6 +14707,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -12525,6 +14723,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -12542,6 +14749,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12556,6 +14764,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -12571,6 +14780,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -12596,6 +14815,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12607,6 +14827,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12629,6 +14850,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12641,6 +14863,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -12674,6 +14907,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12685,6 +14919,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12696,6 +14931,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -12723,6 +14959,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12735,6 +14972,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -12752,6 +14998,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12769,6 +15016,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12781,6 +15029,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -12806,6 +15064,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12817,6 +15076,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12839,6 +15099,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12851,6 +15112,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -12884,6 +15156,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12895,6 +15168,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -12906,6 +15180,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -12933,6 +15208,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -12945,6 +15221,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
@@ -12973,6 +15259,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -12984,6 +15271,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13006,6 +15294,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13018,6 +15307,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -13056,6 +15356,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13067,6 +15368,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13078,6 +15380,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -13102,6 +15405,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -13138,6 +15442,15 @@ const definitions = [
                 },
             }),
             deviceEndpoints({ endpoints: {"cover_switch": 1, "cover": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                    {endpoint: 1, prefix: "cover_switch_0"},
+                ],
+            }),
             romasku.deviceConfig("device_config", "cover_switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "cover_switch"),
             romasku.networkIndicator("network_led", "cover_switch"),
@@ -13163,6 +15476,9 @@ const definitions = [
 
             const coverSwitch1 = device.getEndpoint(1);
             await reporting.bind(coverSwitch1, coordinatorEndpoint, ["genMultistateInput"]);
+            // Same as for the switches: bind the coordinator so the UP/DOWN/STOP
+            // commands sent to the bindings also surface as `action` events.
+            await reporting.bind(coverSwitch1, coordinatorEndpoint, ["closuresWindowCovering"]);
             await coverSwitch1.configureReporting("genMultistateInput", [
                 {
                     attribute: "presentValue",
@@ -13182,6 +15498,7 @@ const definitions = [
                     reportableChange: 1,
                 },
             ]);
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13194,6 +15511,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -13212,6 +15538,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13226,6 +15553,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -13241,6 +15569,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
@@ -13269,6 +15607,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13280,6 +15619,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13302,6 +15642,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13314,6 +15655,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -13352,6 +15704,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13363,6 +15716,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13374,6 +15728,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -13401,6 +15756,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13413,6 +15769,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -13431,6 +15796,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13448,6 +15814,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13460,6 +15827,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
@@ -13488,6 +15865,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13499,6 +15877,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13521,6 +15900,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13533,6 +15913,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -13571,6 +15962,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13582,6 +15974,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13593,6 +15986,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -13620,6 +16014,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13632,6 +16027,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -13651,6 +16055,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13668,6 +16073,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13680,6 +16086,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -13709,6 +16125,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13720,6 +16137,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13742,6 +16160,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13754,6 +16173,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -13793,6 +16223,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13804,6 +16235,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13815,6 +16247,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -13842,6 +16275,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -13854,6 +16288,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -13893,6 +16338,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -13904,6 +16350,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -13915,6 +16362,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -13939,6 +16387,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -13954,6 +16403,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -14003,6 +16464,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14014,6 +16476,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14025,6 +16488,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -14036,6 +16500,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -14065,6 +16530,7 @@ const definitions = [
             await endpoint8.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14081,6 +16547,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -14099,6 +16574,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14113,6 +16589,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14129,6 +16606,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
@@ -14157,6 +16644,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14168,6 +16656,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14187,6 +16676,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14203,6 +16693,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -14241,6 +16742,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14252,6 +16754,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14263,6 +16766,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -14287,6 +16791,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14302,6 +16807,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             onOff({ endpointNames: ["relay_0", "relay_1", "relay_2", "relay_3"] }),
@@ -14350,6 +16867,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14361,6 +16879,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14372,6 +16891,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -14383,6 +16903,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -14412,6 +16933,7 @@ const definitions = [
             await endpoint8.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14427,6 +16949,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             onOff({ endpointNames: ["relay_0", "relay_1", "relay_2", "relay_3"] }),
@@ -14475,6 +17009,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14486,6 +17021,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14497,6 +17033,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -14508,6 +17045,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -14540,6 +17078,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -14552,6 +17091,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -14590,6 +17140,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14601,6 +17152,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14612,6 +17164,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -14639,6 +17192,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -14651,6 +17205,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -14670,6 +17233,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14687,6 +17251,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -14699,6 +17264,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -14728,6 +17303,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14739,6 +17315,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14758,6 +17335,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14774,6 +17352,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -14793,6 +17380,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14807,6 +17395,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14823,6 +17412,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -14852,6 +17451,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14863,6 +17463,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14882,6 +17483,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -14897,6 +17499,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             romasku.networkIndicator("network_led", "switch_left"),
@@ -14936,6 +17549,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -14947,6 +17561,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -14958,6 +17573,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -14985,6 +17601,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -14997,6 +17614,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -15015,6 +17641,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15029,6 +17656,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -15044,6 +17672,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -15062,6 +17699,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15079,6 +17717,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15091,6 +17730,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
@@ -15119,6 +17768,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15130,6 +17780,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -15152,6 +17803,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15164,6 +17816,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -15202,6 +17865,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15213,6 +17877,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -15224,6 +17889,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -15248,6 +17914,7 @@ const definitions = [
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -15263,6 +17930,17 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_middle", "relay_right"] }),
@@ -15301,6 +17979,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15312,6 +17991,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -15323,6 +18003,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -15350,6 +18031,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15362,6 +18044,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             onOff({ endpointNames: ["relay_0", "relay_1", "relay_2", "relay_3"] }),
@@ -15410,6 +18104,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15421,6 +18116,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -15432,6 +18128,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -15443,6 +18140,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -15475,6 +18173,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15487,6 +18186,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
@@ -15504,6 +18212,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15521,6 +18230,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15533,6 +18243,18 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_0"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_0"),
             romasku.networkIndicator("network_led", "switch_0"),
@@ -15574,6 +18296,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15585,6 +18308,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -15596,6 +18320,7 @@ const definitions = [
             ]);
             const endpoint3 = device.getEndpoint(3);
             await reporting.bind(endpoint3, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint3, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint3.configureReporting("genMultistateInput", [
                 {
@@ -15607,6 +18332,7 @@ const definitions = [
             ]);
             const endpoint4 = device.getEndpoint(4);
             await reporting.bind(endpoint4, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint4, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint4.configureReporting("genMultistateInput", [
                 {
@@ -15639,6 +18365,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15651,6 +18378,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -15669,6 +18405,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15683,6 +18420,7 @@ const definitions = [
             await endpoint2.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
@@ -15699,6 +18437,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
@@ -15727,6 +18475,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15738,6 +18487,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -15760,6 +18510,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15772,6 +18523,15 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             onOff({ endpointNames: ["relay"] }),
@@ -15790,6 +18550,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15807,6 +18568,7 @@ const definitions = [
 
 
 
+
         },
         ota: ota.zigbeeOTA,
     },
@@ -15819,6 +18581,16 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
             romasku.deviceConfig("device_config", "switch_left"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
             onOff({ endpointNames: ["relay_left", "relay_right"] }),
@@ -15847,6 +18619,7 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
                 {
@@ -15858,6 +18631,7 @@ const definitions = [
             ]);
             const endpoint2 = device.getEndpoint(2);
             await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint2.configureReporting("genMultistateInput", [
                 {
@@ -15877,6 +18651,7 @@ const definitions = [
             await endpoint4.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
             ]);
+
 
 
 
