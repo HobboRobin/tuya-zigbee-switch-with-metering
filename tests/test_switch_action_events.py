@@ -41,8 +41,14 @@ module.exports = new Proxy({}, {get: () => stub});
     "zigbee-herdsman-converters/lib/utils.js": """
 module.exports = {assertString: () => {}};
 """,
+    # The real bind() dereferences the endpoint, so an undefined one throws
+    # exactly the TypeError this test is about. Keep that behaviour.
     "zigbee-herdsman-converters/lib/reporting.js": """
-module.exports = {bind: async () => {}};
+module.exports = {
+    bind: async (endpoint, target, clusters) => {
+        for (const cluster of clusters) await endpoint.bind(cluster, target);
+    },
+};
 """,
     "zigbee-herdsman-converters/lib/constants.js": """
 module.exports = {repInterval: {MAX: 62000, HOUR: 3600, MINUTE: 60}};
@@ -127,6 +133,27 @@ for (const zbModel of JSON.parse(process.argv[3])) {
     out.actions[zbModel] = actionExtend(findByModel(zbModel))
         .exposes.find((x) => x.name === "action").values;
 }
+// A device joined before `2EP` was enabled has no companion endpoint yet, so
+// getEndpoint() returns undefined for it. configure() must skip it rather than
+// throw - a throw aborts the whole configure and leaves reporting unset.
+const runConfigure = async (zbModel, availableEndpoints) => {
+    const endpoint = (ID) => ({
+        ID,
+        configureReporting: async () => {},
+        read: async () => {},
+        bind: async () => {},
+    });
+    const device = {
+        getEndpoint: (ID) => (availableEndpoints.includes(ID) ? endpoint(ID) : undefined),
+    };
+    try {
+        await findByModel(zbModel).configure(device, endpoint(1), console);
+        return "ok";
+    } catch (e) {
+        return `threw: ${e.message}`;
+    }
+};
+
 for (const c of JSON.parse(process.argv[4])) {
     const [zbModel, cluster, type, endpoint, data] = c;
     const ext = actionExtend(findByModel(zbModel));
@@ -139,7 +166,15 @@ for (const c of JSON.parse(process.argv[4])) {
     }
     out.results.push(action);
 }
-console.log(JSON.stringify(out));
+
+(async () => {
+    // BSLR1 has switch=1, relay=2, switch_long=3.
+    out.configure = {
+        all_endpoints: await runConfigure("BSLR1", [1, 2, 3]),
+        without_2ep_endpoint: await runConfigure("BSLR1", [1, 2]),
+    };
+    console.log(JSON.stringify(out));
+})();
 """
 
 
@@ -204,6 +239,20 @@ def test_every_emitted_action_is_declared(converter_run):
         if action not in declared:
             undeclared[case[0]] = action
     assert not undeclared, undeclared
+
+
+def test_configure_survives_a_missing_2ep_endpoint(converter_run):
+    """Z2M learns endpoints at interview time.
+
+    A device that joined before `2EP` was added to its config string has no
+    companion endpoint in Z2M's database, and getEndpoint() returns undefined.
+    Throwing there aborts configure() completely, so the device is left without
+    even its reporting configured until it is re-interviewed.
+    """
+    assert converter_run["configure"] == {
+        "all_endpoints": "ok",
+        "without_2ep_endpoint": "ok",
+    }
 
 
 def test_press_action_sensors_are_kept():

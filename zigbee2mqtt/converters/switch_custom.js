@@ -12720,7 +12720,9 @@ const definitions = [
 
 
             const longPress1 = device.getEndpoint(3);
-            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress1) {
+                await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            }
         },
         ota: true,
     },
@@ -12987,7 +12989,9 @@ const definitions = [
 
 
             const longPress1 = device.getEndpoint(3);
-            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress1) {
+                await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            }
         },
         ota: true,
     },
@@ -13076,9 +13080,13 @@ const definitions = [
 
 
             const longPress1 = device.getEndpoint(5);
-            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress1) {
+                await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            }
             const longPress2 = device.getEndpoint(6);
-            await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress2) {
+                await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            }
         },
         ota: true,
     },
@@ -13193,11 +13201,17 @@ const definitions = [
 
 
             const longPress1 = device.getEndpoint(7);
-            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress1) {
+                await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            }
             const longPress2 = device.getEndpoint(8);
-            await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress2) {
+                await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            }
             const longPress3 = device.getEndpoint(9);
-            await reporting.bind(longPress3, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress3) {
+                await reporting.bind(longPress3, coordinatorEndpoint, ["genOnOff"]);
+            }
         },
         ota: true,
     },
@@ -13339,13 +13353,21 @@ const definitions = [
 
 
             const longPress1 = device.getEndpoint(9);
-            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress1) {
+                await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            }
             const longPress2 = device.getEndpoint(10);
-            await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress2) {
+                await reporting.bind(longPress2, coordinatorEndpoint, ["genOnOff"]);
+            }
             const longPress3 = device.getEndpoint(11);
-            await reporting.bind(longPress3, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress3) {
+                await reporting.bind(longPress3, coordinatorEndpoint, ["genOnOff"]);
+            }
             const longPress4 = device.getEndpoint(12);
-            await reporting.bind(longPress4, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress4) {
+                await reporting.bind(longPress4, coordinatorEndpoint, ["genOnOff"]);
+            }
         },
         ota: true,
     },
@@ -13695,7 +13717,9 @@ const definitions = [
 
 
             const longPress1 = device.getEndpoint(3);
-            await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress1) {
+                await reporting.bind(longPress1, coordinatorEndpoint, ["genOnOff"]);
+            }
         },
         ota: true,
     },

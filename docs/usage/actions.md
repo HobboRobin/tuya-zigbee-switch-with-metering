@@ -52,3 +52,9 @@ Your own bindings are not affected.
 
 If a device was already paired, run **Reconfigure** in Zigbee2MQTT once so the
 new bindings are applied.
+
+`switch_N_long_*` needs the `2EP` companion endpoint, and Zigbee2MQTT only
+learns a device's endpoints during the interview. If you added `2EP` to the
+config string of an already-joined device, run **Re-interview** first —
+otherwise the endpoint is missing and only its actions stay silent. The rest is
+configured either way.
