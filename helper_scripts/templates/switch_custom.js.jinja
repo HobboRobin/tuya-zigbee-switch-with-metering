@@ -1029,10 +1029,20 @@ const definitions = [
             {% if device.has_long_press_endpoints %}
             {# 2EP companion endpoints carry only an OnOff *client* cluster: a
                long press toggles their bindings. Binding the coordinator makes
-               that toggle show up as a `switch_N_long_toggle` action. #}
+               that toggle show up as a `switch_N_long_toggle` action.
+
+               These endpoints only exist once `2EP` is in the device's config
+               string, and Z2M learns the endpoint list from the interview. A
+               device that was joined before 2EP was enabled therefore has no
+               such endpoint yet, and getEndpoint() returns undefined - skip it
+               instead of throwing, which would abort the whole configure and
+               leave even the reporting unconfigured. Re-interviewing the
+               device picks the endpoint up. #}
             {% for switchName in device.switchNames %}
             const longPress{{loop.index}} = device.getEndpoint({{loop.index + (device.switchNames | length) + (device.relayNames | length) + (device.coverSwitchNames | length) + (device.coverNames | length)}});
-            await reporting.bind(longPress{{loop.index}}, coordinatorEndpoint, ["genOnOff"]);
+            if (longPress{{loop.index}}) {
+                await reporting.bind(longPress{{loop.index}}, coordinatorEndpoint, ["genOnOff"]);
+            }
             {% endfor %}
             {% endif %}
         },
