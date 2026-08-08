@@ -39,7 +39,8 @@ void peripherals_init(void);
 network_indicator_t network_indicator = {
     .leds                        = { NULL, NULL, NULL, NULL },
     .has_dedicated_led           = 0,
-    .manual_state_when_connected = 1,
+    .manual_state_when_connected =                        1,
+    .mask                        = NETWORK_INDICATOR_MASK_ALL,
 };
 
 led_t   leds[5];
@@ -366,6 +367,26 @@ void parse_config() {
             cover_switch_clusters[cover_switch_clusters_cnt].cover_switch_idx =
                 cover_switch_clusters_cnt;
             cover_switch_clusters_cnt++;
+        } else if (entry[0] == 'Y') {
+            // Y<r><g><b>: three-colour status LED. The colour says which light
+            // mode the config selected, so you can tell a strip's mode at a
+            // glance. Not dimmable on purpose - on the Gledopto the red leg
+            // shares its PWM channel with a light output, and a status LED is
+            // not worth losing a channel over.
+            ensure_capacity(leds_cnt + 2, ARRAY_LEN(leds), "leds");
+            for (uint8_t colour = 0; colour < 3; colour++) {
+                hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 1 + 2 * colour);
+                hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
+                leds[leds_cnt].pin = pin;
+                led_apply_flags(&leds[leds_cnt], entry + 7);
+                leds[leds_cnt].dimmable = 0;
+                led_init(&leds[leds_cnt]);
+                network_indicator.leds[colour] = &leds[leds_cnt];
+                leds_cnt++;
+            }
+            network_indicator.leds[3]           = NULL;
+            network_indicator.has_dedicated_led = true;
+            has_dedicated_status_led            = true;
         } else if (entry[0] == 'W' || entry[0] == 'T') {
             // W<pin>[flags]            - single dimmable channel
             // T<cold><warm>[flags]     - tunable white, firmware mixes the pair
@@ -523,6 +544,29 @@ void parse_config() {
            "%d covers\r\n",
            switch_clusters_cnt, relay_clusters_cnt, cover_switch_clusters_cnt,
            cover_clusters_cnt);
+
+    // The colour of a Y indicator names the light mode, decided by the widest
+    // light token in the config: white = RGB+CCT, yellow = RGBW, blue = RGB,
+    // green = tunable white, red = plain dimmer. Bits are r, g, b.
+    if (network_indicator.leds[2] != NULL) {
+        if (light_clusters_cnt == 0) {
+            network_indicator.mask = NETWORK_INDICATOR_MASK_ALL;
+        } else {
+            uint8_t widest = 0;
+            for (int i = 0; i < light_clusters_cnt; i++) {
+                if (light_clusters[i].channel_count > widest) {
+                    widest = light_clusters[i].channel_count;
+                }
+            }
+            switch (widest) {
+            case 5:  network_indicator.mask = 0x07; break; // white  RGB+CCT
+            case 4:  network_indicator.mask = 0x03; break; // yellow RGBW
+            case 3:  network_indicator.mask = 0x04; break; // blue   RGB
+            case 2:  network_indicator.mask = 0x02; break; // green  CCT
+            default: network_indicator.mask = 0x01; break; // red    dimmer
+            }
+        }
+    }
 
     // Each switch gets a trailing long-press binding endpoint when 2EP is set.
     uint8_t long_press_ep_cnt =
