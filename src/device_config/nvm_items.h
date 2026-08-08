@@ -48,4 +48,10 @@
 // Overload protection configuration (single metering endpoint).
 #define NV_ITEM_OVERLOAD_CONFIG    51
 
+// Per-light state (startup mode, level, colour temperature, transition), one
+// per light output (52..). "Previous" restores brightness and colour, not just
+// on/off, so this follows every change rather than only the startup setting.
+#define MAX_LIGHTS    5
+#define NV_ITEM_LIGHT_CLUSTER_DATA(light_idx)    (52 + (light_idx))
+
 #endif /* DEVICE_CONFIG_NVM_ITEMS_H_ */

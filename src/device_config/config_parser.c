@@ -2,6 +2,8 @@
 #include "hal/printf_selector.h"
 #include "hal/zigbee.h"
 #include "zigbee/basic_cluster.h"
+#include "zigbee/light_cluster.h"
+#include "device_config/nvm_items.h"
 #include "zigbee/battery_cluster.h"
 #include "zigbee/consts.h"
 #include "zigbee/cover_cluster.h"
@@ -67,6 +69,14 @@ uint8_t cover_switch_clusters_cnt = 0;
 
 zigbee_cover_cluster cover_clusters[3];
 uint8_t cover_clusters_cnt = 0;
+
+// Dimmable light outputs (W = single channel, T = tunable white). Each light
+// owns one endpoint; its channels are plain leds, kept apart from leds[] so a
+// light never competes with the status LEDs for a slot.
+zigbee_light_cluster light_clusters[MAX_LIGHTS];
+uint8_t light_clusters_cnt = 0;
+led_t   light_channels[MAX_LIGHTS * LIGHT_MAX_CHANNELS];
+uint8_t light_channels_cnt = 0;
 
 // Sized for the largest supported layout, including the optional per-switch
 // long-press binding endpoints (2EP token): a 4-gang switch with 2EP uses
@@ -332,6 +342,31 @@ void parse_config() {
             cover_switch_clusters[cover_switch_clusters_cnt].cover_switch_idx =
                 cover_switch_clusters_cnt;
             cover_switch_clusters_cnt++;
+        } else if (entry[0] == 'W' || entry[0] == 'T') {
+            // W<pin>[flags]            - single dimmable channel
+            // T<cold><warm>[flags]     - tunable white, firmware mixes the pair
+            uint8_t channels = entry[0] == 'T' ? 2 : 1;
+            ensure_capacity(light_clusters_cnt, ARRAY_LEN(light_clusters),
+                            "lights");
+            ensure_capacity(light_channels_cnt + channels - 1,
+                            ARRAY_LEN(light_channels), "light channels");
+
+            zigbee_light_cluster *light = &light_clusters[light_clusters_cnt];
+            light->light_idx     = light_clusters_cnt;
+            light->channel_count = channels;
+            // A light only makes sense on a PWM pin, so the channels are always
+            // dimmable; led_init falls back to on/off if the pin has no PWM.
+            const char *flags = entry + 1 + 2 * channels;
+            for (uint8_t ch = 0; ch < channels; ch++) {
+                led_t *channel = &light_channels[light_channels_cnt++];
+                channel->pin = hal_gpio_parse_pin(entry + 1 + 2 * ch);
+                hal_gpio_init(channel->pin, 0, HAL_GPIO_PULL_NONE);
+                channel->dimmable = 1;
+                led_apply_flags(channel, flags);
+                led_init(channel);
+                light->channels[ch] = channel;
+            }
+            light_clusters_cnt++;
         } else if (entry[0] == 'C') {
             // A cover drives two relays.
             ensure_capacity(relays_cnt + 1, ARRAY_LEN(relays), "relays");
@@ -471,7 +506,7 @@ void parse_config() {
 
     uint8_t total_endpoints = switch_clusters_cnt + relay_clusters_cnt +
                               cover_switch_clusters_cnt + cover_clusters_cnt +
-                              long_press_ep_cnt;
+                              light_clusters_cnt + long_press_ep_cnt;
 
     // The per-peripheral guards above cap each table on its own; this catches
     // the combination overflowing the shared endpoint table (a 4-gang switch
@@ -582,6 +617,17 @@ void parse_config() {
                                       &endpoints[cover_base + index]);
     }
 
+    int light_base = switch_clusters_cnt + relay_clusters_cnt +
+                     cover_switch_clusters_cnt + cover_clusters_cnt;
+    for (int index = 0; index < light_clusters_cnt; index++) {
+        if (light_base + index != 0) {
+            cluster_ptr += endpoints[light_base + index - 1].cluster_count;
+            endpoints[light_base + index].clusters = cluster_ptr;
+        }
+        light_cluster_add_to_endpoint(&light_clusters[index],
+                                      &endpoints[light_base + index]);
+    }
+
     // Add energy measurement clusters to endpoints > 1 (EP1 case handled before relay loop)
     if (energy_monitoring_enabled && energy_monitoring_endpoint > 1) {
         electrical_measurement_cluster_add_to_endpoint(
@@ -596,7 +642,8 @@ void parse_config() {
     // switch_cluster_on_button_long_press), so short and long press can drive
     // two independent targets.
     int long_press_base = switch_clusters_cnt + relay_clusters_cnt +
-                          cover_switch_clusters_cnt + cover_clusters_cnt;
+                          cover_switch_clusters_cnt + cover_clusters_cnt +
+                          light_clusters_cnt;
     for (int index = 0; index < long_press_ep_cnt; index++) {
         int ep_i = long_press_base + index;
         cluster_ptr += endpoints[ep_i - 1].cluster_count;

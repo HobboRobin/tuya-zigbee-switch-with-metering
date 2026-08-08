@@ -12,6 +12,7 @@
 #define ZCL_CLUSTER_ON_OFF_SWITCH_CONFIG      7
 #define ZCL_CLUSTER_MULTISTATE_INPUT_BASIC    0x0012
 #define ZCL_CLUSTER_LEVEL_CONTROL             0x0008
+#define ZCL_CLUSTER_COLOR_CONTROL             0x0300
 #define ZCL_CLUSTER_GROUPS                    0x0004
 #define ZCL_CLUSTER_OTA_BOOTLOAD              0x0019
 #define ZCL_CLUSTER_WINDOW_COVERING           0x0102
@@ -255,6 +256,29 @@
 #define ZCL_CMD_LEVEL_MOVE_WITH_ON_OFF             0x05
 #define ZCL_CMD_LEVEL_STEP_WITH_ON_OFF             0x06
 #define ZCL_CMD_LEVEL_STOP_WITH_ON_OFF             0x07
+
+#define ZCL_ATTR_LEVEL_CURRENT_LEVEL               0x0000
+#define ZCL_ATTR_LEVEL_ON_LEVEL                    0x0011
+#define ZCL_ATTR_LEVEL_START_UP_CURRENT_LEVEL      0x4000
+// Fade time for on/off, level and colour changes, in milliseconds. One per
+// light rather than per channel: a tunable white fades both channels together.
+#define ZCL_ATTR_LEVEL_TRANSITION                  0xff00
+
+// Color Control cluster (tunable white only, see light_cluster.c)
+
+#define ZCL_ATTR_COLOR_TEMP_MIREDS          0x0007
+#define ZCL_ATTR_COLOR_MODE                 0x0008
+#define ZCL_ATTR_COLOR_CAPABILITIES         0x400A
+#define ZCL_ATTR_COLOR_TEMP_PHYS_MIN        0x400B
+#define ZCL_ATTR_COLOR_TEMP_PHYS_MAX        0x400C
+#define ZCL_ATTR_COLOR_STARTUP_TEMP         0x4010
+
+#define ZCL_COLOR_MODE_TEMPERATURE          0x02
+#define ZCL_COLOR_CAPABILITY_TEMPERATURE    0x0010
+
+#define ZCL_CMD_COLOR_MOVE_TO_COLOR_TEMP    0x0A
+#define ZCL_CMD_COLOR_MOVE_COLOR_TEMP       0x4B
+#define ZCL_CMD_COLOR_STEP_COLOR_TEMP       0x4C
 
 // WindowCovering Cluster
 
