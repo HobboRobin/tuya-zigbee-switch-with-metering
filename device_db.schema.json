@@ -13,7 +13,7 @@
         },
         "category": {
           "type": "string",
-          "enum": ["module", "switch", "remote", "outlet", "board", "plug", "din_relay"],
+          "enum": ["module", "switch", "remote", "outlet", "board", "plug", "din_relay", "light"],
           "description": "Device category"
         },
         "power": {
@@ -36,7 +36,7 @@
             {"type": "null"},
             {
               "type": "string",
-              "enum": ["relay", "relay_latching", "triac", "nothing"]
+              "enum": ["relay", "relay_latching", "triac", "pwm", "nothing"]
             }
           ],
           "description": "Type of AC output"

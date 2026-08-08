@@ -12,6 +12,23 @@ Please describe what you are working on, under ## Upcoming
 
 ### Features
 
+- **Dimmable light outputs.** New `W<pin>` (single channel) and
+  `T<cold><warm>` (tunable white) config tokens turn PWM pins into real Zigbee
+  lights with brightness, colour temperature and a fade time. Two `W` tokens
+  give two independent channels where one `T` over the same pins gives a single
+  tunable white - same hardware, decided by the config string.
+  - New device: Gledopto GL-C-006P, in two flavours (two tunable whites or five
+    dimmers); switching between them needs no reflash.
+  - New `Y<r><g><b>` token: a three-colour status LED whose colour names the
+    configured light mode.
+- **Identify** (`genIdentify`) on every device. Z2M shows the button without
+  any converter support; the device blinks everything it can light up, each led
+  with its own transition, then goes back to what it was showing.
+- Switches can drive **every relay at once** (`relay_index` = `all`): anything
+  on means everything goes off, otherwise everything goes on.
+- Raised the ZCL cluster limit from 32 to 48, which also makes a **4-gang
+  switch with `2EP`** possible for the first time.
+
 - **Cover cluster** (window covering) for controlling the motor of curtains, blinds, and shutters.
   Supports open, close, and stop commands with motor safety delays.
 - **Cover switch cluster** for handling user input from window covering switches.
