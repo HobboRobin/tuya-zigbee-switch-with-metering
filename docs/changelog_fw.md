@@ -48,6 +48,15 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **A config string could permanently brick a device.** The parser held
+    peripherals in fixed-size tables (4 switches, 6 relays, 3 cover switches,
+    3 covers, 12 endpoints) but never checked them, so a longer config wrote
+    past the end and corrupted the endpoint and attribute tables. The device
+    stayed on the network and still answered ZCL, but every read returned
+    UNSUPPORTED_ATTRIBUTE — including `device_config`, so the offending config
+    could not be written back and only a re-flash by wire helped. Over-capacity
+    configs now reset to the compiled-in default instead, and the Z2M converter
+    refuses them before they are written.
   - Latching relays not working with off_pin A0
   - Silabs version updates not working
   - Telink End_device unreachable from Z2M after a while ([#217](https://github.com/romasku/tuya-zigbee-switch/issues/217))

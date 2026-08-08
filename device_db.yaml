@@ -296,19 +296,22 @@ OUTLET_USEELINK_SM0306E_TS011F:
   stock_converter_manufacturer: UseeLink
   stock_converter_model: SM-0306E-2W
   override_z2m_device: SM-0306E-2W
-  tuya_module: ZS3L
-  mcu_family: Silabs
-  mcu: EFR32MG21A020F768IM32
-  config_str: cfnprab5;TS011F-SM;LC2i;SB1u;RB0i;RA4i;RA3i;RA0i;RC0;IA6i;M;
-  alt_config_str: null
+  tuya_module: ZT3L
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: cfnprab5;TS011F-SM;LA0ip;SB5u;RB4i;RC2i;RC3i;RD2i;RD7;IB7i;M;
+  # Same board fitted with a ZS3L (Silabs) instead. The pads line up 1:1, only
+  # the GPIO behind each pad differs, so this is the identical wiring in Silabs
+  # names. Needs a Silabs build (mcu_family/mcu above) to be usable.
+  alt_config_str: cfnprab5;TS011F-SM;LC2i;SB1u;RB0i;RA4i;RA3i;RA0i;RC0;IA6i;M;
   old_manufacturer_names: null
   old_zb_models: null
   stock_manufacturer_id: null
   stock_image_type: null
   firmware_image_type: 47116
   build: yes
-  status: in_progress
-  info: "UseeLink 4-AC + USB power strip on the Silabs ZS3L module (EFR32MG21, marking LC-TZS3LN-P — initial flash by wire via SWD, no stock-to-custom OTA). 5 switchable outputs: Relay 1 PB0, Relay 2 PA4, Relay 3 PA3, Relay 4 PA0 (all active-low, each with a hardware-wired status LED), USB PC0 (active-high). Single momentary button PB1. Network LED PC2 (blue, active-low). Red master LED PA6 (active-low) is wired here as the Relay-1 indicator — the firmware has no 'any-output-on' aggregate LED. No energy metering on this model."
+  status: fully_supported
+  info: "UseeLink 4-AC + USB power strip. The stock module is a PhyPlus LC-PZ2, which this firmware does not support — the module has to be replaced by a pin-compatible Tuya one. The config above is for a ZT3L (Telink TLSR8258): flash it by wire via SWS, ideally on the bench before soldering it to the board, as SWS is awkward to reach once fitted. 5 switchable outputs: Relay 1 PB4, Relay 2 PC2, Relay 3 PC3, Relay 4 PD2 (all active-low, each with a hardware-wired status LED), USB PD7 (active-high). Single momentary button PB5. Network LED PA0 (blue, active-low, PWM-dimmable via PWM0_N). The red master LED on PB7 is deliberately not marked dimmable: PB7 has no PWM function on the TLSR8258, so the firmware would silently fall back to plain on/off and the brightness controls would do nothing. Red master LED PB7 (active-low) is wired here as the Relay-1 indicator — the firmware has no 'any-output-on' aggregate LED. No energy metering on this model. The GPIO names were derived by mapping the board's ZS3L wiring pad-by-pad onto the ZT3L pinout (both modules share the footprint, see docs/diagrams/) and are confirmed on hardware — all five outputs, the button and both LEDs work as listed. If one output stays dead after a module swap, suspect a cold solder joint before the config string."
   threads: https://www.zigbee2mqtt.io/devices/SM-0306E-2W.html
   store: https://www.zigbee2mqtt.io/devices/SM-0306E-2W.html
 MODULE_AUBESS_TS0001:

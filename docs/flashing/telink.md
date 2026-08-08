@@ -58,4 +58,21 @@ Plug the UART into your PC, then open pvvx's [web flasher](https://pvvx.github.i
 3. Click "Erase All Flash" and wait until the process finishes.  
 4. Click "Write to Flash" and wait until the process finishes.  
 
+> [!IMPORTANT]  
+> **The flasher cannot tell you when something went wrong.** Its title says it:
+> *TX-SWS only* — it sends on TX and never reads back, so it reports `Done`
+> whether or not a chip was listening. Two failures look identical to a
+> successful flash:
+>
+> - **SWS on the programmer's RX instead of TX.** Nothing is written at all.
+>   The device keeps its old firmware, which for a stock Tuya module also
+>   blinks its LED while unpaired — so it looks alive, just never joins.
+> - **Skipping "Erase All Flash".** The write lands, but the old firmware's
+>   Zigbee NV survives. The device boots believing it is still joined, so it
+>   never searches for a network and its status LED stays dark. Erasing is
+>   not optional.
+>
+> If the device does not join, check the wiring and repeat with the erase
+> before suspecting the firmware.
+
 If done correctly, the onboard LED will start flashing automatically. You can try joining the device to a Zigbee network to verify that it connects properly. Once confirmed, disconnect everything, unsolder the wires, and reassemble the case.  

@@ -471,6 +471,37 @@ const romasku = {
                 if (!value.endsWith(';')) throw new Error('Should end with ;');
                 const parts = value.slice(0, -1).split(';');  // Drop last ;
                 if (parts.length < 2) throw new Error("Model and/or manufacturer missing");
+
+                // The firmware holds its peripherals in fixed-size tables. Asking
+                // for more than fits used to overflow them and corrupt the
+                // device's cluster tables for good - it stayed on the network but
+                // answered every read with UNSUPPORTED_ATTRIBUTE, so not even the
+                // config could be written back, leaving only a re-flash by wire.
+                // Newer firmware resets itself to defaults instead, but the write
+                // still costs a rejoin, so refuse it here.
+                const capacity = {
+                    S: [4, 'switches'], R: [6, 'relays'],
+                    X: [3, 'cover switches'], C: [3, 'covers'],
+                };
+                const counts = {};
+                for (const part of parts.slice(2)) {
+                    // Only the bare single-letter tokens declare peripherals;
+                    // BT/SLP and friends are options that happen to share a letter.
+                    if (part === 'SLP' || part.startsWith('BT')) continue;
+                    if (capacity[part[0]]) counts[part[0]] = (counts[part[0]] || 0) + 1;
+                }
+                for (const [token, [max, name]] of Object.entries(capacity)) {
+                    if ((counts[token] || 0) > max) {
+                        throw new Error(`Config declares ${counts[token]} ${name}, the firmware supports at most ${max}`);
+                    }
+                }
+                // Switches, relays, cover switches and covers each take one
+                // endpoint, plus one more per switch when 2EP is set.
+                const endpoints = (counts.S || 0) + (counts.R || 0) + (counts.X || 0) +
+                    (counts.C || 0) + (parts.includes('2EP') ? (counts.S || 0) : 0);
+                if (endpoints > 12) {
+                    throw new Error(`Config needs ${endpoints} endpoints, the firmware supports at most 12`);
+                }
                 for (const part of parts.slice(2)) {
                     if (part == 'SLP') {
                         continue;
@@ -1761,6 +1792,8 @@ const definitions = [
             romasku.deviceConfig("device_config", "switch"),
             romasku.multiPressResetCount("multi_press_reset_count", "switch"),
             romasku.networkIndicator("network_led", "switch"),
+            romasku.networkLedBrightness("network_led_brightness", "switch"),
+            romasku.networkLedTransition("network_led_transition", "switch"),
             onOff({ endpointNames: ["relay_0", "relay_1", "relay_2", "relay_3", "relay_4"] }),
             romasku.pressAction("switch_press_action", "switch"),
             romasku.switchMode("switch_mode", "switch"),
