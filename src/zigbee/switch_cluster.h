@@ -6,6 +6,12 @@
 #include "hal/zigbee.h"
 #include <stdint.h>
 
+// relay_index picks which relay a switch drives: 0 = detached, 1..N a specific
+// relay, and 0xFF every relay at once (a master button). 0xFF is out of the
+// 1..N range on purpose, so an older firmware or a stale NV value can never be
+// mistaken for it.
+#define SWITCH_RELAY_INDEX_ALL    0xFF
+
 typedef struct {
     uint8_t  mode;
     uint8_t  action;

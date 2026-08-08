@@ -66,12 +66,17 @@ const romasku = {
         enumLookup({
             name,
             endpointName,
-            lookup: Object.fromEntries(
-                Array.from({ length: relay_cnt || 2 }, (_, i) => [`relay_${i + 1}`, i + 1])
-            ),
+            lookup: Object.fromEntries([
+                ...Array.from({ length: relay_cnt || 2 }, (_, i) => [`relay_${i + 1}`, i + 1]),
+                // 0xFF drives every relay at once. A mixed set is resolved as a
+                // group rather than per relay: anything on means everything
+                // goes off, otherwise everything goes on - what a master button
+                // is expected to do.
+                ["all", 255],
+            ]),
             cluster: "genOnOffSwitchCfg",
             attribute: { ID: 0xff02, type: 0x20 }, // uint8
-            description: "Which internal relay it should trigger",
+            description: "Which internal relay it should trigger ('all' switches every relay together)",
             entityCategory: "config",
         }),
     bindedMode: (name, endpointName) =>
