@@ -66,6 +66,7 @@ source:
 - {path: ../../zigbee/group_cluster.c}
 - {path: ../../zigbee/relay_cluster.c}
 - {path: ../../zigbee/light_cluster.c}
+- {path: ../../zigbee/identify_cluster.c}
 - {path: ../../zigbee/switch_cluster.c}
 - {path: ../../zigbee/cover_switch_cluster.c}
 - {path: ../../zigbee/cover_cluster.c}

@@ -19,8 +19,14 @@
  * Adjust these values according to application requirements
  */
 
-/* ZCL: Maximum number of clusters (in + out cluster count) */
-#define ZCL_CLUSTER_NUM_MAX        32
+/* ZCL: Maximum number of clusters (in + out cluster count)
+ *
+ * Counted across all endpoints, not per endpoint. A 4-gang switch with the 2EP
+ * long-press endpoints needs 35, which is why that combination used to be
+ * unsupported; adding Identify to every device costs one more still and left
+ * the plain 4-gang at 31, one short of the old limit. Raising it costs a few
+ * hundred bytes of RAM on a part with 64 KB. */
+#define ZCL_CLUSTER_NUM_MAX        48
 
 /* ZCL: Maximum number of reporting table entries */
 #define ZCL_REPORTING_TABLE_NUM    12

@@ -3,6 +3,7 @@
 #include "hal/zigbee.h"
 #include "zigbee/basic_cluster.h"
 #include "zigbee/light_cluster.h"
+#include "zigbee/identify_cluster.h"
 #include "device_config/nvm_items.h"
 #include "zigbee/battery_cluster.h"
 #include "zigbee/consts.h"
@@ -81,7 +82,7 @@ uint8_t light_channels_cnt = 0;
 // Sized for the largest supported layout, including the optional per-switch
 // long-press binding endpoints (2EP token): a 4-gang switch with 2EP uses
 // 4 switch + 4 relay + 4 long-press = 12 endpoints.
-hal_zigbee_cluster  clusters[40];
+hal_zigbee_cluster  clusters[48];
 hal_zigbee_endpoint endpoints[12];
 
 uint8_t allow_simultaneous_latching_pulses = 0;
@@ -149,6 +150,29 @@ static void ensure_capacity(uint8_t used, uint8_t capacity, const char *what) {
     printf("Config needs more than %d %s, resetting to default\r\n",
            (int)capacity, what);
     reset_all();
+}
+
+// Identify blinks everything the device can light up. Only this file knows
+// the full inventory - status LEDs, relay indicators and light channels all
+// live in different tables - so the identify cluster calls back in here.
+void identify_blink_all(uint16_t on_ms, uint16_t off_ms, uint16_t times) {
+    for (int i = 0; i < leds_cnt; i++) {
+        led_blink(&leds[i], on_ms, off_ms, times);
+    }
+    light_clusters_blink(on_ms, off_ms, times);
+}
+
+void identify_restore_all(void) {
+    // Put every led back to what it should be showing: the status LEDs follow
+    // the network state, the relay indicators their relay, the light channels
+    // their light.
+    if (hal_zigbee_get_network_status() == HAL_ZIGBEE_NETWORK_JOINED) {
+        network_indicator_connected(&network_indicator);
+    } else {
+        network_indicator_not_connected(&network_indicator);
+    }
+    update_relay_clusters();
+    light_clusters_restore();
 }
 
 void parse_config() {
@@ -547,6 +571,11 @@ void parse_config() {
 
     hal_ota_cluster_setup(&endpoints[0].clusters[endpoints[0].cluster_count]);
     endpoints[0].cluster_count++;
+
+    // Every device gets Identify - Z2M renders the button from the cluster
+    // alone, no converter support needed.
+    static zigbee_identify_cluster identify_cluster;
+    identify_cluster_add_to_endpoint(&identify_cluster, &endpoints[0]);
 
     // Add battery cluster for battery-powered devices
     if (battery.pin != HAL_INVALID_PIN) {

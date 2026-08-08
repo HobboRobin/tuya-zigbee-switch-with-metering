@@ -8,6 +8,7 @@
 
 #define ZCL_CLUSTER_BASIC                     0
 #define ZCL_CLUSTER_POWER_CFG                 1
+#define ZCL_CLUSTER_IDENTIFY                  3
 #define ZCL_CLUSTER_ON_OFF                    6
 #define ZCL_CLUSTER_ON_OFF_SWITCH_CONFIG      7
 #define ZCL_CLUSTER_MULTISTATE_INPUT_BASIC    0x0012
@@ -60,6 +61,11 @@
 #define POWER_SOURCE_MAINS_1_PHASE               0x01
 #define POWER_SOURCE_BATTERY                     0x03
 #define POWER_SOURCE_DC                          0x04
+
+// Identify cluster
+
+#define ZCL_ATTR_IDENTIFY_TIME    0x0000
+#define ZCL_CMD_IDENTIFY          0x00
 
 // OnOff cluster
 
