@@ -120,6 +120,27 @@ void on_multi_press_reset(void *_, uint8_t press_count) {
     }
 }
 
+#define ARRAY_LEN(a)    (sizeof(a) / sizeof((a)[0]))
+
+// A config string asking for more peripherals than the static tables above can
+// hold used to run straight past the end of them. That corrupts the endpoint
+// and attribute tables permanently: the device stays on the network and still
+// answers ZCL, but every read comes back UNSUPPORTED_ATTRIBUTE - including
+// genBasic's device_config, so the offending config cannot even be written
+// back. The only way out is re-flashing by wire.
+//
+// Bail out to a full reset instead. That clears NVM and reboots into the
+// compiled-in default config, which is known to fit, so an impossible config
+// costs a rejoin rather than the device.
+static void ensure_capacity(uint8_t used, uint8_t capacity, const char *what) {
+    if (used < capacity) {
+        return;
+    }
+    printf("Config needs more than %d %s, resetting to default\r\n",
+           (int)capacity, what);
+    reset_all();
+}
+
 void parse_config() {
     device_config_read_from_nv();
     char *cursor = (char *)device_config_str.data;
@@ -165,6 +186,7 @@ void parse_config() {
             battery.pin = pin;
             battery_init(&battery);
         } else if (entry[0] == 'B') {
+            ensure_capacity(buttons_cnt, ARRAY_LEN(buttons), "buttons");
             hal_gpio_pin_t  pin  = hal_gpio_parse_pin(entry + 1);
             hal_gpio_pull_t pull = hal_gpio_parse_pull(entry + 3);
             hal_gpio_init(pin, 1, pull);
@@ -176,6 +198,7 @@ void parse_config() {
             buttons[buttons_cnt].on_long_press           = on_reset_clicked;
             buttons_cnt++;
         } else if (entry[0] == 'L') {
+            ensure_capacity(leds_cnt, ARRAY_LEN(leds), "leds");
             hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 1);
             hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
             leds[leds_cnt].pin = pin;
@@ -190,6 +213,7 @@ void parse_config() {
             has_dedicated_status_led = true;
             leds_cnt++;
         } else if (entry[0] == 'I') {
+            ensure_capacity(leds_cnt, ARRAY_LEN(leds), "leds");
             hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 1);
             hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
             leds[leds_cnt].pin = pin;
@@ -220,6 +244,9 @@ void parse_config() {
             }
             leds_cnt++;
         } else if (entry[0] == 'S') {
+            ensure_capacity(buttons_cnt, ARRAY_LEN(buttons), "buttons");
+            ensure_capacity(switch_clusters_cnt, ARRAY_LEN(switch_clusters),
+                            "switches");
             hal_gpio_pin_t  pin  = hal_gpio_parse_pin(entry + 1);
             hal_gpio_pull_t pull = hal_gpio_parse_pull(entry + 3);
             hal_gpio_init(pin, 1, pull);
@@ -247,6 +274,9 @@ void parse_config() {
             buttons_cnt++;
             switch_clusters_cnt++;
         } else if (entry[0] == 'R') {
+            ensure_capacity(relays_cnt, ARRAY_LEN(relays), "relays");
+            ensure_capacity(relay_clusters_cnt, ARRAY_LEN(relay_clusters),
+                            "relays");
             hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 1);
             hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
 
@@ -270,6 +300,10 @@ void parse_config() {
             relays_cnt++;
             relay_clusters_cnt++;
         } else if (entry[0] == 'X') {
+            // A cover switch takes two buttons.
+            ensure_capacity(buttons_cnt + 1, ARRAY_LEN(buttons), "buttons");
+            ensure_capacity(cover_switch_clusters_cnt,
+                            ARRAY_LEN(cover_switch_clusters), "cover switches");
             hal_gpio_pin_t  open_pin  = hal_gpio_parse_pin(entry + 1);
             hal_gpio_pin_t  close_pin = hal_gpio_parse_pin(entry + 3);
             hal_gpio_pull_t pull      = hal_gpio_parse_pull(entry + 5);
@@ -299,6 +333,10 @@ void parse_config() {
                 cover_switch_clusters_cnt;
             cover_switch_clusters_cnt++;
         } else if (entry[0] == 'C') {
+            // A cover drives two relays.
+            ensure_capacity(relays_cnt + 1, ARRAY_LEN(relays), "relays");
+            ensure_capacity(cover_clusters_cnt, ARRAY_LEN(cover_clusters),
+                            "covers");
             hal_gpio_pin_t open_pin  = hal_gpio_parse_pin(entry + 1);
             hal_gpio_pin_t close_pin = hal_gpio_parse_pin(entry + 3);
 
@@ -434,6 +472,16 @@ void parse_config() {
     uint8_t total_endpoints = switch_clusters_cnt + relay_clusters_cnt +
                               cover_switch_clusters_cnt + cover_clusters_cnt +
                               long_press_ep_cnt;
+
+    // The per-peripheral guards above cap each table on its own; this catches
+    // the combination overflowing the shared endpoint table (a 4-gang switch
+    // with 2EP already needs all 12). Capping the endpoints also keeps
+    // clusters[] in bounds, since every endpoint contributes a fixed handful.
+    if (total_endpoints > ARRAY_LEN(endpoints)) {
+        printf("Config needs %d endpoints, max is %d, resetting to default\r\n",
+               (int)total_endpoints, (int)ARRAY_LEN(endpoints));
+        reset_all();
+    }
 
     hal_zigbee_cluster *cluster_ptr = clusters;
 
