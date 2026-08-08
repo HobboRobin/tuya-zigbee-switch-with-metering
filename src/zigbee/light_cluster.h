@@ -19,10 +19,16 @@
 // one setting per *light* - a tunable white fades both channels together.
 #define LIGHT_MAX_CHANNELS    2
 
-// Colour temperature range in mireds. 153 mired = 6500 K (coldest),
-// 500 mired = 2000 K (warmest); the usual span for a CCT strip.
-#define LIGHT_COLOR_TEMP_MIN_MIREDS    153
-#define LIGHT_COLOR_TEMP_MAX_MIREDS    500
+// Colour temperature range in mireds (mired = 1e6 / kelvin, so the *lower*
+// bound is the coldest light). 167 = 6000 K, 333 = 3000 K.
+//
+// This has to match the strip: quoting a wider range than the hardware can
+// reach means the outer part of the slider does nothing, because the mix is
+// already fully cold or fully warm before the end of the scale. If a strip
+// with a different span turns up, this becomes a per-device value passed as a
+// -D define from device_db, the same way the meter calibration is.
+#define LIGHT_COLOR_TEMP_MIN_MIREDS    167
+#define LIGHT_COLOR_TEMP_MAX_MIREDS    333
 
 typedef struct {
     uint8_t              light_idx;
