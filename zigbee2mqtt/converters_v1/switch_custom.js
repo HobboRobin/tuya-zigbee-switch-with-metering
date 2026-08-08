@@ -6,6 +6,7 @@ const {
     text,
     binary,
     windowCovering,
+    light,
     deviceAddCustomCluster,
 } = require("zigbee-herdsman-converters/lib/modernExtend");
 const {assertString} = require("zigbee-herdsman-converters/lib/utils");
@@ -230,6 +231,21 @@ const romasku = {
             ],
         };
     },
+    // One fade time per light rather than per channel: a tunable white has to
+    // fade cold and warm together, and an RGB light must not end up with three
+    // separate transitions.
+    lightTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genLevelCtrl",
+            attribute: { ID: 0xff00, type: 0x21 }, // uint16
+            description: "Fade time for on/off, brightness and colour changes",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
     relayIndicatorMode: (name, endpointName) =>
         enumLookup({
             name,
@@ -487,6 +503,7 @@ const romasku = {
                 const capacity = {
                     S: [4, 'switches'], R: [6, 'relays'],
                     X: [3, 'cover switches'], C: [3, 'covers'],
+                    W: [5, 'lights'], T: [5, 'lights'],
                 };
                 const counts = {};
                 for (const part of parts.slice(2)) {
@@ -502,8 +519,12 @@ const romasku = {
                 }
                 // Switches, relays, cover switches and covers each take one
                 // endpoint, plus one more per switch when 2EP is set.
+                if ((counts.W || 0) + (counts.T || 0) > 5) {
+                    throw new Error(`Config declares ${(counts.W || 0) + (counts.T || 0)} lights, the firmware supports at most 5`);
+                }
                 const endpoints = (counts.S || 0) + (counts.R || 0) + (counts.X || 0) +
-                    (counts.C || 0) + (parts.includes('2EP') ? (counts.S || 0) : 0);
+                    (counts.C || 0) + (counts.W || 0) + (counts.T || 0) +
+                    (parts.includes('2EP') ? (counts.S || 0) : 0);
                 if (endpoints > 12) {
                     throw new Error(`Config needs ${endpoints} endpoints, the firmware supports at most 12`);
                 }
@@ -547,12 +568,24 @@ const romasku = {
                         validatePin(part.slice(2,4));
                         validatePin(part.slice(4,6));
                         validatePin(part.slice(6,8));
+                    } else if (part[0] == 'W') {
+                        // W<pin> - one dimmable channel
+                        validatePin(part.slice(1,3));
+                    } else if (part[0] == 'T') {
+                        // T<cold><warm> - tunable white
+                        validatePin(part.slice(1,3));
+                        validatePin(part.slice(3,5));
+                    } else if (part[0] == 'Y') {
+                        // Y<r><g><b> - three-colour status LED
+                        validatePin(part.slice(1,3));
+                        validatePin(part.slice(3,5));
+                        validatePin(part.slice(5,7));
                     } else if(part.startsWith('EB')) {
                         // BL0942 UART metering: EB<TX><RX>[S<baud>][V..][A..][W..]
                         validatePin(part.slice(2,4));
                         validatePin(part.slice(4,6));
                     } else {
-                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, OL, R, S, SLP, X, i, 2EP`);
+                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, OL, R, S, SLP, T, W, X, Y, i, 2EP`);
                     }
                 }
             },

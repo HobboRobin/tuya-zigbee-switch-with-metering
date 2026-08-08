@@ -43,6 +43,7 @@ if __name__ == "__main__":
         switch_cnt = 0
         cover_switch_cnt = 0
         cover_cnt = 0
+        light_kinds: list[str] = []
         indicators_cnt = 0
         dimmable_indicators = []
         has_dedicated_net_led = False
@@ -69,6 +70,11 @@ if __name__ == "__main__":
                 cover_switch_cnt += 1
             if peripheral[0] == "C":
                 cover_cnt += 1
+            # W = one dimmable channel, T = tunable white (cold + warm). Each
+            # is one light endpoint; they differ only in whether Z2M gets a
+            # colour temperature control.
+            if peripheral[0] in ("W", "T"):
+                light_kinds.append(peripheral[0])
             if peripheral[0] == "I":
                 indicators_cnt += 1
                 # flags after the 2-char pin; 'p' = PWM-dimmable
@@ -109,6 +115,14 @@ if __name__ == "__main__":
         else:
             relay_names = [f"relay_{index}" for index in range(relay_cnt)]
 
+        # Lights are numbered from zero in config order, because that is the
+        # order the firmware assigns their endpoints in. Splitting by kind has
+        # to keep that numbering rather than renumber each group, or a config
+        # mixing W and T would name the endpoints out of step with the device.
+        light_names = [f"light_{index}" for index in range(len(light_kinds))]
+        dimmer_names = [n for n, k in zip(light_names, light_kinds) if k == "W"]
+        cct_names = [n for n, k in zip(light_names, light_kinds) if k == "T"]
+
         if cover_switch_cnt == 1:
             cover_switch_names = ["cover_switch"]
         elif cover_switch_cnt == 2:
@@ -148,6 +162,9 @@ if __name__ == "__main__":
                 ],
                 "coverSwitchNames": cover_switch_names,
                 "coverNames": cover_names,
+                "lightNames": light_names,
+                "dimmerNames": dimmer_names,
+                "cctNames": cct_names,
                 "has_dedicated_net_led": has_dedicated_net_led,
                 "has_dimmable_net_led": has_dimmable_net_led,
                 "has_battery_cluster": has_battery_cluster,
