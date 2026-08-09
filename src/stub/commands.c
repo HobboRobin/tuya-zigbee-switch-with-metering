@@ -303,6 +303,7 @@ static int cmd_read_pin(int argc, char **argv) {
 }
 
 int16_t stub_pwm_get_duty_for_pin(hal_gpio_pin_t pin);
+int8_t  stub_pwm_get_inverted_for_pin(hal_gpio_pin_t pin);
 
 static int cmd_read_pwm(int argc, char **argv) {
     if (argc != 2) {
@@ -315,9 +316,10 @@ static int cmd_read_pwm(int argc, char **argv) {
         io_res_err("bad_pin=%s", argv[1]);
         return -1;
     }
-    int16_t duty = stub_pwm_get_duty_for_pin((hal_gpio_pin_t)pin);
-    printf("PWM pin %d => %d\n", pin, duty);
-    io_res_ok("pin=%d duty=%d", pin, duty);
+    int16_t duty     = stub_pwm_get_duty_for_pin((hal_gpio_pin_t)pin);
+    int8_t  inverted = stub_pwm_get_inverted_for_pin((hal_gpio_pin_t)pin);
+    printf("PWM pin %d => %d (inverted %d)\n", pin, duty, inverted);
+    io_res_ok("pin=%d duty=%d inverted=%d", pin, duty, (int)inverted);
     return 0;
 }
 
