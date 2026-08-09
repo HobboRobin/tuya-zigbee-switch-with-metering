@@ -30,6 +30,8 @@ typedef struct {
     uint8_t  level;
     uint16_t color_temp;
     uint16_t transition_ms;
+    uint16_t startup_color_temp_setting;
+    uint8_t  color_options;
 } light_nv_data_t;
 
 // Drive the channels from the current on/level/colour_temp.
@@ -167,6 +169,8 @@ static void light_cluster_store_to_nv(zigbee_light_cluster *cluster) {
         .level         = cluster->level,
         .color_temp    = cluster->color_temp,
         .transition_ms = cluster->transition_ms,
+        .startup_color_temp_setting = cluster->startup_color_temp_setting,
+        .color_options              = cluster->color_options,
     };
 
     // "Previous" restores what the light was actually showing, so the stored
@@ -182,13 +186,24 @@ static void light_cluster_load_from_nv(zigbee_light_cluster *cluster) {
                      sizeof(data), (uint8_t *)&data) != HAL_NVM_SUCCESS) {
         return;
     }
-    cluster->startup_mode       = data.startup_mode;
-    cluster->startup_level      = data.level;
-    cluster->startup_color_temp = data.color_temp;
-    cluster->transition_ms      = data.transition_ms;
+    cluster->startup_mode               = data.startup_mode;
+    cluster->startup_level              = data.level;
+    cluster->startup_color_temp         = data.color_temp;
+    cluster->transition_ms              = data.transition_ms;
+    cluster->startup_color_temp_setting = data.startup_color_temp_setting;
+    cluster->color_options              = data.color_options;
 }
 
 static void light_cluster_handle_startup(zigbee_light_cluster *cluster) {
+    // startUpColorTemperature is independent of the on/off startup mode: it
+    // decides which colour the light comes back at, not whether it comes back.
+    if (cluster->startup_color_temp_setting != ZCL_COLOR_STARTUP_TEMP_PREVIOUS &&
+        cluster->startup_color_temp_setting != 0) {
+        cluster->color_temp = cluster->startup_color_temp_setting;
+    } else if (cluster->startup_color_temp > 0) {
+        cluster->color_temp = cluster->startup_color_temp;
+    }
+
     switch (cluster->startup_mode) {
     case LIGHT_STARTUP_ON:
         cluster->on = 1;
@@ -202,9 +217,7 @@ static void light_cluster_handle_startup(zigbee_light_cluster *cluster) {
         if (cluster->startup_level > 0) {
             cluster->level = cluster->startup_level;
         }
-        if (cluster->startup_color_temp > 0) {
-            cluster->color_temp = cluster->startup_color_temp;
-        }
+        // The colour is already restored above, for every startup mode.
         break;
 
     case LIGHT_STARTUP_OFF:
@@ -340,6 +353,11 @@ void light_cluster_add_to_endpoint(zigbee_light_cluster *cluster,
         cluster->color_temp =
             (LIGHT_COLOR_TEMP_MIN_MIREDS + LIGHT_COLOR_TEMP_MAX_MIREDS) / 2;
     }
+    // Default to picking the colour back up where it left off, and to obeying a
+    // colour command while off - a coordinator that sets the colour first and
+    // switches on second is otherwise ignored on the first half of the pair.
+    cluster->startup_color_temp_setting = ZCL_COLOR_STARTUP_TEMP_PREVIOUS;
+    cluster->color_options = ZCL_COLOR_OPTIONS_EXECUTE_IF_OFF;
 
     light_cluster_load_from_nv(cluster);
     light_cluster_handle_startup(cluster);
@@ -389,10 +407,23 @@ void light_cluster_add_to_endpoint(zigbee_light_cluster *cluster,
     SETUP_ATTR_FOR_TABLE(cluster->color_attrs, 3, ZCL_ATTR_COLOR_TEMP_PHYS_MAX,
                          ZCL_DATA_TYPE_UINT16, ATTR_READONLY,
                          color_temp_phys_max);
+    // Mandatory for a colour-temperature light: without it a coordinator has no
+    // way to tell a tunable white from a full-colour one.
+    SETUP_ATTR_FOR_TABLE(cluster->color_attrs, 4, ZCL_ATTR_COLOR_CAPABILITIES,
+                         ZCL_DATA_TYPE_BITMAP16, ATTR_READONLY,
+                         color_capabilities);
+    // Z2M's "colour temp startup" option writes this one; leaving it out is
+    // what made that read come back UNSUPPORTED_ATTRIBUTE.
+    SETUP_ATTR_FOR_TABLE(cluster->color_attrs, 5, ZCL_ATTR_COLOR_STARTUP_TEMP,
+                         ZCL_DATA_TYPE_UINT16, ATTR_WRITABLE,
+                         cluster->startup_color_temp_setting);
+    SETUP_ATTR_FOR_TABLE(cluster->color_attrs, 6, ZCL_ATTR_COLOR_OPTIONS,
+                         ZCL_DATA_TYPE_BITMAP8, ATTR_WRITABLE,
+                         cluster->color_options);
 
     endpoint->clusters[endpoint->cluster_count].cluster_id =
         ZCL_CLUSTER_COLOR_CONTROL;
-    endpoint->clusters[endpoint->cluster_count].attribute_count = 4;
+    endpoint->clusters[endpoint->cluster_count].attribute_count = 7;
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->color_attrs;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->clusters[endpoint->cluster_count].cmd_callback    =

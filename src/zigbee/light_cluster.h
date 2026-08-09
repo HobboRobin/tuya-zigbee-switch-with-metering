@@ -45,9 +45,16 @@ typedef struct {
     uint8_t              startup_level; // level restored in "previous" mode
     uint16_t             startup_color_temp;
 
+    // startUpColorTemperature: 0xFFFF ("previous") restores startup_color_temp,
+    // anything else is the colour the light comes back at.
+    uint16_t             startup_color_temp_setting;
+    // colorOptions bit 0 decides whether a colour command is obeyed while the
+    // light is off. The stack checks this itself, before our callback runs.
+    uint8_t              color_options;
+
     hal_zigbee_attribute onoff_attrs[3];
     hal_zigbee_attribute level_attrs[3];
-    hal_zigbee_attribute color_attrs[4];
+    hal_zigbee_attribute color_attrs[7];
 } zigbee_light_cluster;
 
 void light_cluster_add_to_endpoint(zigbee_light_cluster *cluster,

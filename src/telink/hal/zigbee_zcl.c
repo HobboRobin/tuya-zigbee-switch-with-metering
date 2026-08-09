@@ -50,6 +50,9 @@ static cluster_registerFunc_t get_register_func_by_cluster_id(u16 cluster_id) {
     if (cluster_id == ZCL_CLUSTER_GEN_ON_OFF) {
         return zcl_onOff_register;
     }
+    if (cluster_id == ZCL_CLUSTER_LIGHTING_COLOR_CONTROL) {
+        return zcl_lightColorCtrl_register;
+    }
     if (cluster_id == ZCL_CLUSTER_GEN_MULTISTATE_INPUT_BASIC) {
         return zcl_multistate_input_register;
     }
@@ -124,6 +127,14 @@ static status_t cmd_callback_level_control(zclIncomingAddrInfo_t *pAddrInfo,
                         pInMsg->pData, pInMsg->dataLen);
 }
 
+static status_t cmd_callback_color_control(zclIncomingAddrInfo_t *pAddrInfo,
+                                           u8 cmdId, void *cmdPayload) {
+    zclIncoming_t *pInMsg = cmd_incoming_from_addr_info(pAddrInfo);
+
+    return cmd_callback(pAddrInfo->dstEp, ZCL_CLUSTER_LIGHTING_COLOR_CONTROL,
+                        cmdId, pInMsg->pData, pInMsg->dataLen);
+}
+
 static status_t cmd_callback_poll_control(zclIncomingAddrInfo_t *pAddrInfo,
                                           u8 cmdId, void *cmdPayload) {
     zclIncoming_t *pInMsg = cmd_incoming_from_addr_info(pAddrInfo);
@@ -141,6 +152,9 @@ static cluster_forAppCb_t get_cmd_callback_by_cluster_id(u16 cluster_id) {
     }
     if (cluster_id == ZCL_CLUSTER_CLOSURES_WINDOW_COVERING) {
         return cmd_callback_window_covering;
+    }
+    if (cluster_id == ZCL_CLUSTER_LIGHTING_COLOR_CONTROL) {
+        return cmd_callback_color_control;
     }
     if (cluster_id == ZCL_CLUSTER_GEN_POLL_CONTROL) {
         return cmd_callback_poll_control;

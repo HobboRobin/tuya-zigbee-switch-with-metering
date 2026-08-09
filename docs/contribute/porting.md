@@ -94,6 +94,9 @@ The pinout is stored in the **device config string**.
 | **`X`** | Cover Switch  | • User input for cover control <br> • Format: `XA2B3u` - 2 pins + pull resistor: open button, close button        |
 | **`C`** | Cover         | • Motor control for curtains/blinds/shades <br> • Format: `CA2B3` - 2 pins: open relay, close relay               |
 | **`I`** | Indicator LED | • 1 per relay, follows state <br> • Briefly flashes on button press (binding confirmation) <br> • Blinks while pairing if there is no network led |
+| **`W`** | Dimmer        | • Output: one PWM channel as a Zigbee light with brightness <br> • Format: `WC4` - 1 pin (add `i` for active-low drivers: `WC4i`) |
+| **`T`** | Tunable white | • Output: two PWM channels mixed into one light with a colour temperature <br> • Format: `TC4C3` - 2 pins: cold, warm (`TC4C3i` inverts **both**) |
+| **`Y`** | Mode status LED | • 3 pins: red, green, blue - the colour names the configured light mode <br> • Format: `YA0A1A7` (never dimmable, so it can share a PWM channel with a light) |
 
 For buttons (`B`), switches (`S`), and cover switches (`X`), the next character chooses the internal pull-up/down resistor:  
 ⤷ **`u`: up 10K**, `U`: up 1M, `d`: down 100K, `f`: float (external resistor)  
@@ -108,6 +111,12 @@ transition time (ms) for that LED in Z2M. On TLSR825x each pin maps to one
 fixed PWM channel (pins with PWM: A0, A2-A4, B0-B5, C0-C7, D2-D5; two LEDs
 must not share a channel — e.g. B4 and C6 both use PWM4). If the pin has no
 PWM the LED silently falls back to plain on/off.
+
+Light outputs (`W`, `T`) are always PWM-dimmable, so they only take the `i`
+flag - and it goes **after the last pin**, applying to every channel of that
+light (`TC4C3i`, not `TC4iC3i`). If the light gets brighter as you dim it, or
+is at full output while switched off, the board drives its LEDs low and wants
+`i`.
 
 Additional options: 
 | Format       | Option                       | Function                                                                          |
