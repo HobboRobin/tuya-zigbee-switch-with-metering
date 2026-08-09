@@ -2,6 +2,9 @@
 #include "hal/printf_selector.h"
 #include "hal/zigbee.h"
 #include "zigbee/basic_cluster.h"
+#include "zigbee/light_cluster.h"
+#include "zigbee/identify_cluster.h"
+#include "device_config/nvm_items.h"
 #include "zigbee/battery_cluster.h"
 #include "zigbee/consts.h"
 #include "zigbee/cover_cluster.h"
@@ -36,7 +39,8 @@ void peripherals_init(void);
 network_indicator_t network_indicator = {
     .leds                        = { NULL, NULL, NULL, NULL },
     .has_dedicated_led           = 0,
-    .manual_state_when_connected = 1,
+    .manual_state_when_connected =                        1,
+    .mask                        = NETWORK_INDICATOR_MASK_ALL,
 };
 
 led_t   leds[5];
@@ -68,10 +72,18 @@ uint8_t cover_switch_clusters_cnt = 0;
 zigbee_cover_cluster cover_clusters[3];
 uint8_t cover_clusters_cnt = 0;
 
+// Dimmable light outputs (W = single channel, T = tunable white). Each light
+// owns one endpoint; its channels are plain leds, kept apart from leds[] so a
+// light never competes with the status LEDs for a slot.
+zigbee_light_cluster light_clusters[MAX_LIGHTS];
+uint8_t light_clusters_cnt = 0;
+led_t   light_channels[MAX_LIGHTS * LIGHT_MAX_CHANNELS];
+uint8_t light_channels_cnt = 0;
+
 // Sized for the largest supported layout, including the optional per-switch
 // long-press binding endpoints (2EP token): a 4-gang switch with 2EP uses
 // 4 switch + 4 relay + 4 long-press = 12 endpoints.
-hal_zigbee_cluster  clusters[40];
+hal_zigbee_cluster  clusters[48];
 hal_zigbee_endpoint endpoints[12];
 
 uint8_t allow_simultaneous_latching_pulses = 0;
@@ -139,6 +151,29 @@ static void ensure_capacity(uint8_t used, uint8_t capacity, const char *what) {
     printf("Config needs more than %d %s, resetting to default\r\n",
            (int)capacity, what);
     reset_all();
+}
+
+// Identify blinks everything the device can light up. Only this file knows
+// the full inventory - status LEDs, relay indicators and light channels all
+// live in different tables - so the identify cluster calls back in here.
+void identify_blink_all(uint16_t on_ms, uint16_t off_ms, uint16_t times) {
+    for (int i = 0; i < leds_cnt; i++) {
+        led_blink(&leds[i], on_ms, off_ms, times);
+    }
+    light_clusters_blink(on_ms, off_ms, times);
+}
+
+void identify_restore_all(void) {
+    // Put every led back to what it should be showing: the status LEDs follow
+    // the network state, the relay indicators their relay, the light channels
+    // their light.
+    if (hal_zigbee_get_network_status() == HAL_ZIGBEE_NETWORK_JOINED) {
+        network_indicator_connected(&network_indicator);
+    } else {
+        network_indicator_not_connected(&network_indicator);
+    }
+    update_relay_clusters();
+    light_clusters_restore();
 }
 
 void parse_config() {
@@ -332,6 +367,51 @@ void parse_config() {
             cover_switch_clusters[cover_switch_clusters_cnt].cover_switch_idx =
                 cover_switch_clusters_cnt;
             cover_switch_clusters_cnt++;
+        } else if (entry[0] == 'Y') {
+            // Y<r><g><b>: three-colour status LED. The colour says which light
+            // mode the config selected, so you can tell a strip's mode at a
+            // glance. Not dimmable on purpose - on the Gledopto the red leg
+            // shares its PWM channel with a light output, and a status LED is
+            // not worth losing a channel over.
+            ensure_capacity(leds_cnt + 2, ARRAY_LEN(leds), "leds");
+            for (uint8_t colour = 0; colour < 3; colour++) {
+                hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 1 + 2 * colour);
+                hal_gpio_init(pin, 0, HAL_GPIO_PULL_NONE);
+                leds[leds_cnt].pin = pin;
+                led_apply_flags(&leds[leds_cnt], entry + 7);
+                leds[leds_cnt].dimmable = 0;
+                led_init(&leds[leds_cnt]);
+                network_indicator.leds[colour] = &leds[leds_cnt];
+                leds_cnt++;
+            }
+            network_indicator.leds[3]           = NULL;
+            network_indicator.has_dedicated_led = true;
+            has_dedicated_status_led            = true;
+        } else if (entry[0] == 'W' || entry[0] == 'T') {
+            // W<pin>[flags]            - single dimmable channel
+            // T<cold><warm>[flags]     - tunable white, firmware mixes the pair
+            uint8_t channels = entry[0] == 'T' ? 2 : 1;
+            ensure_capacity(light_clusters_cnt, ARRAY_LEN(light_clusters),
+                            "lights");
+            ensure_capacity(light_channels_cnt + channels - 1,
+                            ARRAY_LEN(light_channels), "light channels");
+
+            zigbee_light_cluster *light = &light_clusters[light_clusters_cnt];
+            light->light_idx     = light_clusters_cnt;
+            light->channel_count = channels;
+            // A light only makes sense on a PWM pin, so the channels are always
+            // dimmable; led_init falls back to on/off if the pin has no PWM.
+            const char *flags = entry + 1 + 2 * channels;
+            for (uint8_t ch = 0; ch < channels; ch++) {
+                led_t *channel = &light_channels[light_channels_cnt++];
+                channel->pin = hal_gpio_parse_pin(entry + 1 + 2 * ch);
+                hal_gpio_init(channel->pin, 0, HAL_GPIO_PULL_NONE);
+                channel->dimmable = 1;
+                led_apply_flags(channel, flags);
+                led_init(channel);
+                light->channels[ch] = channel;
+            }
+            light_clusters_cnt++;
         } else if (entry[0] == 'C') {
             // A cover drives two relays.
             ensure_capacity(relays_cnt + 1, ARRAY_LEN(relays), "relays");
@@ -465,13 +545,36 @@ void parse_config() {
            switch_clusters_cnt, relay_clusters_cnt, cover_switch_clusters_cnt,
            cover_clusters_cnt);
 
+    // The colour of a Y indicator names the light mode, decided by the widest
+    // light token in the config: white = RGB+CCT, yellow = RGBW, blue = RGB,
+    // green = tunable white, red = plain dimmer. Bits are r, g, b.
+    if (network_indicator.leds[2] != NULL) {
+        if (light_clusters_cnt == 0) {
+            network_indicator.mask = NETWORK_INDICATOR_MASK_ALL;
+        } else {
+            uint8_t widest = 0;
+            for (int i = 0; i < light_clusters_cnt; i++) {
+                if (light_clusters[i].channel_count > widest) {
+                    widest = light_clusters[i].channel_count;
+                }
+            }
+            switch (widest) {
+            case 5:  network_indicator.mask = 0x07; break; // white  RGB+CCT
+            case 4:  network_indicator.mask = 0x03; break; // yellow RGBW
+            case 3:  network_indicator.mask = 0x04; break; // blue   RGB
+            case 2:  network_indicator.mask = 0x02; break; // green  CCT
+            default: network_indicator.mask = 0x01; break; // red    dimmer
+            }
+        }
+    }
+
     // Each switch gets a trailing long-press binding endpoint when 2EP is set.
     uint8_t long_press_ep_cnt =
         long_press_bind_endpoints ? switch_clusters_cnt : 0;
 
     uint8_t total_endpoints = switch_clusters_cnt + relay_clusters_cnt +
                               cover_switch_clusters_cnt + cover_clusters_cnt +
-                              long_press_ep_cnt;
+                              light_clusters_cnt + long_press_ep_cnt;
 
     // The per-peripheral guards above cap each table on its own; this catches
     // the combination overflowing the shared endpoint table (a 4-gang switch
@@ -512,6 +615,11 @@ void parse_config() {
 
     hal_ota_cluster_setup(&endpoints[0].clusters[endpoints[0].cluster_count]);
     endpoints[0].cluster_count++;
+
+    // Every device gets Identify - Z2M renders the button from the cluster
+    // alone, no converter support needed.
+    static zigbee_identify_cluster identify_cluster;
+    identify_cluster_add_to_endpoint(&identify_cluster, &endpoints[0]);
 
     // Add battery cluster for battery-powered devices
     if (battery.pin != HAL_INVALID_PIN) {
@@ -582,6 +690,17 @@ void parse_config() {
                                       &endpoints[cover_base + index]);
     }
 
+    int light_base = switch_clusters_cnt + relay_clusters_cnt +
+                     cover_switch_clusters_cnt + cover_clusters_cnt;
+    for (int index = 0; index < light_clusters_cnt; index++) {
+        if (light_base + index != 0) {
+            cluster_ptr += endpoints[light_base + index - 1].cluster_count;
+            endpoints[light_base + index].clusters = cluster_ptr;
+        }
+        light_cluster_add_to_endpoint(&light_clusters[index],
+                                      &endpoints[light_base + index]);
+    }
+
     // Add energy measurement clusters to endpoints > 1 (EP1 case handled before relay loop)
     if (energy_monitoring_enabled && energy_monitoring_endpoint > 1) {
         electrical_measurement_cluster_add_to_endpoint(
@@ -596,7 +715,8 @@ void parse_config() {
     // switch_cluster_on_button_long_press), so short and long press can drive
     // two independent targets.
     int long_press_base = switch_clusters_cnt + relay_clusters_cnt +
-                          cover_switch_clusters_cnt + cover_clusters_cnt;
+                          cover_switch_clusters_cnt + cover_clusters_cnt +
+                          light_clusters_cnt;
     for (int index = 0; index < long_press_ep_cnt; index++) {
         int ep_i = long_press_base + index;
         cluster_ptr += endpoints[ep_i - 1].cluster_count;

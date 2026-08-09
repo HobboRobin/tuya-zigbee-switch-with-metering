@@ -6,6 +6,7 @@ const {
     text,
     binary,
     windowCovering,
+    light,
     deviceAddCustomCluster,
 } = require("zigbee-herdsman-converters/lib/modernExtend");
 const {assertString} = require("zigbee-herdsman-converters/lib/utils");
@@ -65,12 +66,17 @@ const romasku = {
         enumLookup({
             name,
             endpointName,
-            lookup: Object.fromEntries(
-                Array.from({ length: relay_cnt || 2 }, (_, i) => [`relay_${i + 1}`, i + 1])
-            ),
+            lookup: Object.fromEntries([
+                ...Array.from({ length: relay_cnt || 2 }, (_, i) => [`relay_${i + 1}`, i + 1]),
+                // 0xFF drives every relay at once. A mixed set is resolved as a
+                // group rather than per relay: anything on means everything
+                // goes off, otherwise everything goes on - what a master button
+                // is expected to do.
+                ["all", 255],
+            ]),
             cluster: "genOnOffSwitchCfg",
             attribute: { ID: 0xff02, type: 0x20 }, // uint8
-            description: "Which internal relay it should trigger",
+            description: "Which internal relay it should trigger ('all' switches every relay together)",
             entityCategory: "config",
         }),
     bindedMode: (name, endpointName) =>
@@ -224,6 +230,21 @@ const romasku = {
             ],
         };
     },
+    // One fade time per light rather than per channel: a tunable white has to
+    // fade cold and warm together, and an RGB light must not end up with three
+    // separate transitions.
+    lightTransition: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genLevelCtrl",
+            attribute: { ID: 0xff00, type: 0x21 }, // uint16
+            description: "Fade time for on/off, brightness and colour changes",
+            valueMin: 0,
+            valueMax: 65535,
+            unit: "ms",
+            entityCategory: "config",
+        }),
     relayIndicatorMode: (name, endpointName) =>
         enumLookup({
             name,
@@ -481,6 +502,7 @@ const romasku = {
                 const capacity = {
                     S: [4, 'switches'], R: [6, 'relays'],
                     X: [3, 'cover switches'], C: [3, 'covers'],
+                    W: [5, 'lights'], T: [5, 'lights'],
                 };
                 const counts = {};
                 for (const part of parts.slice(2)) {
@@ -496,8 +518,12 @@ const romasku = {
                 }
                 // Switches, relays, cover switches and covers each take one
                 // endpoint, plus one more per switch when 2EP is set.
+                if ((counts.W || 0) + (counts.T || 0) > 5) {
+                    throw new Error(`Config declares ${(counts.W || 0) + (counts.T || 0)} lights, the firmware supports at most 5`);
+                }
                 const endpoints = (counts.S || 0) + (counts.R || 0) + (counts.X || 0) +
-                    (counts.C || 0) + (parts.includes('2EP') ? (counts.S || 0) : 0);
+                    (counts.C || 0) + (counts.W || 0) + (counts.T || 0) +
+                    (parts.includes('2EP') ? (counts.S || 0) : 0);
                 if (endpoints > 12) {
                     throw new Error(`Config needs ${endpoints} endpoints, the firmware supports at most 12`);
                 }
@@ -541,12 +567,24 @@ const romasku = {
                         validatePin(part.slice(2,4));
                         validatePin(part.slice(4,6));
                         validatePin(part.slice(6,8));
+                    } else if (part[0] == 'W') {
+                        // W<pin> - one dimmable channel
+                        validatePin(part.slice(1,3));
+                    } else if (part[0] == 'T') {
+                        // T<cold><warm> - tunable white
+                        validatePin(part.slice(1,3));
+                        validatePin(part.slice(3,5));
+                    } else if (part[0] == 'Y') {
+                        // Y<r><g><b> - three-colour status LED
+                        validatePin(part.slice(1,3));
+                        validatePin(part.slice(3,5));
+                        validatePin(part.slice(5,7));
                     } else if(part.startsWith('EB')) {
                         // BL0942 UART metering: EB<TX><RX>[S<baud>][V..][A..][W..]
                         validatePin(part.slice(2,4));
                         validatePin(part.slice(4,6));
                     } else {
-                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, OL, R, S, SLP, X, i, 2EP`);
+                        throw new Error(`Invalid entry ${part}. Should start with one of B, BT, C, D, EB, EP, I, L, M, OL, R, S, SLP, T, W, X, Y, i, 2EP`);
                     }
                 }
             },
@@ -1843,6 +1881,149 @@ const definitions = [
             await reporting.bind(endpoint6, coordinatorEndpoint, ["genOnOff"]);
             await endpoint6.configureReporting("genOnOff", [
                 {attribute: "onOff", minimumReportInterval: 0, maximumReportInterval: 300, reportableChange: 0},
+            ]);
+
+
+
+
+        },
+        ota: true,
+    },
+    {
+        zigbeeModel: [
+            "GL-C-006P-CCT",
+        ],
+        model: "GL-C-006P-CCT",
+        vendor: "Tuya-custom",
+        description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
+        extend: [
+            deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "light_0": 3, "light_1": 4, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
+            romasku.deviceConfig("device_config", "switch_left"),
+            romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
+            romasku.pressAction("switch_left_press_action", "switch_left"),
+            romasku.switchMode("switch_left_mode", "switch_left"),
+            romasku.switchAction("switch_left_action_mode", "switch_left"),
+            romasku.bindedMode("switch_left_binded_mode", "switch_left"),
+            romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
+            romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
+            romasku.pressAction("switch_right_press_action", "switch_right"),
+            romasku.switchMode("switch_right_mode", "switch_right"),
+            romasku.switchAction("switch_right_action_mode", "switch_right"),
+            romasku.bindedMode("switch_right_binded_mode", "switch_right"),
+            romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
+            romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
+            light({ endpointNames: ["light_0", "light_1"], colorTemp: {range: [167, 333]} }),
+            romasku.lightTransition("light_0_transition", "light_0"),
+            romasku.lightTransition("light_1_transition", "light_1"),
+        ],
+        meta: { multiEndpoint: true },
+        configure: async (device, coordinatorEndpoint, logger) => {
+            const endpoint1 = device.getEndpoint(1);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
+            // switch action:
+            await endpoint1.configureReporting("genMultistateInput", [
+                {
+                    attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
+                    minimumReportInterval: 0,
+                    maximumReportInterval: constants.repInterval.MAX,
+                    reportableChange: 1,
+                },
+            ]);
+            const endpoint2 = device.getEndpoint(2);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
+            // switch action:
+            await endpoint2.configureReporting("genMultistateInput", [
+                {
+                    attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
+                    minimumReportInterval: 0,
+                    maximumReportInterval: constants.repInterval.MAX,
+                    reportableChange: 1,
+                },
+            ]);
+
+
+
+
+        },
+        ota: true,
+    },
+    {
+        zigbeeModel: [
+            "GL-C-006P-DIM",
+        ],
+        model: "GL-C-006P-DIM",
+        vendor: "Tuya-custom",
+        description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
+        extend: [
+            deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "light_0": 3, "light_1": 4, "light_2": 5, "light_3": 6, "light_4": 7, } }),
+            romasku.actionEvent({
+                switches: [
+                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1"},
+                ],
+                longSwitches: [
+                ],
+                coverSwitches: [
+                ],
+            }),
+            romasku.deviceConfig("device_config", "switch_left"),
+            romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
+            romasku.pressAction("switch_left_press_action", "switch_left"),
+            romasku.switchMode("switch_left_mode", "switch_left"),
+            romasku.switchAction("switch_left_action_mode", "switch_left"),
+            romasku.bindedMode("switch_left_binded_mode", "switch_left"),
+            romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
+            romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
+            romasku.pressAction("switch_right_press_action", "switch_right"),
+            romasku.switchMode("switch_right_mode", "switch_right"),
+            romasku.switchAction("switch_right_action_mode", "switch_right"),
+            romasku.bindedMode("switch_right_binded_mode", "switch_right"),
+            romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
+            romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
+            light({ endpointNames: ["light_0", "light_1", "light_2", "light_3", "light_4"] }),
+            romasku.lightTransition("light_0_transition", "light_0"),
+            romasku.lightTransition("light_1_transition", "light_1"),
+            romasku.lightTransition("light_2_transition", "light_2"),
+            romasku.lightTransition("light_3_transition", "light_3"),
+            romasku.lightTransition("light_4_transition", "light_4"),
+        ],
+        meta: { multiEndpoint: true },
+        configure: async (device, coordinatorEndpoint, logger) => {
+            const endpoint1 = device.getEndpoint(1);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
+            // switch action:
+            await endpoint1.configureReporting("genMultistateInput", [
+                {
+                    attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
+                    minimumReportInterval: 0,
+                    maximumReportInterval: constants.repInterval.MAX,
+                    reportableChange: 1,
+                },
+            ]);
+            const endpoint2 = device.getEndpoint(2);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
+            // switch action:
+            await endpoint2.configureReporting("genMultistateInput", [
+                {
+                    attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
+                    minimumReportInterval: 0,
+                    maximumReportInterval: constants.repInterval.MAX,
+                    reportableChange: 1,
+                },
             ]);
 
 

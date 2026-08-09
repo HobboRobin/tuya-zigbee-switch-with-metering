@@ -314,6 +314,60 @@ OUTLET_USEELINK_SM0306E_TS011F:
   info: "UseeLink 4-AC + USB power strip. The stock module is a PhyPlus LC-PZ2, which this firmware does not support — the module has to be replaced by a pin-compatible Tuya one. The config above is for a ZT3L (Telink TLSR8258): flash it by wire via SWS, ideally on the bench before soldering it to the board, as SWS is awkward to reach once fitted. 5 switchable outputs: Relay 1 PB4, Relay 2 PC2, Relay 3 PC3, Relay 4 PD2 (all active-low, each with a hardware-wired status LED), USB PD7 (active-high). Single momentary button PB5. Network LED PA0 (blue, active-low, PWM-dimmable via PWM0_N). The red master LED on PB7 is deliberately not marked dimmable: PB7 has no PWM function on the TLSR8258, so the firmware would silently fall back to plain on/off and the brightness controls would do nothing. Red master LED PB7 (active-low) is wired here as the Relay-1 indicator — the firmware has no 'any-output-on' aggregate LED. No energy metering on this model. The GPIO names were derived by mapping the board's ZS3L wiring pad-by-pad onto the ZT3L pinout (both modules share the footprint, see docs/diagrams/) and are confirmed on hardware — all five outputs, the button and both LEDs work as listed. If one output stays dead after a module swap, suspect a cold solder joint before the config string."
   threads: https://www.zigbee2mqtt.io/devices/SM-0306E-2W.html
   store: https://www.zigbee2mqtt.io/devices/SM-0306E-2W.html
+LIGHT_GLEDOPTO_GLC006P_CCT:
+  human_name: Gledopto GL-C-006P (tunable white)
+  category: light
+  power: DC
+  neutral: without
+  output: pwm
+  device_type: router
+  stock_model_name: GL-C-006P
+  stock_manufacturer_name: ERICSITY
+  stock_converter_manufacturer: Gledopto
+  stock_converter_model: GL-C-006P
+  override_z2m_device: GL-C-006P-CCT
+  tuya_module: none
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: gled;GL-C-006P-CCT;BC0u;SB7u;SB1u;YA0A1A7;TC4C3;TC2D2;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: null
+  stock_image_type: null
+  firmware_image_type: 47118
+  build: yes
+  status: in_progress
+  info: "Gledopto WW/CW LED controller on a bare TLSR8258ET32 (not a Tuya module; flash by wire via SWS). Stock firmware exposes the four outputs as a single tunable-white light, which is what this replaces: here the same hardware becomes two independent lights, and switching to five plain dimmers is a config-string change away (see the -DIM entry). Outputs PC4/PC3 are the first pair (cold/warm), PC2/PD2 the second; PB4 is the fifth channel, unused in this mode. Reset button PC0, second button PB7 (usable as a master switch via relay_index 'all'), wired input PB1 for binding. Three-colour status LED on PA0/PA1/PA7 shows the configured mode - green here. The status LED is deliberately not dimmable: PA0 shares PWM channel 0 with the PC2 output. Strips are 3000-6000 K, matching the firmware's mired range; a different span needs LIGHT_COLOR_TEMP_*_MIREDS changed."
+  threads: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
+  store: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
+LIGHT_GLEDOPTO_GLC006P_DIM:
+  human_name: Gledopto GL-C-006P (five dimmers)
+  category: light
+  power: DC
+  neutral: without
+  output: pwm
+  device_type: router
+  stock_model_name: GL-C-006P
+  stock_manufacturer_name: ERICSITY
+  stock_converter_manufacturer: Gledopto
+  stock_converter_model: GL-C-006P
+  override_z2m_device: GL-C-006P-DIM
+  tuya_module: none
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: gled;GL-C-006P-DIM;BC0u;SB7u;SB1u;YA0A1A7;WC4;WC3;WC2;WD2;WB4;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: null
+  stock_image_type: null
+  firmware_image_type: 47119
+  build: yes
+  status: in_progress
+  info: "Same hardware as the -CCT entry, with every output as its own dimmable light instead of two tunable-white pairs: five independent single-colour channels on PC4, PC3, PC2, PD2 and PB4. Same firmware - switching between the two is a config-string change plus a re-interview, no reflash, because Z2M picks the definition from the model name. Status LED shows red in this mode."
+  threads: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
+  store: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
 MODULE_AUBESS_TS0001:
   human_name: Aubess WHD02
   category: module
