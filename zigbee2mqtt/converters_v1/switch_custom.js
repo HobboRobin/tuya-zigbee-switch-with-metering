@@ -163,7 +163,25 @@ const romasku = {
         };
         const levelSuffixes = ["brightness_move_up", "brightness_move_down", "brightness_stop"];
 
+        // Each button also gets an `action` of its own, tied to its endpoint, so
+        // Home Assistant creates one event entity per button instead of a single
+        // device-wide one whose type carries the button in its name. The
+        // combined `action` stays exactly as it was - automations built on it
+        // keep working, and it remains the only place a 2EP long press and its
+        // parent button can be told apart by name alone.
         const byEndpoint = (list) => Object.fromEntries(list.map((s) => [s.endpoint, s.prefix]));
+        const namesByEndpoint = Object.fromEntries(
+            [...switches, ...longSwitches, ...coverSwitches]
+                .filter((s) => s.name)
+                .map((s) => [s.endpoint, s.name]),
+        );
+        // A 2EP companion endpoint has no name of its own in deviceEndpoints; its
+        // events land on the parent button's entity, marked `long_`.
+        const suffixPrefixByEndpoint = Object.fromEntries(
+            [...switches, ...longSwitches, ...coverSwitches].map(
+                (s) => [s.endpoint, s.suffixPrefix || ""],
+            ),
+        );
         const multistatePrefixes = byEndpoint([...switches, ...coverSwitches]);
         const multistateStates = Object.fromEntries([
             ...switches.map((s) => [s.endpoint, switchStates]),
@@ -176,29 +194,48 @@ const romasku = {
         const coverPrefixes = byEndpoint(coverSwitches);
 
         const actions = [];
-        const add = (prefix, suffixes) => actions.push(...suffixes.map((s) => `${prefix}_${s}`));
+        // Per endpoint name, the event types that button alone can produce.
+        const perButton = {};
+        const add = (s, suffixes) => {
+            const suffixPrefix = s.suffixPrefix || "";
+            actions.push(...suffixes.map((x) => `${s.prefix}_${x}`));
+            if (!s.name) return;
+            perButton[s.name] = perButton[s.name] || [];
+            perButton[s.name].push(...suffixes.map((x) => `${suffixPrefix}${x}`));
+        };
         for (const s of switches) {
-            add(s.prefix, Object.values(switchStates));
-            add(s.prefix, Object.values(onOffCommands));
-            add(s.prefix, levelSuffixes);
+            add(s, Object.values(switchStates));
+            add(s, Object.values(onOffCommands));
+            add(s, levelSuffixes);
         }
         for (const s of longSwitches) {
-            add(s.prefix, Object.values(onOffCommands));
+            add(s, Object.values(onOffCommands));
         }
         for (const s of coverSwitches) {
-            add(s.prefix, Object.values(coverStates));
-            add(s.prefix, Object.values(coverCommands));
+            add(s, Object.values(coverStates));
+            add(s, Object.values(coverCommands));
         }
 
         const lookupAction = (prefixes, msg, suffix) => {
             const prefix = prefixes[msg.endpoint.ID];
             if (prefix === undefined || suffix === undefined) return;
-            return {action: `${prefix}_${suffix}`};
+            const result = {action: `${prefix}_${suffix}`};
+            const name = namesByEndpoint[msg.endpoint.ID];
+            if (name !== undefined) {
+                const suffixPrefix = suffixPrefixByEndpoint[msg.endpoint.ID] || "";
+                result[`action_${name}`] = `${suffixPrefix}${suffix}`;
+            }
+            return result;
         };
 
         return {
             isModernExtend: true,
-            exposes: [e.action(actions)],
+            exposes: [
+                e.action(actions),
+                ...Object.entries(perButton).map(
+                    ([name, values]) => e.action([...new Set(values)]).withEndpoint(name),
+                ),
+            ],
             fromZigbee: [
                 {
                     cluster: "genMultistateInput",
@@ -719,10 +756,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -854,10 +891,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -989,10 +1026,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -1124,10 +1161,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -1259,7 +1296,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1316,8 +1353,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -1399,8 +1436,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -1482,7 +1519,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1541,7 +1578,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1600,7 +1637,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1824,7 +1861,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay_0": 2, "relay_1": 3, "relay_2": 4, "relay_3": 5, "relay_4": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1905,8 +1942,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "light_0": 3, "light_1": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -1979,8 +2016,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "light_0": 3, "light_1": 4, "light_2": 5, "light_3": 6, "light_4": 7, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2057,7 +2094,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -2114,8 +2151,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2197,9 +2234,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2306,10 +2343,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -2443,7 +2480,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -2502,8 +2539,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2587,9 +2624,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2698,10 +2735,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -2833,9 +2870,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2942,10 +2979,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -3077,7 +3114,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3135,7 +3172,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3193,8 +3230,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3276,8 +3313,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3359,9 +3396,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3468,8 +3505,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3551,8 +3588,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3634,7 +3671,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3691,8 +3728,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3774,8 +3811,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3858,7 +3895,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3916,9 +3953,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -4025,7 +4062,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4082,8 +4119,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -4165,7 +4202,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4222,7 +4259,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4280,8 +4317,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -4388,7 +4425,7 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch"),
@@ -4478,8 +4515,8 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
-                    {endpoint: 2, prefix: "cover_switch_1"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch_left"},
+                    {endpoint: 2, prefix: "cover_switch_1", name: "cover_switch_right"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch_left"),
@@ -4582,7 +4619,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4639,7 +4676,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4696,7 +4733,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4753,7 +4790,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4810,7 +4847,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4867,7 +4904,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4925,9 +4962,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5034,10 +5071,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -5169,7 +5206,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5226,7 +5263,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5283,7 +5320,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5340,8 +5377,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5423,9 +5460,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5531,7 +5568,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5588,8 +5625,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5671,9 +5708,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5780,10 +5817,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -5915,7 +5952,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5972,7 +6009,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6029,7 +6066,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6086,7 +6123,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6143,8 +6180,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6226,9 +6263,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6335,7 +6372,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6392,7 +6429,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6450,8 +6487,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6533,10 +6570,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -6668,9 +6705,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6777,7 +6814,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6834,7 +6871,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6891,7 +6928,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6948,7 +6985,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7005,7 +7042,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7062,7 +7099,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7121,8 +7158,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7205,9 +7242,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7314,7 +7351,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7371,7 +7408,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7428,8 +7465,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7511,9 +7548,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7620,7 +7657,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7677,8 +7714,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7760,7 +7797,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7817,8 +7854,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7925,7 +7962,7 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch"),
@@ -7990,9 +8027,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8099,7 +8136,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8156,8 +8193,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8239,8 +8276,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8322,7 +8359,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8379,7 +8416,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8436,7 +8473,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8493,10 +8530,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -8628,8 +8665,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8711,8 +8748,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8795,7 +8832,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8852,7 +8889,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9076,7 +9113,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9300,7 +9337,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9524,7 +9561,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9748,7 +9785,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9807,7 +9844,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10028,8 +10065,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -10115,7 +10152,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10173,7 +10210,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10231,7 +10268,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10289,7 +10326,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10347,7 +10384,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10406,10 +10443,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -10524,7 +10561,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10585,7 +10622,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10646,10 +10683,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -10765,10 +10802,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -10883,7 +10920,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10944,7 +10981,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -11005,8 +11042,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11085,9 +11122,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11184,10 +11221,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -11302,10 +11339,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -11420,7 +11457,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -11481,7 +11518,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -11542,7 +11579,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -11603,8 +11640,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11683,9 +11720,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11782,9 +11819,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11881,10 +11918,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -11999,8 +12036,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12079,7 +12116,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -12140,10 +12177,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -12257,7 +12294,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -12314,8 +12351,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12398,9 +12435,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12507,10 +12544,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -12643,7 +12680,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -12703,8 +12740,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12791,9 +12828,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12900,10 +12937,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
-                    {endpoint: 3, prefix: "switch_0_long"},
+                    {endpoint: 3, prefix: "switch_0_long", name: "switch", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -12966,8 +13003,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13054,9 +13091,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13169,10 +13206,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
-                    {endpoint: 3, prefix: "switch_0_long"},
+                    {endpoint: 3, prefix: "switch_0_long", name: "switch", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13233,12 +13270,12 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, "switch_left_long": 5, "switch_right_long": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
-                    {endpoint: 5, prefix: "switch_0_long"},
-                    {endpoint: 6, prefix: "switch_1_long"},
+                    {endpoint: 5, prefix: "switch_0_long", name: "switch_left", suffixPrefix: "long_"},
+                    {endpoint: 6, prefix: "switch_1_long", name: "switch_right", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13329,14 +13366,14 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, "switch_left_long": 7, "switch_middle_long": 8, "switch_right_long": 9, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
-                    {endpoint: 7, prefix: "switch_0_long"},
-                    {endpoint: 8, prefix: "switch_1_long"},
-                    {endpoint: 9, prefix: "switch_2_long"},
+                    {endpoint: 7, prefix: "switch_0_long", name: "switch_left", suffixPrefix: "long_"},
+                    {endpoint: 8, prefix: "switch_1_long", name: "switch_middle", suffixPrefix: "long_"},
+                    {endpoint: 9, prefix: "switch_2_long", name: "switch_right", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13454,16 +13491,16 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, "switch_0_long": 9, "switch_1_long": 10, "switch_2_long": 11, "switch_3_long": 12, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
-                    {endpoint: 9, prefix: "switch_0_long"},
-                    {endpoint: 10, prefix: "switch_1_long"},
-                    {endpoint: 11, prefix: "switch_2_long"},
-                    {endpoint: 12, prefix: "switch_3_long"},
+                    {endpoint: 9, prefix: "switch_0_long", name: "switch_0", suffixPrefix: "long_"},
+                    {endpoint: 10, prefix: "switch_1_long", name: "switch_1", suffixPrefix: "long_"},
+                    {endpoint: 11, prefix: "switch_2_long", name: "switch_2", suffixPrefix: "long_"},
+                    {endpoint: 12, prefix: "switch_3_long", name: "switch_3", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13609,7 +13646,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -13668,7 +13705,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -13727,8 +13764,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13812,8 +13849,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13897,10 +13934,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
-                    {endpoint: 3, prefix: "switch_0_long"},
+                    {endpoint: 3, prefix: "switch_0_long", name: "switch", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13962,8 +13999,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14049,8 +14086,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14136,9 +14173,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14251,7 +14288,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -14310,8 +14347,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14397,9 +14434,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14513,10 +14550,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -14656,7 +14693,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -14715,8 +14752,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14802,9 +14839,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14917,7 +14954,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -14975,7 +15012,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -15032,8 +15069,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15115,9 +15152,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15224,7 +15261,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -15281,8 +15318,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15364,9 +15401,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15473,8 +15510,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15559,9 +15596,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15698,7 +15735,7 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch"),
@@ -15763,7 +15800,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -15821,8 +15858,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15907,9 +15944,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16021,7 +16058,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -16079,8 +16116,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16165,9 +16202,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16279,7 +16316,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -16338,8 +16375,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16425,9 +16462,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16540,9 +16577,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16655,10 +16692,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -16799,7 +16836,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -16858,8 +16895,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16945,9 +16982,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17059,10 +17096,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -17201,10 +17238,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -17343,9 +17380,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17457,7 +17494,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17516,8 +17553,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17604,7 +17641,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17664,8 +17701,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17751,9 +17788,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17866,7 +17903,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17924,7 +17961,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17982,8 +18019,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18068,9 +18105,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18182,9 +18219,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18296,10 +18333,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -18438,7 +18475,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -18495,10 +18532,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -18630,7 +18667,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -18689,8 +18726,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18775,7 +18812,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -18833,8 +18870,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],

@@ -165,7 +165,25 @@ const romasku = {
         };
         const levelSuffixes = ["brightness_move_up", "brightness_move_down", "brightness_stop"];
 
+        // Each button also gets an `action` of its own, tied to its endpoint, so
+        // Home Assistant creates one event entity per button instead of a single
+        // device-wide one whose type carries the button in its name. The
+        // combined `action` stays exactly as it was - automations built on it
+        // keep working, and it remains the only place a 2EP long press and its
+        // parent button can be told apart by name alone.
         const byEndpoint = (list) => Object.fromEntries(list.map((s) => [s.endpoint, s.prefix]));
+        const namesByEndpoint = Object.fromEntries(
+            [...switches, ...longSwitches, ...coverSwitches]
+                .filter((s) => s.name)
+                .map((s) => [s.endpoint, s.name]),
+        );
+        // A 2EP companion endpoint has no name of its own in deviceEndpoints; its
+        // events land on the parent button's entity, marked `long_`.
+        const suffixPrefixByEndpoint = Object.fromEntries(
+            [...switches, ...longSwitches, ...coverSwitches].map(
+                (s) => [s.endpoint, s.suffixPrefix || ""],
+            ),
+        );
         const multistatePrefixes = byEndpoint([...switches, ...coverSwitches]);
         const multistateStates = Object.fromEntries([
             ...switches.map((s) => [s.endpoint, switchStates]),
@@ -178,29 +196,48 @@ const romasku = {
         const coverPrefixes = byEndpoint(coverSwitches);
 
         const actions = [];
-        const add = (prefix, suffixes) => actions.push(...suffixes.map((s) => `${prefix}_${s}`));
+        // Per endpoint name, the event types that button alone can produce.
+        const perButton = {};
+        const add = (s, suffixes) => {
+            const suffixPrefix = s.suffixPrefix || "";
+            actions.push(...suffixes.map((x) => `${s.prefix}_${x}`));
+            if (!s.name) return;
+            perButton[s.name] = perButton[s.name] || [];
+            perButton[s.name].push(...suffixes.map((x) => `${suffixPrefix}${x}`));
+        };
         for (const s of switches) {
-            add(s.prefix, Object.values(switchStates));
-            add(s.prefix, Object.values(onOffCommands));
-            add(s.prefix, levelSuffixes);
+            add(s, Object.values(switchStates));
+            add(s, Object.values(onOffCommands));
+            add(s, levelSuffixes);
         }
         for (const s of longSwitches) {
-            add(s.prefix, Object.values(onOffCommands));
+            add(s, Object.values(onOffCommands));
         }
         for (const s of coverSwitches) {
-            add(s.prefix, Object.values(coverStates));
-            add(s.prefix, Object.values(coverCommands));
+            add(s, Object.values(coverStates));
+            add(s, Object.values(coverCommands));
         }
 
         const lookupAction = (prefixes, msg, suffix) => {
             const prefix = prefixes[msg.endpoint.ID];
             if (prefix === undefined || suffix === undefined) return;
-            return {action: `${prefix}_${suffix}`};
+            const result = {action: `${prefix}_${suffix}`};
+            const name = namesByEndpoint[msg.endpoint.ID];
+            if (name !== undefined) {
+                const suffixPrefix = suffixPrefixByEndpoint[msg.endpoint.ID] || "";
+                result[`action_${name}`] = `${suffixPrefix}${suffix}`;
+            }
+            return result;
         };
 
         return {
             isModernExtend: true,
-            exposes: [e.action(actions)],
+            exposes: [
+                e.action(actions),
+                ...Object.entries(perButton).map(
+                    ([name, values]) => e.action([...new Set(values)]).withEndpoint(name),
+                ),
+            ],
             fromZigbee: [
                 {
                     cluster: "genMultistateInput",
@@ -781,19 +818,19 @@ const definitions = [
             romasku.actionEvent({
                 switches: [
                 {% for switchName in device.switchNames %}
-                    {endpoint: {{loop.index}}, prefix: "switch_{{loop.index0}}"},
+                    {endpoint: {{loop.index}}, prefix: "switch_{{loop.index0}}", name: "{{switchName}}"},
                 {% endfor %}
                 ],
                 longSwitches: [
                 {% if device.has_long_press_endpoints %}
                 {% for switchName in device.switchNames %}
-                    {endpoint: {{loop.index + n_switch + n_relay + n_cover_switch + n_cover}}, prefix: "switch_{{loop.index0}}_long"},
+                    {endpoint: {{loop.index + n_switch + n_relay + n_cover_switch + n_cover}}, prefix: "switch_{{loop.index0}}_long", name: "{{switchName}}", suffixPrefix: "long_"},
                 {% endfor %}
                 {% endif %}
                 ],
                 coverSwitches: [
                 {% for coverSwitchName in device.coverSwitchNames %}
-                    {endpoint: {{loop.index + n_switch + n_relay}}, prefix: "cover_switch_{{loop.index0}}"},
+                    {endpoint: {{loop.index + n_switch + n_relay}}, prefix: "cover_switch_{{loop.index0}}", name: "{{coverSwitchName}}"},
                 {% endfor %}
                 ],
             }),

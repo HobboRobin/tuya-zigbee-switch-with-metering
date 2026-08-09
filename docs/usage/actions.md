@@ -11,6 +11,24 @@ The per-button `… press action` sensors are still there and unchanged. Both
 representations arrive at the same time, so nothing that already listens to
 the sensor needs to be touched.
 
+## One entity for the device, one per button
+
+There are two ways to listen, and both are published at once:
+
+| Entity                                    | Event types                       |
+|-------------------------------------------|-----------------------------------|
+| **Action** (one per device)               | `switch_0_press`, `switch_1_long_press`, … |
+| **Action switch_left**, **Action switch_right**, … (one per button) | `press`, `long_press`, `toggle`, … |
+
+The per-button entities carry no prefix — the entity already says which button
+it is, so repeating it in the event type would only be noise. Pick whichever
+suits the automation: the device-wide entity when one automation should react
+to several buttons, the per-button entity when a trigger belongs to exactly one
+button.
+
+A `2EP` long press has no entity of its own; it appears on its parent button as
+`long_toggle`.
+
 ## Naming
 
 Endpoint names differ with the gang count (`switch_left`, `switch_right`, …),

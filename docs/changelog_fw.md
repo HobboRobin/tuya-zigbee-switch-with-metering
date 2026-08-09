@@ -51,6 +51,11 @@ Please describe what you are working on, under ## Upcoming
   `2EP` long-press endpoint now publishes an `action`, so HA creates an event
   entity like the one a Hue remote gets. The `… press action` sensors stay as
   they were. See [actions.md](/docs/usage/actions.md).
+  - Each button additionally gets an **event entity of its own**
+    (`action_switch_left`, `action_switch_right`, …) whose types are unprefixed
+    (`press`, `long_press`, `toggle`, …), because the entity already names the
+    button. A `2EP` long press appears on its parent button as `long_toggle`.
+    The combined device-wide `action` is unchanged.
 
 ### Changes
 
