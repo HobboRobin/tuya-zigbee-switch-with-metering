@@ -4,6 +4,7 @@
 #include "cover_switch_cluster.h"
 #include "electrical_measurement_cluster.h"
 #include "hal/printf_selector.h"
+#include "light_cluster.h"
 #include "metering_cluster.h"
 #include "poll_control_cluster.h"
 #include "relay_cluster.h"
@@ -20,7 +21,13 @@ static void zigbee_on_attr_change(uint8_t endpoint, uint16_t cluster_id,
     } else if (cluster_id == ZCL_CLUSTER_COVER_SWITCH_CONFIG) {
         cover_switch_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
     } else if (cluster_id == ZCL_CLUSTER_ON_OFF) {
+        // genOnOff belongs to a relay on some endpoints and to a light on
+        // others; each trampoline ignores endpoints it does not own.
         relay_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
+        light_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
+    } else if (cluster_id == ZCL_CLUSTER_LEVEL_CONTROL ||
+               cluster_id == ZCL_CLUSTER_COLOR_CONTROL) {
+        light_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
     } else if (cluster_id == ZCL_CLUSTER_WINDOW_COVERING) {
         cover_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
     } else if (cluster_id == ZCL_CLUSTER_METERING) {

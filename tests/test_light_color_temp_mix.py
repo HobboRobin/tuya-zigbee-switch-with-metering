@@ -104,6 +104,43 @@ def test_i_flag_inverts_a_single_channel_dimmer():
         p.stop()
 
 
+COLOR_CLUSTER = 0x0300
+ATTR_COLOR_TEMP = 0x0007
+ATTR_COLOR_OPTIONS = 0x000F
+ATTR_COLOR_CAPABILITIES = 0x400A
+ATTR_STARTUP_COLOR_TEMP = 0x4010
+
+
+def test_colour_cluster_carries_the_attributes_a_coordinator_reads(light: Device):
+    """A missing attribute here is not cosmetic - it is a failed read in Z2M.
+
+    `colorCapabilities` is how a coordinator tells a tunable white from a full
+    colour light, and `startUpColorTemperature` is what the "colour temp
+    startup" option writes; both used to come back UNSUPPORTED_ATTRIBUTE.
+    """
+    # Bitmaps read back as hex, plain integers as decimal.
+    caps = int(light.read_zigbee_attr(1, COLOR_CLUSTER, ATTR_COLOR_CAPABILITIES), 16)
+    assert caps == 0x0010  # colour temperature, and nothing else
+    options = int(light.read_zigbee_attr(1, COLOR_CLUSTER, ATTR_COLOR_OPTIONS), 16)
+    assert options & 0x01  # obey colour commands while off
+    assert int(light.read_zigbee_attr(1, COLOR_CLUSTER, ATTR_STARTUP_COLOR_TEMP)) == 0xFFFF
+
+
+def test_startup_colour_temperature_is_honoured():
+    """0xFFFF means "come back at the previous colour"; anything else pins it."""
+    config = f"gled;X;BC0u;T{COLD}{WARM};"
+
+    with StubProc(device_config=config) as p:
+        Device(p).write_zigbee_attr(1, COLOR_CLUSTER, ATTR_STARTUP_COLOR_TEMP, 333)
+
+    with StubProc(device_config=config) as p:
+        d = Device(p)
+        assert int(d.read_zigbee_attr(1, COLOR_CLUSTER, ATTR_COLOR_TEMP)) == 333
+        d.call_zigbee_cmd(1, 0x0006, 0x01)
+        d.call_zigbee_cmd(1, 0x0008, 0x04, bytes([LEVEL, 0, 0]))
+        assert (duty(d, COLD), duty(d, WARM)) == (0, 254)
+
+
 def test_out_of_range_clamps_to_the_ends(light: Device):
     """Z2M clamps to the advertised range, but nothing else has to."""
     set_color_temp(light, 50)

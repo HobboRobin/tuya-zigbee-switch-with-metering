@@ -42,6 +42,11 @@ zigbee_relay_cluster *relay_cluster_by_endpoint[12];
 
 void relay_cluster_callback_attr_write_trampoline(uint8_t endpoint,
                                                   uint16_t attribute_id) {
+    // genOnOff is not always a relay - a light endpoint carries it too, and
+    // then there is nothing here to write to.
+    if (relay_cluster_by_endpoint[endpoint] == NULL) {
+        return;
+    }
     relay_cluster_on_write_attr(relay_cluster_by_endpoint[endpoint],
                                 attribute_id);
 }

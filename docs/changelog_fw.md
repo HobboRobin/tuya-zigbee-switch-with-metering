@@ -65,6 +65,23 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **Colour temperature did nothing on a tunable white.** The colour cluster
+    was advertised in the endpoint descriptor but never registered with the
+    Telink ZCL stack, which needs a per-cluster register function and the
+    matching build flag. Z2M therefore saw the light, showed the slider, and
+    every `moveToColorTemp` was dropped before it reached the firmware, while
+    on/off and brightness worked normally. Reads of the colour attributes
+    failed the same way — that is where the `startUpColorTemperature`
+    UNSUPPORTED_ATTRIBUTE came from. Brightness-only lights (`W`) were never
+    affected.
+  - Lights ignored every attribute write: startup behaviour, transition time
+    and startup colour temperature were applied to the running light but never
+    dispatched to it or written to NV, so they were back to their defaults
+    after a power cut. Writing one of them on a light endpoint also
+    dereferenced a null relay and could crash the device.
+  - `colorCapabilities` (mandatory) and `colorOptions` were missing. Without
+    the latter the stack drops any colour command that arrives while the light
+    is off, which is exactly the order a coordinator sends "on at 3000 K" in.
   - **A config string could permanently brick a device.** The parser held
     peripherals in fixed-size tables (4 switches, 6 relays, 3 cover switches,
     3 covers, 12 endpoints) but never checked them, so a longer config wrote

@@ -731,6 +731,11 @@ void parse_config() {
 
     hal_zigbee_init(endpoints, total_endpoints);
 
+    // Registering the colour cluster lets the stack apply startUpColorTemperature
+    // by writing straight into the attribute, i.e. behind this cluster's back.
+    // Re-apply so the channels show what the attributes now say.
+    light_clusters_restore();
+
     // Record whether the energy clusters actually registered in the stack, so
     // it can be read back from genBasic swBuildId for diagnostics.
     basic_cluster_set_energy_diag(
