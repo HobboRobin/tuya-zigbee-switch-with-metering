@@ -333,12 +333,12 @@ LIGHT_GLEDOPTO_GLC006P_CCT:
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
-  stock_manufacturer_id: null
-  stock_image_type: null
+  stock_manufacturer_id: 4687
+  stock_image_type: 5145
   firmware_image_type: 47118
   build: yes
   status: in_progress
-  info: "Gledopto WW/CW LED controller on a bare TLSR8258ET32 (not a Tuya module; flash by wire via SWS). Stock firmware exposes the four outputs as a single tunable-white light, which is what this replaces: here the same hardware becomes two independent lights, and switching to five plain dimmers is a config-string change away (see the -DIM entry). Outputs PC4/PC3 are the first pair (cold/warm), PC2/PD2 the second; PB4 is the fifth channel, unused in this mode. Reset button PC0, second button PB7 (usable as a master switch via relay_index 'all'), wired input PB1 for binding. Three-colour status LED on PA0/PA1/PA7 shows the configured mode - green here. The status LED is deliberately not dimmable: PA0 shares PWM channel 0 with the PC2 output. Strips are 3000-6000 K, matching the firmware's mired range; a different span needs LIGHT_COLOR_TEMP_*_MIREDS changed."
+  info: "Gledopto WW/CW LED controller on a bare TLSR8258ET32 (not a Tuya module). The stock firmware announces itself as manufacturer 4687 / image type 5145, so the usual stock-to-custom OTA applies here as well - a Telink bootloader verifies no signatures, whatever brand wrote the firmware. Flashing by wire via SWS stays the fallback, and note SWS is PA7, shared with the blue status LED, so its resistor may have to come off. Stock firmware exposes the four outputs as a single tunable-white light, which is what this replaces: here the same hardware becomes two independent lights, and switching to five plain dimmers is a config-string change away (see the -DIM entry). Outputs PC4/PC3 are the first pair (cold/warm), PC2/PD2 the second; PB4 is the fifth channel, unused in this mode. Reset button PC0, second button PB7 (usable as a master switch via relay_index 'all'), wired input PB1 for binding. Three-colour status LED on PA0/PA1/PA7 shows the configured mode - green here. The status LED is deliberately not dimmable: PA0 shares PWM channel 0 with the PC2 output. Strips are 3000-6000 K, matching the firmware's mired range; a different span needs LIGHT_COLOR_TEMP_*_MIREDS changed."
   threads: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
   store: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
 LIGHT_GLEDOPTO_GLC006P_DIM:
@@ -360,8 +360,8 @@ LIGHT_GLEDOPTO_GLC006P_DIM:
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
-  stock_manufacturer_id: null
-  stock_image_type: null
+  stock_manufacturer_id: 4687
+  stock_image_type: 5145
   firmware_image_type: 47119
   build: yes
   status: in_progress
