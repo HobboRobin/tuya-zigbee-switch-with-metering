@@ -27,3 +27,13 @@ void hal_pwm_set_duty(uint8_t channel, uint8_t duty) {
     if (channel < HAL_PWM_CHANNELS)
         stub_pwm_duty[channel] = duty;
 }
+
+// Read back what a pin is currently driving, so tests can assert the mix of a
+// tunable white instead of someone having to watch an actual strip.
+int16_t stub_pwm_get_duty_for_pin(hal_gpio_pin_t pin) {
+    for (uint8_t c = 0; c < stub_next_channel; c++) {
+        if (stub_channel_owner[c] == pin)
+            return (int16_t)stub_pwm_duty[c];
+    }
+    return -1;
+}

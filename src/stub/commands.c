@@ -302,6 +302,25 @@ static int cmd_read_pin(int argc, char **argv) {
     return 0;
 }
 
+int16_t stub_pwm_get_duty_for_pin(hal_gpio_pin_t pin);
+
+static int cmd_read_pwm(int argc, char **argv) {
+    if (argc != 2) {
+        io_res_err("usage");
+        return -1;
+    }
+    char *e   = NULL;
+    int   pin = strtol(argv[1], &e, 10);
+    if (*argv[1] == '\0' || *e) {
+        io_res_err("bad_pin=%s", argv[1]);
+        return -1;
+    }
+    int16_t duty = stub_pwm_get_duty_for_pin((hal_gpio_pin_t)pin);
+    printf("PWM pin %d => %d\n", pin, duty);
+    io_res_ok("pin=%d duty=%d", pin, duty);
+    return 0;
+}
+
 static int cmd_zcl_cmd_impl(int argc, char **argv, bool trigger_activity) {
     if (argc < 4) {
         fprintf(stderr, "Usage: zcl_cmd <ep:dec> <cluster:hex> <cmd:hex> "
@@ -498,6 +517,7 @@ static const SimpleReplCommand kCmds[] = {
     { "net",                 cmd_net                 },
     { "set_pin",             cmd_pin                 },
     { "read_pin",            cmd_read_pin            },
+    { "read_pwm",            cmd_read_pwm            },
     { "zcl_read",            cmd_zcl_read            },
     { "zcl_write",           cmd_zcl_write           },
     { "zcl_list_attrs",      cmd_zcl_list_attrs      },
