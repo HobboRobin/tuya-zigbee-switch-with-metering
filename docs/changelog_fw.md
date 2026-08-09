@@ -74,6 +74,11 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **Lights and covers could not join a Zigbee group.** The Groups cluster
+    was only attached to relay endpoints, so `genGroups.add` on a light or
+    cover endpoint was answered with UNSUP_COMMAND and Z2M reported the group
+    add as failed. Switch endpoints stay out on purpose - a switch is a
+    client, so pointing it at a group is a binding, not a membership.
   - **Fades ran longer than their transition time.** The fade stepped by a
     fixed amount per scheduler tick, so every rounded-down step cost an extra
     tick and a tick that arrived late was never made up for - the error only

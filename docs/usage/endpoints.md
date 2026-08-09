@@ -32,3 +32,8 @@ Bind endpoint 2 of your device to endpoint 1 of the bulb, and bind the `OnOff` c
 If you have two 2-gang devices and want to group the first relay of both devices, you should add endpoint 3 of both devices to the same group, as shown in the screenshot:
 
 ![add to group](/docs/.images/add_to_group.png)
+
+Groups work the same way for **lights** (`W`/`T` outputs) and **covers**: pick
+the endpoint of the output itself (`light_0`, `light_1`, …), not a switch
+endpoint. A switch endpoint carries a *client* cluster, so it cannot be a group
+member — to make a button drive a group, bind it to the group instead.
