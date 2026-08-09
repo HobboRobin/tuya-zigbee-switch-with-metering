@@ -26,6 +26,10 @@ Please describe what you are working on, under ## Upcoming
   with its own transition, then goes back to what it was showing.
 - Switches can drive **every relay at once** (`relay_index` = `all`): anything
   on means everything goes off, otherwise everything goes on.
+- **Switches can drive lights**, not only relays. `relay_index` now numbers all
+  of the device's outputs - relays first, then lights - so a lamp with no
+  relays at all can still work its own light from its buttons instead of only
+  through a binding. `all` covers the lights too.
 - Raised the ZCL cluster limit from 32 to 48, which also makes a **4-gang
   switch with `2EP`** possible for the first time.
 
@@ -65,6 +69,12 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **Fades ran longer than their transition time.** The fade stepped by a
+    fixed amount per scheduler tick, so every rounded-down step cost an extra
+    tick and a tick that arrived late was never made up for - the error only
+    ever ran one way, and a nominal 1 s fade visibly overshot. The duty is now
+    interpolated from the elapsed time, so the fade ends when it says it does
+    however coarsely the scheduler ticks.
   - **Colour temperature did nothing on a tunable white.** The colour cluster
     was advertised in the endpoint descriptor but never registered with the
     Telink ZCL stack, which needs a per-cluster register function and the

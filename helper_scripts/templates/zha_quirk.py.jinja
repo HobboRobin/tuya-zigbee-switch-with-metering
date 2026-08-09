@@ -239,6 +239,7 @@ for config in CONFIGS:
     zb_manufacturer, zb_model, *peripherals = config.rstrip(";").split(";")
 
     relay_cnt = 0
+    light_cnt = 0
     switch_cnt = 0
     indicators_cnt = 0
     cover_switch_cnt = 0
@@ -249,6 +250,9 @@ for config in CONFIGS:
             continue
         if peripheral[0] == "R":
             relay_cnt += 1
+        if peripheral[0] in ("W", "T"):
+            # Lights are switchable outputs too, so a switch can point at one.
+            light_cnt += 1
         if peripheral[0] == 'S':
             switch_cnt += 1
         if peripheral[0] == 'X':
@@ -302,7 +306,7 @@ for config in CONFIGS:
                 translation_key="relay_index_"+str(endpoint_id),
                 fallback_name="Relay index "+str(endpoint_id),
                 min_value=1,
-                max_value=relay_cnt,
+                max_value=relay_cnt + light_cnt,
                 step=1,
                 endpoint_id=endpoint_id,
             )

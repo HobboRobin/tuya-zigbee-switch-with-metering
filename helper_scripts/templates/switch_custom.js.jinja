@@ -65,21 +65,25 @@ const romasku = {
             description: "When to turn on/off internal relay",
             entityCategory: "config",
         }),
-    relayIndex: (name, endpointName, relay_cnt) =>
+    relayIndex: (name, endpointName, relay_cnt, light_cnt) =>
         enumLookup({
             name,
             endpointName,
             lookup: Object.fromEntries([
-                ...Array.from({ length: relay_cnt || 2 }, (_, i) => [`relay_${i + 1}`, i + 1]),
-                // 0xFF drives every relay at once. A mixed set is resolved as a
-                // group rather than per relay: anything on means everything
+                // The device's outputs in the order the firmware numbers them:
+                // relays first, then lights. Lights count from 0 to match their
+                // endpoint names, relays from 1 as they always have.
+                ...Array.from({ length: relay_cnt }, (_, i) => [`relay_${i + 1}`, i + 1]),
+                ...Array.from({ length: light_cnt }, (_, i) => [`light_${i}`, relay_cnt + i + 1]),
+                // 0xFF drives every output at once. A mixed set is resolved as
+                // a group rather than per output: anything on means everything
                 // goes off, otherwise everything goes on - what a master button
                 // is expected to do.
                 ["all", 255],
             ]),
             cluster: "genOnOffSwitchCfg",
             attribute: { ID: 0xff02, type: 0x20 }, // uint8
-            description: "Which internal relay it should trigger ('all' switches every relay together)",
+            description: "Which internal output it should trigger ('all' switches every output together)",
             entityCategory: "config",
         }),
     bindedMode: (name, endpointName) =>
@@ -959,9 +963,9 @@ const definitions = [
             romasku.pressAction("{{switchName}}_press_action", "{{switchName}}"),
             romasku.switchMode("{{switchName}}_mode", "{{switchName}}"),
             romasku.switchAction("{{switchName}}_action_mode", "{{switchName}}"),
-            {% if device.relayNames %}
+            {% if device.relayNames or device.lightNames %}
             romasku.relayMode("{{switchName}}_relay_mode", "{{switchName}}"),
-            romasku.relayIndex("{{switchName}}_relay_index", "{{switchName}}", {{device.relayNames | length}}),
+            romasku.relayIndex("{{switchName}}_relay_index", "{{switchName}}", {{device.relayNames | length}}, {{device.lightNames | length}}),
             {% endif %}
             romasku.bindedMode("{{switchName}}_binded_mode", "{{switchName}}"),
             romasku.longPressDuration("{{switchName}}_long_press_duration", "{{switchName}}"),

@@ -8,6 +8,7 @@
 #include "hal/printf_selector.h"
 #include "hal/system.h"
 #include "hal/tasks.h"
+#include "light_cluster.h"
 #include "relay_cluster.h"
 #include "zigbee_commands.h"
 
@@ -23,6 +24,8 @@ const uint16_t multistate_num_of_states  = 3;
 
 extern zigbee_relay_cluster relay_clusters[];
 extern uint8_t relay_clusters_cnt;
+extern zigbee_light_cluster light_clusters[];
+extern uint8_t light_clusters_cnt;
 extern zigbee_switch_cluster switch_clusters[];
 extern uint8_t switch_clusters_cnt;
 
@@ -53,14 +56,50 @@ void update_switch_clusters() {
     }
 }
 
+// A switch drives one of the device's local outputs, numbered from 1: the
+// relays first, then the lights. A light is just another thing to switch on and
+// off, so a device with no relays at all - a lamp - can still work its own
+// outputs from its buttons instead of only through a binding.
+uint8_t switch_cluster_output_cnt(void) {
+    return relay_clusters_cnt + light_clusters_cnt;
+}
+
+static bool switch_cluster_output_is_on(uint8_t index) {
+    if (index <= relay_clusters_cnt) {
+        return relay_clusters[index - 1].relay->on != 0;
+    }
+    return light_clusters[index - relay_clusters_cnt - 1].on != 0;
+}
+
+static void switch_cluster_output_set(uint8_t index, bool on) {
+    if (index <= relay_clusters_cnt) {
+        on ? relay_cluster_on(&relay_clusters[index - 1])
+           : relay_cluster_off(&relay_clusters[index - 1]);
+        return;
+    }
+    zigbee_light_cluster *light = &light_clusters[index - relay_clusters_cnt - 1];
+    on ? light_cluster_on(light) : light_cluster_off(light);
+}
+
+static void switch_cluster_output_toggle(uint8_t index) {
+    if (index <= relay_clusters_cnt) {
+        // Relays keep their own toggle: a latching relay has to pulse rather
+        // than be driven to a level.
+        relay_cluster_toggle(&relay_clusters[index - 1]);
+        return;
+    }
+    light_cluster_toggle(&light_clusters[index - relay_clusters_cnt - 1]);
+}
+
 static bool switch_cluster_targets_all(const zigbee_switch_cluster *cluster) {
     return cluster->relay_index == SWITCH_RELAY_INDEX_ALL &&
-           relay_clusters_cnt > 0;
+           switch_cluster_output_cnt() > 0;
 }
 
 static bool switch_cluster_has_valid_relay(const zigbee_switch_cluster *cluster) {
     return switch_cluster_targets_all(cluster) ||
-           (cluster->relay_index > 0 && cluster->relay_index <= relay_clusters_cnt);
+           (cluster->relay_index > 0 &&
+            cluster->relay_index <= switch_cluster_output_cnt());
 }
 
 // Is the switch's target on? With `all` that means "is anything on", which is
@@ -68,34 +107,32 @@ static bool switch_cluster_has_valid_relay(const zigbee_switch_cluster *cluster)
 // on counts as on, so the next press turns everything off.
 static bool switch_cluster_target_is_on(const zigbee_switch_cluster *cluster) {
     if (switch_cluster_targets_all(cluster)) {
-        for (int i = 0; i < relay_clusters_cnt; i++) {
-            if (relay_clusters[i].relay->on) {
+        for (uint8_t i = 1; i <= switch_cluster_output_cnt(); i++) {
+            if (switch_cluster_output_is_on(i)) {
                 return true;
             }
         }
         return false;
     }
-    return relay_clusters[cluster->relay_index - 1].relay->on != 0;
+    return switch_cluster_output_is_on(cluster->relay_index);
 }
 
 static void switch_cluster_target_set(zigbee_switch_cluster *cluster, bool on) {
     if (!switch_cluster_targets_all(cluster)) {
-        on ? relay_cluster_on(&relay_clusters[cluster->relay_index - 1])
-           : relay_cluster_off(&relay_clusters[cluster->relay_index - 1]);
+        switch_cluster_output_set(cluster->relay_index, on);
         return;
     }
-    for (int i = 0; i < relay_clusters_cnt; i++) {
-        on ? relay_cluster_on(&relay_clusters[i])
-           : relay_cluster_off(&relay_clusters[i]);
+    for (uint8_t i = 1; i <= switch_cluster_output_cnt(); i++) {
+        switch_cluster_output_set(i, on);
     }
 }
 
-// Toggling `all` is resolved as a group rather than per relay: anything on
-// means everything goes off, otherwise everything goes on. Toggling each relay
+// Toggling `all` is resolved as a group rather than per output: anything on
+// means everything goes off, otherwise everything goes on. Toggling each output
 // on its own would only deepen a mixed state instead of levelling it.
 static void switch_cluster_target_toggle(zigbee_switch_cluster *cluster) {
     if (!switch_cluster_targets_all(cluster)) {
-        relay_cluster_toggle(&relay_clusters[cluster->relay_index - 1]);
+        switch_cluster_output_toggle(cluster->relay_index);
         return;
     }
     switch_cluster_target_set(cluster, !switch_cluster_target_is_on(cluster));
@@ -491,11 +528,11 @@ void switch_cluster_on_write_attr(zigbee_switch_cluster *cluster,
                                   uint16_t attribute_id) {
     printf("Index at write attr: %d\r\n", cluster->switch_idx);
     if (attribute_id == ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_RELAY_INDEX) {
-        if (relay_clusters_cnt == 0) {
+        if (switch_cluster_output_cnt() == 0) {
             cluster->relay_index = 0;
         } else if (cluster->relay_index != SWITCH_RELAY_INDEX_ALL &&
                    (cluster->relay_index < 1 ||
-                    cluster->relay_index > relay_clusters_cnt)) {
+                    cluster->relay_index > switch_cluster_output_cnt())) {
             cluster->relay_index = 1;
         }
     }
@@ -545,11 +582,11 @@ void switch_cluster_load_attrs_from_nv(zigbee_switch_cluster *cluster) {
     cluster->binded_mode     = nv_config_buffer.binded_mode;
 
     // Validate relay_index to prevent out-of-bounds access
-    if (relay_clusters_cnt == 0) {
+    if (switch_cluster_output_cnt() == 0) {
         cluster->relay_index = 0;
     } else if (cluster->relay_index != SWITCH_RELAY_INDEX_ALL &&
                (cluster->relay_index < 1 ||
-                cluster->relay_index > relay_clusters_cnt)) {
+                cluster->relay_index > switch_cluster_output_cnt())) {
         printf("Invalid relay_index %d in NV, resetting to default\r\n",
                cluster->relay_index);
         cluster->relay_index = cluster->switch_idx + 1;

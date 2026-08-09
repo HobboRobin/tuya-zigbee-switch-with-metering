@@ -589,8 +589,9 @@ void parse_config() {
     hal_zigbee_cluster *cluster_ptr = clusters;
 
     for (int index = 0; index < switch_clusters_cnt; index++) {
-        if (switch_clusters[index].relay_index > relay_clusters_cnt) {
-            // Detach switches that point past the available relay count.
+        if (switch_clusters[index].relay_index >
+            relay_clusters_cnt + light_clusters_cnt) {
+            // Detach switches that point past the available outputs.
             switch_clusters[index].relay_mode =
                 ZCL_ONOFF_CONFIGURATION_RELAY_MODE_DETACHED;
             switch_clusters[index].relay_index = 0;

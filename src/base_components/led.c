@@ -29,32 +29,31 @@ static uint8_t led_on_level(led_t *led) {
     return led->brightness ? led->brightness : 255;
 }
 
+// Interpolate the duty from how much of the transition has actually elapsed.
+//
+// Stepping by a fixed amount per tick instead would make the fade last as long
+// as the scheduler takes to deliver its ticks: every rounding-down of the step
+// size costs an extra tick, and a tick that arrives late is never made up for,
+// so a nominal 1 s fade visibly overruns. Anchoring on the clock means a late
+// tick simply jumps further and the fade still ends on time.
 static void led_fade_handler(void *arg) {
     led_t *led = (led_t *)arg;
 
     if (led->cur_duty == led->target_duty)
         return;
 
-    uint16_t steps = led->transition_ms / LED_FADE_STEP_MS;
-    if (steps == 0) {
+    uint32_t elapsed = hal_millis() - led->fade_start_ms;
+    if (elapsed >= led->transition_ms) {
         led_write_raw(led, led->target_duty);
         return;
     }
 
-    int diff = (int)led->target_duty - (int)led->cur_duty;
-    int step = diff / (int)steps;
-    if (step == 0)
-        step = (diff > 0) ? 1 : -1;
-
-    int next = (int)led->cur_duty + step;
-    if ((step > 0 && next > led->target_duty) ||
-        (step < 0 && next < led->target_duty)) {
-        next = led->target_duty;
-    }
+    int32_t diff = (int32_t)led->target_duty - (int32_t)led->fade_start_duty;
+    int32_t next = (int32_t)led->fade_start_duty +
+                   (diff * (int32_t)elapsed) / (int32_t)led->transition_ms;
     led_write_raw(led, (uint8_t)next);
 
-    if (led->cur_duty != led->target_duty)
-        hal_tasks_schedule(&led->fade_task, LED_FADE_STEP_MS);
+    hal_tasks_schedule(&led->fade_task, LED_FADE_STEP_MS);
 }
 
 static void led_fade_to(led_t *led, uint8_t target) {
@@ -65,6 +64,9 @@ static void led_fade_to(led_t *led, uint8_t target) {
         led_write_raw(led, target);
         return;
     }
+
+    led->fade_start_duty = led->cur_duty;
+    led->fade_start_ms   = hal_millis();
 
     led->fade_task.handler = led_fade_handler;
     led->fade_task.arg     = led;

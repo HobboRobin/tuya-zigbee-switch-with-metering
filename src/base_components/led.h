@@ -21,6 +21,10 @@ typedef struct {
     uint16_t       transition_ms; // fade duration for on/off/brightness changes
     uint8_t        cur_duty;      // current PWM duty 0..255
     uint8_t        target_duty;   // fade target
+    // A fade is anchored in time rather than counted in steps, so it lasts
+    // transition_ms even if the scheduler wakes it late or coarsely.
+    uint8_t        fade_start_duty;
+    uint32_t       fade_start_ms;
     hal_task_t     fade_task;
 } led_t;
 
