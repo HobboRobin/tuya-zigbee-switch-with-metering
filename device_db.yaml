@@ -360,12 +360,17 @@ LIGHT_GLEDOPTO_GLC006P_DIM:
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
-  stock_manufacturer_id: 4687
-  stock_image_type: 5145
+  # Only the -CCT entry carries the stock ids. Both describe the same
+  # board, so both would build a migration image claiming to be the
+  # upgrade for manufacturer 4687 / image type 5145, and the OTA index
+  # can only hold one of them - silently, whichever comes last. The mode
+  # is a config-string change after migration anyway.
+  stock_manufacturer_id: null
+  stock_image_type: null
   firmware_image_type: 47119
   build: yes
   status: in_progress
-  info: "Same hardware as the -CCT entry, with every output as its own dimmable light instead of two tunable-white pairs: five independent single-colour channels on PC4, PC3, PC2, PD2 and PB4. Same firmware - switching between the two is a config-string change plus a re-interview, no reflash, because Z2M picks the definition from the model name. Status LED shows red in this mode."
+  info: "Same hardware as the -CCT entry, reached by writing this config string and re-interviewing rather than by its own OTA - the stock-to-custom image lives on the -CCT entry, because both would otherwise claim the same stock ids. Every output is its own dimmable light here instead of two tunable-white pairs: five independent single-colour channels on PC4, PC3, PC2, PD2 and PB4. Same firmware - switching between the two is a config-string change plus a re-interview, no reflash, because Z2M picks the definition from the model name. Status LED shows red in this mode."
   threads: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
   store: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
 MODULE_AUBESS_TS0001:
