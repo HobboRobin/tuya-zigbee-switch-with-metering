@@ -589,8 +589,9 @@ void parse_config() {
     hal_zigbee_cluster *cluster_ptr = clusters;
 
     for (int index = 0; index < switch_clusters_cnt; index++) {
-        if (switch_clusters[index].relay_index > relay_clusters_cnt) {
-            // Detach switches that point past the available relay count.
+        if (switch_clusters[index].relay_index >
+            relay_clusters_cnt + light_clusters_cnt) {
+            // Detach switches that point past the available outputs.
             switch_clusters[index].relay_mode =
                 ZCL_ONOFF_CONFIGURATION_RELAY_MODE_DETACHED;
             switch_clusters[index].relay_index = 0;
@@ -688,6 +689,8 @@ void parse_config() {
         }
         cover_cluster_add_to_endpoint(&cover_clusters[index],
                                       &endpoints[cover_base + index]);
+        group_cluster_add_to_endpoint(&group_cluster,
+                                      &endpoints[cover_base + index]);
     }
 
     int light_base = switch_clusters_cnt + relay_clusters_cnt +
@@ -698,6 +701,11 @@ void parse_config() {
             endpoints[light_base + index].clusters = cluster_ptr;
         }
         light_cluster_add_to_endpoint(&light_clusters[index],
+                                      &endpoints[light_base + index]);
+        // A light is a switchable output like a relay, so it has to be
+        // groupable like one - without this cluster the coordinator's
+        // "add to group" is answered with UNSUP_COMMAND.
+        group_cluster_add_to_endpoint(&group_cluster,
                                       &endpoints[light_base + index]);
     }
 

@@ -55,7 +55,21 @@ module.exports = {repInterval: {MAX: 62000, HOUR: 3600, MINUTE: 60}};
 """,
     "zigbee-herdsman-converters/lib/exposes.js": """
 module.exports = {
-    presets: {action: (values) => ({name: "action", values})},
+    // withEndpoint is what turns one device-wide action into one per button:
+    // it renames the property, and Z2M's HA discovery makes a separate event
+    // entity out of each property.
+    presets: {
+        action: (values) => ({
+            name: "action",
+            property: "action",
+            values,
+            withEndpoint(endpoint) {
+                this.endpoint = endpoint;
+                this.property = `action_${endpoint}`;
+                return this;
+            },
+        }),
+    },
     access: {STATE: 1, ALL: 7},
 };
 """,
@@ -128,10 +142,13 @@ const actionExtend = (d) => {
     return ext;
 };
 
-const out = {actions: {}, results: []};
+const out = {actions: {}, perButton: {}, results: [], perButtonResults: []};
 for (const zbModel of JSON.parse(process.argv[3])) {
-    out.actions[zbModel] = actionExtend(findByModel(zbModel))
-        .exposes.find((x) => x.name === "action").values;
+    const exposes = actionExtend(findByModel(zbModel)).exposes;
+    out.actions[zbModel] = exposes.find((x) => x.property === "action").values;
+    // One event entity per button: same expose name, endpoint-suffixed property.
+    out.perButton[zbModel] = Object.fromEntries(
+        exposes.filter((x) => x.endpoint).map((x) => [x.property, x.values]));
 }
 // A device joined before `2EP` was enabled has no companion endpoint yet, so
 // getEndpoint() returns undefined for it. configure() must skip it rather than
@@ -159,12 +176,19 @@ for (const c of JSON.parse(process.argv[4])) {
     const ext = actionExtend(findByModel(zbModel));
     const msg = {endpoint: {ID: endpoint}, type, cluster, data};
     let action = null;
+    let perButton = null;
     for (const fz of ext.fromZigbee) {
         if (fz.cluster !== cluster || !fz.type.includes(type)) continue;
         const r = fz.convert(findByModel(zbModel), msg, () => {}, {}, {});
         if (r && r.action !== undefined) action = r.action;
+        if (r) {
+            for (const [k, v] of Object.entries(r)) {
+                if (k.startsWith("action_")) perButton = [k, v];
+            }
+        }
     }
     out.results.push(action);
+    out.perButtonResults.push(perButton);
 }
 
 (async () => {
@@ -239,6 +263,61 @@ def test_every_emitted_action_is_declared(converter_run):
         if action not in declared:
             undeclared[case[0]] = action
     assert not undeclared, undeclared
+
+
+def test_each_button_gets_its_own_event_entity(converter_run):
+    """One combined `action` leaves HA with a single event entity for the whole
+    device, so a two-button device has one entity whose types happen to be
+    named switch_0_* and switch_1_*. Endpoint-scoped actions give each button
+    an entity of its own, which is what a per-button automation wants."""
+    per_button = converter_run["perButton"]["TS0002-BSMN"]
+    assert sorted(per_button) == ["action_switch_left", "action_switch_right"]
+    for values in per_button.values():
+        # Unprefixed: the button is the entity, so repeating it in the type
+        # would only be noise.
+        assert "press" in values
+        assert "long_press" in values
+        assert "toggle" in values
+        assert "brightness_move_up" in values
+        # The 2EP companion endpoint lands on its parent button, marked long_.
+        assert "long_toggle" in values
+        assert not any(v.startswith("switch_") for v in values)
+
+
+def test_a_button_event_names_its_own_entity(converter_run):
+    """The endpoint the message came from decides which entity is fed."""
+    got = {
+        f"{c[0]} ep{c[3]} {c[1]}/{c[2]}": pb
+        for c, pb in zip(CASES, converter_run["perButtonResults"])
+        if c[0] == "TS0002-BSMN"
+    }
+    assert got == {
+        "TS0002-BSMN ep1 genMultistateInput/attributeReport": ["action_switch_left", "press"],
+        "TS0002-BSMN ep2 genMultistateInput/attributeReport": ["action_switch_right", "long_press"],
+        "TS0002-BSMN ep5 genOnOff/commandToggle": ["action_switch_left", "long_toggle"],
+        "TS0002-BSMN ep6 genOnOff/commandToggle": ["action_switch_right", "long_toggle"],
+    }
+
+
+def test_every_per_button_event_is_declared(converter_run):
+    """HA only fires event types the entity advertises."""
+    undeclared = {}
+    for case, emitted in zip(CASES, converter_run["perButtonResults"]):
+        if emitted is None:
+            continue
+        prop, value = emitted
+        declared = converter_run["perButton"][case[0]].get(prop, [])
+        if value not in declared:
+            undeclared[f"{case[0]} {prop}"] = value
+    assert not undeclared, undeclared
+
+
+def test_the_combined_action_is_unchanged(converter_run):
+    """Automations already built on the device-wide action must keep working."""
+    combined = converter_run["actions"]["TS0002-BSMN"]
+    assert "switch_0_press" in combined
+    assert "switch_1_long_press" in combined
+    assert "switch_1_long_toggle" in combined
 
 
 def test_configure_survives_a_missing_2ep_endpoint(converter_run):

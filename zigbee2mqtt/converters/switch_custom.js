@@ -62,21 +62,25 @@ const romasku = {
             description: "When to turn on/off internal relay",
             entityCategory: "config",
         }),
-    relayIndex: (name, endpointName, relay_cnt) =>
+    relayIndex: (name, endpointName, relay_cnt, light_cnt) =>
         enumLookup({
             name,
             endpointName,
             lookup: Object.fromEntries([
-                ...Array.from({ length: relay_cnt || 2 }, (_, i) => [`relay_${i + 1}`, i + 1]),
-                // 0xFF drives every relay at once. A mixed set is resolved as a
-                // group rather than per relay: anything on means everything
+                // The device's outputs in the order the firmware numbers them:
+                // relays first, then lights. Lights count from 0 to match their
+                // endpoint names, relays from 1 as they always have.
+                ...Array.from({ length: relay_cnt }, (_, i) => [`relay_${i + 1}`, i + 1]),
+                ...Array.from({ length: light_cnt }, (_, i) => [`light_${i}`, relay_cnt + i + 1]),
+                // 0xFF drives every output at once. A mixed set is resolved as
+                // a group rather than per output: anything on means everything
                 // goes off, otherwise everything goes on - what a master button
                 // is expected to do.
                 ["all", 255],
             ]),
             cluster: "genOnOffSwitchCfg",
             attribute: { ID: 0xff02, type: 0x20 }, // uint8
-            description: "Which internal relay it should trigger ('all' switches every relay together)",
+            description: "Which internal output it should trigger ('all' switches every output together)",
             entityCategory: "config",
         }),
     bindedMode: (name, endpointName) =>
@@ -158,7 +162,25 @@ const romasku = {
         };
         const levelSuffixes = ["brightness_move_up", "brightness_move_down", "brightness_stop"];
 
+        // Each button also gets an `action` of its own, tied to its endpoint, so
+        // Home Assistant creates one event entity per button instead of a single
+        // device-wide one whose type carries the button in its name. The
+        // combined `action` stays exactly as it was - automations built on it
+        // keep working, and it remains the only place a 2EP long press and its
+        // parent button can be told apart by name alone.
         const byEndpoint = (list) => Object.fromEntries(list.map((s) => [s.endpoint, s.prefix]));
+        const namesByEndpoint = Object.fromEntries(
+            [...switches, ...longSwitches, ...coverSwitches]
+                .filter((s) => s.name)
+                .map((s) => [s.endpoint, s.name]),
+        );
+        // A 2EP companion endpoint has no name of its own in deviceEndpoints; its
+        // events land on the parent button's entity, marked `long_`.
+        const suffixPrefixByEndpoint = Object.fromEntries(
+            [...switches, ...longSwitches, ...coverSwitches].map(
+                (s) => [s.endpoint, s.suffixPrefix || ""],
+            ),
+        );
         const multistatePrefixes = byEndpoint([...switches, ...coverSwitches]);
         const multistateStates = Object.fromEntries([
             ...switches.map((s) => [s.endpoint, switchStates]),
@@ -171,29 +193,48 @@ const romasku = {
         const coverPrefixes = byEndpoint(coverSwitches);
 
         const actions = [];
-        const add = (prefix, suffixes) => actions.push(...suffixes.map((s) => `${prefix}_${s}`));
+        // Per endpoint name, the event types that button alone can produce.
+        const perButton = {};
+        const add = (s, suffixes) => {
+            const suffixPrefix = s.suffixPrefix || "";
+            actions.push(...suffixes.map((x) => `${s.prefix}_${x}`));
+            if (!s.name) return;
+            perButton[s.name] = perButton[s.name] || [];
+            perButton[s.name].push(...suffixes.map((x) => `${suffixPrefix}${x}`));
+        };
         for (const s of switches) {
-            add(s.prefix, Object.values(switchStates));
-            add(s.prefix, Object.values(onOffCommands));
-            add(s.prefix, levelSuffixes);
+            add(s, Object.values(switchStates));
+            add(s, Object.values(onOffCommands));
+            add(s, levelSuffixes);
         }
         for (const s of longSwitches) {
-            add(s.prefix, Object.values(onOffCommands));
+            add(s, Object.values(onOffCommands));
         }
         for (const s of coverSwitches) {
-            add(s.prefix, Object.values(coverStates));
-            add(s.prefix, Object.values(coverCommands));
+            add(s, Object.values(coverStates));
+            add(s, Object.values(coverCommands));
         }
 
         const lookupAction = (prefixes, msg, suffix) => {
             const prefix = prefixes[msg.endpoint.ID];
             if (prefix === undefined || suffix === undefined) return;
-            return {action: `${prefix}_${suffix}`};
+            const result = {action: `${prefix}_${suffix}`};
+            const name = namesByEndpoint[msg.endpoint.ID];
+            if (name !== undefined) {
+                const suffixPrefix = suffixPrefixByEndpoint[msg.endpoint.ID] || "";
+                result[`action_${name}`] = `${suffixPrefix}${suffix}`;
+            }
+            return result;
         };
 
         return {
             isModernExtend: true,
-            exposes: [e.action(actions)],
+            exposes: [
+                e.action(actions),
+                ...Object.entries(perButton).map(
+                    ([name, values]) => e.action([...new Set(values)]).withEndpoint(name),
+                ),
+            ],
             fromZigbee: [
                 {
                     cluster: "genMultistateInput",
@@ -714,10 +755,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -732,7 +773,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -740,7 +781,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -748,7 +789,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -756,7 +797,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -849,10 +890,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -867,7 +908,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -875,7 +916,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -883,7 +924,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -891,7 +932,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -984,10 +1025,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -1002,7 +1043,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -1010,7 +1051,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -1018,7 +1059,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -1026,7 +1067,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -1119,10 +1160,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -1137,7 +1178,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -1145,7 +1186,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -1153,7 +1194,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -1161,7 +1202,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -1254,7 +1295,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1269,7 +1310,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -1311,8 +1352,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -1327,7 +1368,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -1335,7 +1376,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -1394,8 +1435,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -1410,7 +1451,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -1418,7 +1459,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -1477,7 +1518,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1492,7 +1533,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -1536,7 +1577,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1551,7 +1592,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -1595,7 +1636,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1756,7 +1797,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -1819,7 +1860,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay_0": 2, "relay_1": 3, "relay_2": 4, "relay_3": 5, "relay_4": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -1836,7 +1877,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 5),
+            romasku.relayIndex("switch_relay_index", "switch", 5, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -1893,15 +1934,15 @@ const definitions = [
         zigbeeModel: [
             "GL-C-006P-CCT",
         ],
-        model: "GL-C-006P-CCT",
+        model: "GL-C-006P",
         vendor: "Tuya-custom",
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "light_0": 3, "light_1": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -1913,12 +1954,16 @@ const definitions = [
             romasku.pressAction("switch_left_press_action", "switch_left"),
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
+            romasku.relayMode("switch_left_relay_mode", "switch_left"),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 0, 2),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
             romasku.pressAction("switch_right_press_action", "switch_right"),
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
+            romasku.relayMode("switch_right_relay_mode", "switch_right"),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 0, 2),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -1963,15 +2008,15 @@ const definitions = [
         zigbeeModel: [
             "GL-C-006P-DIM",
         ],
-        model: "GL-C-006P-DIM",
+        model: "GL-C-006P",
         vendor: "Tuya-custom",
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "light_0": 3, "light_1": 4, "light_2": 5, "light_3": 6, "light_4": 7, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -1983,12 +2028,16 @@ const definitions = [
             romasku.pressAction("switch_left_press_action", "switch_left"),
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
+            romasku.relayMode("switch_left_relay_mode", "switch_left"),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 0, 5),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
             romasku.pressAction("switch_right_press_action", "switch_right"),
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
+            romasku.relayMode("switch_right_relay_mode", "switch_right"),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 0, 5),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -2044,7 +2093,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -2059,7 +2108,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -2101,8 +2150,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2117,7 +2166,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -2125,7 +2174,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -2184,9 +2233,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2201,7 +2250,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -2209,7 +2258,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -2217,7 +2266,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -2293,10 +2342,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -2311,7 +2360,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -2319,7 +2368,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -2327,7 +2376,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -2335,7 +2384,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -2430,7 +2479,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -2445,7 +2494,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -2489,8 +2538,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2505,7 +2554,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -2513,7 +2562,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -2574,9 +2623,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2591,7 +2640,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -2599,7 +2648,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -2607,7 +2656,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -2685,10 +2734,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -2703,7 +2752,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -2711,7 +2760,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -2719,7 +2768,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -2727,7 +2776,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -2820,9 +2869,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -2837,7 +2886,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -2845,7 +2894,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -2853,7 +2902,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -2929,10 +2978,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -2947,7 +2996,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -2955,7 +3004,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -2963,7 +3012,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -2971,7 +3020,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -3064,7 +3113,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3079,7 +3128,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -3122,7 +3171,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3137,7 +3186,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -3180,8 +3229,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3196,7 +3245,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3204,7 +3253,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -3263,8 +3312,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3279,7 +3328,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3287,7 +3336,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -3346,9 +3395,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3363,7 +3412,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3371,7 +3420,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -3379,7 +3428,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -3455,8 +3504,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3471,7 +3520,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3479,7 +3528,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -3538,8 +3587,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3554,7 +3603,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3562,7 +3611,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -3621,7 +3670,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3636,7 +3685,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -3678,8 +3727,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3694,7 +3743,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3702,7 +3751,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -3761,8 +3810,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3777,7 +3826,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3785,7 +3834,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -3845,7 +3894,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -3860,7 +3909,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -3903,9 +3952,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -3920,7 +3969,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -3928,7 +3977,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -3936,7 +3985,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -4012,7 +4061,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4027,7 +4076,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4069,8 +4118,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -4085,7 +4134,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -4093,7 +4142,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -4152,7 +4201,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4167,7 +4216,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4209,7 +4258,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4224,7 +4273,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4267,8 +4316,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -4283,7 +4332,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -4291,7 +4340,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -4375,7 +4424,7 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch"),
@@ -4465,8 +4514,8 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
-                    {endpoint: 2, prefix: "cover_switch_1"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch_left"},
+                    {endpoint: 2, prefix: "cover_switch_1", name: "cover_switch_right"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch_left"),
@@ -4569,7 +4618,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4584,7 +4633,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4626,7 +4675,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4641,7 +4690,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4683,7 +4732,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4698,7 +4747,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4740,7 +4789,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4755,7 +4804,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4797,7 +4846,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4812,7 +4861,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4854,7 +4903,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -4869,7 +4918,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -4912,9 +4961,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -4929,7 +4978,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -4937,7 +4986,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -4945,7 +4994,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -5021,10 +5070,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -5039,7 +5088,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -5047,7 +5096,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -5055,7 +5104,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -5063,7 +5112,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -5156,7 +5205,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5171,7 +5220,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -5213,7 +5262,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5228,7 +5277,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -5270,7 +5319,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5285,7 +5334,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -5327,8 +5376,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5343,7 +5392,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -5351,7 +5400,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -5410,9 +5459,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5426,7 +5475,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -5434,7 +5483,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -5442,7 +5491,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -5518,7 +5567,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5533,7 +5582,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -5575,8 +5624,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5591,7 +5640,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -5599,7 +5648,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -5658,9 +5707,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -5675,7 +5724,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -5683,7 +5732,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -5691,7 +5740,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -5767,10 +5816,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -5785,7 +5834,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -5793,7 +5842,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -5801,7 +5850,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -5809,7 +5858,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -5902,7 +5951,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5917,7 +5966,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -5959,7 +6008,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -5974,7 +6023,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6016,7 +6065,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6031,7 +6080,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6073,7 +6122,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6088,7 +6137,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6130,8 +6179,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6146,7 +6195,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -6154,7 +6203,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -6213,9 +6262,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6230,7 +6279,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -6238,7 +6287,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -6246,7 +6295,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -6322,7 +6371,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6337,7 +6386,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6379,7 +6428,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6394,7 +6443,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6437,8 +6486,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6453,7 +6502,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -6461,7 +6510,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -6520,10 +6569,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -6538,7 +6587,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -6546,7 +6595,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -6554,7 +6603,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -6562,7 +6611,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -6655,9 +6704,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -6672,7 +6721,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -6680,7 +6729,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -6688,7 +6737,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -6764,7 +6813,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6779,7 +6828,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6821,7 +6870,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6836,7 +6885,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6878,7 +6927,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6893,7 +6942,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6935,7 +6984,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -6950,7 +6999,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -6992,7 +7041,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7007,7 +7056,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -7049,7 +7098,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7064,7 +7113,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -7108,8 +7157,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7124,7 +7173,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -7132,7 +7181,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -7192,9 +7241,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7209,7 +7258,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -7217,7 +7266,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -7225,7 +7274,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -7301,7 +7350,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7316,7 +7365,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -7358,7 +7407,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7373,7 +7422,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -7415,8 +7464,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7431,7 +7480,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -7439,7 +7488,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -7498,9 +7547,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7515,7 +7564,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -7523,7 +7572,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -7531,7 +7580,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -7607,7 +7656,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7622,7 +7671,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -7664,8 +7713,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7680,7 +7729,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -7688,7 +7737,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -7747,7 +7796,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -7762,7 +7811,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -7804,8 +7853,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7820,7 +7869,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -7828,7 +7877,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -7912,7 +7961,7 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch"),
@@ -7977,9 +8026,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -7994,7 +8043,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -8002,7 +8051,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -8010,7 +8059,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -8086,7 +8135,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8101,7 +8150,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -8143,8 +8192,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8159,7 +8208,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -8167,7 +8216,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -8226,8 +8275,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8242,7 +8291,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -8250,7 +8299,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -8309,7 +8358,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8324,7 +8373,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -8366,7 +8415,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8381,7 +8430,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -8423,7 +8472,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8438,7 +8487,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -8480,10 +8529,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -8498,7 +8547,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -8506,7 +8555,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -8514,7 +8563,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -8522,7 +8571,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -8615,8 +8664,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8631,7 +8680,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -8639,7 +8688,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -8698,8 +8747,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -8714,7 +8763,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -8722,7 +8771,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -8782,7 +8831,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -8797,7 +8846,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -8839,7 +8888,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9000,7 +9049,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -9063,7 +9112,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9224,7 +9273,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -9287,7 +9336,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9448,7 +9497,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -9511,7 +9560,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9672,7 +9721,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -9735,7 +9784,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9750,7 +9799,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -9794,7 +9843,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -9952,7 +10001,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -10015,8 +10064,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -10031,7 +10080,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -10039,7 +10088,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -10102,7 +10151,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10116,7 +10165,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -10160,7 +10209,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10174,7 +10223,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -10218,7 +10267,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10232,7 +10281,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -10276,7 +10325,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10290,7 +10339,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -10334,7 +10383,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10348,7 +10397,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -10393,10 +10442,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -10511,7 +10560,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10572,7 +10621,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10633,10 +10682,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -10752,10 +10801,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -10870,7 +10919,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10931,7 +10980,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -10992,8 +11041,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11072,9 +11121,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11171,10 +11220,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -11289,10 +11338,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -11407,7 +11456,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -11468,7 +11517,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -11529,7 +11578,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -11590,8 +11639,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11670,9 +11719,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11769,9 +11818,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -11868,10 +11917,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -11986,8 +12035,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12066,7 +12115,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -12127,10 +12176,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -12244,7 +12293,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -12259,7 +12308,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -12301,8 +12350,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12317,7 +12366,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -12325,7 +12374,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -12385,9 +12434,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12402,7 +12451,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -12410,7 +12459,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -12418,7 +12467,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -12494,10 +12543,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -12512,7 +12561,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -12520,7 +12569,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -12528,7 +12577,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -12536,7 +12585,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -12630,7 +12679,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -12645,7 +12694,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -12690,8 +12739,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12706,7 +12755,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -12714,7 +12763,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -12778,9 +12827,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12795,7 +12844,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -12803,7 +12852,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -12811,7 +12860,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -12887,10 +12936,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
-                    {endpoint: 3, prefix: "switch_0_long"},
+                    {endpoint: 3, prefix: "switch_0_long", name: "switch", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -12903,7 +12952,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -12953,8 +13002,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -12969,7 +13018,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -12977,7 +13026,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -13041,9 +13090,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13058,7 +13107,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -13066,7 +13115,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -13074,7 +13123,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -13156,10 +13205,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
-                    {endpoint: 3, prefix: "switch_0_long"},
+                    {endpoint: 3, prefix: "switch_0_long", name: "switch", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13174,7 +13223,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -13220,12 +13269,12 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, "switch_left_long": 5, "switch_right_long": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
-                    {endpoint: 5, prefix: "switch_0_long"},
-                    {endpoint: 6, prefix: "switch_1_long"},
+                    {endpoint: 5, prefix: "switch_0_long", name: "switch_left", suffixPrefix: "long_"},
+                    {endpoint: 6, prefix: "switch_1_long", name: "switch_right", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13240,7 +13289,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -13248,7 +13297,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -13316,14 +13365,14 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, "switch_left_long": 7, "switch_middle_long": 8, "switch_right_long": 9, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
-                    {endpoint: 7, prefix: "switch_0_long"},
-                    {endpoint: 8, prefix: "switch_1_long"},
-                    {endpoint: 9, prefix: "switch_2_long"},
+                    {endpoint: 7, prefix: "switch_0_long", name: "switch_left", suffixPrefix: "long_"},
+                    {endpoint: 8, prefix: "switch_1_long", name: "switch_middle", suffixPrefix: "long_"},
+                    {endpoint: 9, prefix: "switch_2_long", name: "switch_right", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13336,7 +13385,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -13344,7 +13393,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -13352,7 +13401,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -13441,16 +13490,16 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, "switch_0_long": 9, "switch_1_long": 10, "switch_2_long": 11, "switch_3_long": 12, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
-                    {endpoint: 9, prefix: "switch_0_long"},
-                    {endpoint: 10, prefix: "switch_1_long"},
-                    {endpoint: 11, prefix: "switch_2_long"},
-                    {endpoint: 12, prefix: "switch_3_long"},
+                    {endpoint: 9, prefix: "switch_0_long", name: "switch_0", suffixPrefix: "long_"},
+                    {endpoint: 10, prefix: "switch_1_long", name: "switch_1", suffixPrefix: "long_"},
+                    {endpoint: 11, prefix: "switch_2_long", name: "switch_2", suffixPrefix: "long_"},
+                    {endpoint: 12, prefix: "switch_3_long", name: "switch_3", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13463,7 +13512,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -13471,7 +13520,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -13479,7 +13528,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -13487,7 +13536,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -13596,7 +13645,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -13611,7 +13660,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -13655,7 +13704,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -13670,7 +13719,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -13714,8 +13763,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13730,7 +13779,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -13738,7 +13787,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -13799,8 +13848,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13815,7 +13864,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -13823,7 +13872,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -13884,10 +13933,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, "switch_long": 3, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
-                    {endpoint: 3, prefix: "switch_0_long"},
+                    {endpoint: 3, prefix: "switch_0_long", name: "switch", suffixPrefix: "long_"},
                 ],
                 coverSwitches: [
                 ],
@@ -13900,7 +13949,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -13949,8 +13998,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -13965,7 +14014,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -13973,7 +14022,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -14036,8 +14085,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14052,7 +14101,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -14060,7 +14109,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -14123,9 +14172,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14140,7 +14189,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -14148,7 +14197,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -14156,7 +14205,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -14238,7 +14287,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -14253,7 +14302,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -14297,8 +14346,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14313,7 +14362,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -14321,7 +14370,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -14384,9 +14433,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14401,7 +14450,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -14409,7 +14458,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -14417,7 +14466,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -14500,10 +14549,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -14518,7 +14567,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -14526,7 +14575,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -14534,7 +14583,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -14542,7 +14591,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -14643,7 +14692,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -14658,7 +14707,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -14702,8 +14751,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14718,7 +14767,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -14726,7 +14775,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -14789,9 +14838,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -14806,7 +14855,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -14814,7 +14863,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -14822,7 +14871,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -14904,7 +14953,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -14918,7 +14967,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -14962,7 +15011,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -14977,7 +15026,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -15019,8 +15068,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15035,7 +15084,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15043,7 +15092,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -15102,9 +15151,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15119,7 +15168,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15127,7 +15176,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -15135,7 +15184,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -15211,7 +15260,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -15226,7 +15275,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -15268,8 +15317,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15284,7 +15333,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15292,7 +15341,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -15351,9 +15400,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15368,7 +15417,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15376,7 +15425,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -15384,7 +15433,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -15460,8 +15509,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15475,7 +15524,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15483,7 +15532,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -15546,9 +15595,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15562,7 +15611,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15570,7 +15619,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -15578,7 +15627,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -15685,7 +15734,7 @@ const definitions = [
                 longSwitches: [
                 ],
                 coverSwitches: [
-                    {endpoint: 1, prefix: "cover_switch_0"},
+                    {endpoint: 1, prefix: "cover_switch_0", name: "cover_switch"},
                 ],
             }),
             romasku.deviceConfig("device_config", "cover_switch"),
@@ -15750,7 +15799,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -15764,7 +15813,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -15808,8 +15857,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15823,7 +15872,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15831,7 +15880,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -15894,9 +15943,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -15910,7 +15959,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -15918,7 +15967,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -15926,7 +15975,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -16008,7 +16057,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -16022,7 +16071,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -16066,8 +16115,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16081,7 +16130,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -16089,7 +16138,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -16152,9 +16201,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16168,7 +16217,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -16176,7 +16225,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -16184,7 +16233,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -16266,7 +16315,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -16281,7 +16330,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -16325,8 +16374,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16341,7 +16390,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -16349,7 +16398,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -16412,9 +16461,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16429,7 +16478,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -16437,7 +16486,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -16445,7 +16494,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -16527,9 +16576,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16544,7 +16593,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -16552,7 +16601,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -16560,7 +16609,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -16642,10 +16691,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -16660,7 +16709,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -16668,7 +16717,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -16676,7 +16725,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -16684,7 +16733,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -16786,7 +16835,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -16800,7 +16849,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -16845,8 +16894,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16860,7 +16909,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -16868,7 +16917,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -16932,9 +16981,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -16948,7 +16997,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -16956,7 +17005,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -16964,7 +17013,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -17046,10 +17095,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -17063,7 +17112,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -17071,7 +17120,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -17079,7 +17128,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -17087,7 +17136,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -17188,10 +17237,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -17205,7 +17254,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -17213,7 +17262,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -17221,7 +17270,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -17229,7 +17278,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -17330,9 +17379,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17346,7 +17395,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -17354,7 +17403,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -17362,7 +17411,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -17444,7 +17493,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17459,7 +17508,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -17503,8 +17552,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17519,7 +17568,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -17527,7 +17576,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -17591,7 +17640,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17606,7 +17655,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -17651,8 +17700,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17667,7 +17716,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -17675,7 +17724,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -17738,9 +17787,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17755,7 +17804,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -17763,7 +17812,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -17771,7 +17820,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -17853,7 +17902,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17867,7 +17916,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -17911,7 +17960,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -17925,7 +17974,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -17969,8 +18018,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -17984,7 +18033,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -17992,7 +18041,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -18055,9 +18104,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18071,7 +18120,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -18079,7 +18128,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -18087,7 +18136,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -18169,9 +18218,9 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_middle": 2, "switch_right": 3, "relay_left": 4, "relay_middle": 5, "relay_right": 6, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_middle"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18185,7 +18234,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 3),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 3, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -18193,7 +18242,7 @@ const definitions = [
             romasku.switchMode("switch_middle_mode", "switch_middle"),
             romasku.switchAction("switch_middle_action_mode", "switch_middle"),
             romasku.relayMode("switch_middle_relay_mode", "switch_middle"),
-            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3),
+            romasku.relayIndex("switch_middle_relay_index", "switch_middle", 3, 0),
             romasku.bindedMode("switch_middle_binded_mode", "switch_middle"),
             romasku.longPressDuration("switch_middle_long_press_duration", "switch_middle"),
             romasku.levelMoveRate("switch_middle_level_move_rate", "switch_middle"),
@@ -18201,7 +18250,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 3),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 3, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -18283,10 +18332,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -18300,7 +18349,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -18308,7 +18357,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -18316,7 +18365,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -18324,7 +18373,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -18425,7 +18474,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -18440,7 +18489,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -18482,10 +18531,10 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_0": 1, "switch_1": 2, "switch_2": 3, "switch_3": 4, "relay_0": 5, "relay_1": 6, "relay_2": 7, "relay_3": 8, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
-                    {endpoint: 3, prefix: "switch_2"},
-                    {endpoint: 4, prefix: "switch_3"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_0"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_1"},
+                    {endpoint: 3, prefix: "switch_2", name: "switch_2"},
+                    {endpoint: 4, prefix: "switch_3", name: "switch_3"},
                 ],
                 longSwitches: [
                 ],
@@ -18500,7 +18549,7 @@ const definitions = [
             romasku.switchMode("switch_0_mode", "switch_0"),
             romasku.switchAction("switch_0_action_mode", "switch_0"),
             romasku.relayMode("switch_0_relay_mode", "switch_0"),
-            romasku.relayIndex("switch_0_relay_index", "switch_0", 4),
+            romasku.relayIndex("switch_0_relay_index", "switch_0", 4, 0),
             romasku.bindedMode("switch_0_binded_mode", "switch_0"),
             romasku.longPressDuration("switch_0_long_press_duration", "switch_0"),
             romasku.levelMoveRate("switch_0_level_move_rate", "switch_0"),
@@ -18508,7 +18557,7 @@ const definitions = [
             romasku.switchMode("switch_1_mode", "switch_1"),
             romasku.switchAction("switch_1_action_mode", "switch_1"),
             romasku.relayMode("switch_1_relay_mode", "switch_1"),
-            romasku.relayIndex("switch_1_relay_index", "switch_1", 4),
+            romasku.relayIndex("switch_1_relay_index", "switch_1", 4, 0),
             romasku.bindedMode("switch_1_binded_mode", "switch_1"),
             romasku.longPressDuration("switch_1_long_press_duration", "switch_1"),
             romasku.levelMoveRate("switch_1_level_move_rate", "switch_1"),
@@ -18516,7 +18565,7 @@ const definitions = [
             romasku.switchMode("switch_2_mode", "switch_2"),
             romasku.switchAction("switch_2_action_mode", "switch_2"),
             romasku.relayMode("switch_2_relay_mode", "switch_2"),
-            romasku.relayIndex("switch_2_relay_index", "switch_2", 4),
+            romasku.relayIndex("switch_2_relay_index", "switch_2", 4, 0),
             romasku.bindedMode("switch_2_binded_mode", "switch_2"),
             romasku.longPressDuration("switch_2_long_press_duration", "switch_2"),
             romasku.levelMoveRate("switch_2_level_move_rate", "switch_2"),
@@ -18524,7 +18573,7 @@ const definitions = [
             romasku.switchMode("switch_3_mode", "switch_3"),
             romasku.switchAction("switch_3_action_mode", "switch_3"),
             romasku.relayMode("switch_3_relay_mode", "switch_3"),
-            romasku.relayIndex("switch_3_relay_index", "switch_3", 4),
+            romasku.relayIndex("switch_3_relay_index", "switch_3", 4, 0),
             romasku.bindedMode("switch_3_binded_mode", "switch_3"),
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
@@ -18617,7 +18666,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -18631,7 +18680,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -18676,8 +18725,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18691,7 +18740,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -18699,7 +18748,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
@@ -18762,7 +18811,7 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch": 1, "relay": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch"},
                 ],
                 longSwitches: [
                 ],
@@ -18776,7 +18825,7 @@ const definitions = [
             romasku.switchMode("switch_mode", "switch"),
             romasku.switchAction("switch_action_mode", "switch"),
             romasku.relayMode("switch_relay_mode", "switch"),
-            romasku.relayIndex("switch_relay_index", "switch", 1),
+            romasku.relayIndex("switch_relay_index", "switch", 1, 0),
             romasku.bindedMode("switch_binded_mode", "switch"),
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
@@ -18820,8 +18869,8 @@ const definitions = [
             deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, "relay_left": 3, "relay_right": 4, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0"},
-                    {endpoint: 2, prefix: "switch_1"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
@@ -18835,7 +18884,7 @@ const definitions = [
             romasku.switchMode("switch_left_mode", "switch_left"),
             romasku.switchAction("switch_left_action_mode", "switch_left"),
             romasku.relayMode("switch_left_relay_mode", "switch_left"),
-            romasku.relayIndex("switch_left_relay_index", "switch_left", 2),
+            romasku.relayIndex("switch_left_relay_index", "switch_left", 2, 0),
             romasku.bindedMode("switch_left_binded_mode", "switch_left"),
             romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
             romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
@@ -18843,7 +18892,7 @@ const definitions = [
             romasku.switchMode("switch_right_mode", "switch_right"),
             romasku.switchAction("switch_right_action_mode", "switch_right"),
             romasku.relayMode("switch_right_relay_mode", "switch_right"),
-            romasku.relayIndex("switch_right_relay_index", "switch_right", 2),
+            romasku.relayIndex("switch_right_relay_index", "switch_right", 2, 0),
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),

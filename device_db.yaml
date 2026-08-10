@@ -325,7 +325,7 @@ LIGHT_GLEDOPTO_GLC006P_CCT:
   stock_manufacturer_name: ERICSITY
   stock_converter_manufacturer: Gledopto
   stock_converter_model: GL-C-006P
-  override_z2m_device: GL-C-006P-CCT
+  override_z2m_device: null
   tuya_module: none
   mcu_family: Telink
   mcu: TLSR8258
@@ -338,7 +338,7 @@ LIGHT_GLEDOPTO_GLC006P_CCT:
   firmware_image_type: 47118
   build: yes
   status: in_progress
-  info: "Gledopto WW/CW LED controller on a bare TLSR8258ET32 (not a Tuya module). The stock firmware announces itself as manufacturer 4687 / image type 5145, so the usual stock-to-custom OTA applies here as well - a Telink bootloader verifies no signatures, whatever brand wrote the firmware. Flashing by wire via SWS stays the fallback, and note SWS is PA7, shared with the blue status LED, so its resistor may have to come off. Stock firmware exposes the four outputs as a single tunable-white light, which is what this replaces: here the same hardware becomes two independent lights, and switching to five plain dimmers is a config-string change away (see the -DIM entry). Outputs PC4/PC3 are the first pair (cold/warm), PC2/PD2 the second; PB4 is the fifth channel, unused in this mode. Reset button PC0, second button PB7 (usable as a master switch via relay_index 'all'), wired input PB1 for binding. Three-colour status LED on PA0/PA1/PA7 shows the configured mode - green here. The status LED is deliberately not dimmable: PA0 shares PWM channel 0 with the PC2 output. Strips are 3000-6000 K, matching the firmware's mired range; a different span needs LIGHT_COLOR_TEMP_*_MIREDS changed."
+  info: "Gledopto WW/CW LED controller on a bare TLSR8258ET32 (not a Tuya module). The stock firmware announces itself as manufacturer 4687 / image type 5145, so the usual stock-to-custom OTA applies here as well - a Telink bootloader verifies no signatures, whatever brand wrote the firmware. Flashing by wire via SWS stays the fallback, and note SWS is PA7, shared with the blue status LED, so its resistor may have to come off. Stock firmware exposes the four outputs as a single tunable-white light, which is what this replaces: here the same hardware becomes two independent lights, and switching to five plain dimmers is a config-string change away (see the -DIM entry). Outputs PC4/PC3 are the first pair (cold/warm), PC2/PD2 the second; PB4 is the fifth channel, unused in this mode. Reset button PC0, second button PB7 and wired input PB1 both appear as switches (switch_left / switch_right) and each picks what it drives with relay_index: light_0, light_1, or 'all' for a master button. Three-colour status LED on PA0/PA1/PA7 shows the configured mode - green here. The status LED is deliberately not dimmable: PA0 shares PWM channel 0 with the PC2 output. Strips are 3000-6000 K, matching the firmware's mired range; a different span needs LIGHT_COLOR_TEMP_*_MIREDS changed."
   threads: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
   store: https://www.zigbee2mqtt.io/devices/GL-C-006P.html
 LIGHT_GLEDOPTO_GLC006P_DIM:
@@ -352,7 +352,7 @@ LIGHT_GLEDOPTO_GLC006P_DIM:
   stock_manufacturer_name: ERICSITY
   stock_converter_manufacturer: Gledopto
   stock_converter_model: GL-C-006P
-  override_z2m_device: GL-C-006P-DIM
+  override_z2m_device: null
   tuya_module: none
   mcu_family: Telink
   mcu: TLSR8258
