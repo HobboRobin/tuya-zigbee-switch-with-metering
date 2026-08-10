@@ -74,6 +74,18 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **A light's power-on behaviour was mismapped.** `startUpOnOff` is a ZCL
+    enum - 0 off, 1 on, 2 toggle, 0xFF previous - but the light cluster
+    numbered "previous" as 2, so a coordinator asking for *previous* (0xFF)
+    fell through to *off* and the light never came back, while *toggle* was
+    silently read as *previous*. The on/off state is now also stored in its
+    own right rather than derived from the level, which is clamped to 1..254
+    and so would have made "previous" always mean on. Coming back on now also
+    restores the brightness the light had instead of jumping to full.
+  - Lights no longer advertise an **effect** control. It maps onto
+    `genIdentify` triggerEffect, which light endpoints do not carry - Identify
+    is one cluster for the whole device on endpoint 1 - so the control could
+    only ever answer UNSUP_COMMAND.
   - **Lights and covers could not join a Zigbee group.** The Groups cluster
     was only attached to relay endpoints, so `genGroups.add` on a light or
     cover endpoint was answered with UNSUP_COMMAND and Z2M reported the group
