@@ -74,6 +74,15 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **"Previous" as the startup colour temperature is written as 0.** The ZCL
+    sentinel for it is 0xFFFF, but zigbee-herdsman 10.6.1 caps
+    `startUpColorTemperature` at 0xFEFF and never consults the sentinel its own
+    definition declares, so the write was refused with INVALID_VALUE before it
+    left the coordinator (and a read of 0xFFFF came back as NaN). Both are
+    fixed upstream, but only in later versions. The converter now puts 0 on the
+    wire, which the firmware reads as "previous" as well - 0 mireds is not a
+    colour any light can show - and keeps publishing 65535 so the preset stays
+    selected in the UI.
   - **A light's power-on behaviour was mismapped.** `startUpOnOff` is a ZCL
     enum - 0 off, 1 on, 2 toggle, 0xFF previous - but the light cluster
     numbered "previous" as 2, so a coordinator asking for *previous* (0xFF)

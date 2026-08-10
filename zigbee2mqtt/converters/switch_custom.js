@@ -271,6 +271,49 @@ const romasku = {
             ],
         };
     },
+    // "Restore the previous colour temperature" is 0xFFFF on the wire, but
+    // zigbee-herdsman 10.6.1 caps startUpColorTemperature at 0xFEFF and never
+    // consults the sentinel it defines for exactly this: a write of 65535 is
+    // refused with INVALID_VALUE before it leaves the coordinator, and a read
+    // of 65535 comes back as NaN. Both are fixed upstream, but only later.
+    //
+    // 0 is sent instead. The firmware reads it as "previous" as well - 0 mireds
+    // is not a colour any light can show, so nothing else can mean it - and it
+    // passes the check. The published state stays 65535 so the UI keeps showing
+    // its "previous" preset as the selected one.
+    //
+    // Split in two because converter order decides who wins: the *first*
+    // matching toZigbee is used, so the write has to come before light(), while
+    // fromZigbee results are merged in order, so the read has to come after it.
+    colorTempStartupPreviousWrite: () => ({
+        isModernExtend: true,
+        toZigbee: [{
+            key: ["color_temp_startup"],
+            convertSet: async (entity, key, value, meta) => {
+                const previous = value === "previous" || Number(value) === 65535;
+                await entity.write("lightingColorCtrl", {
+                    startUpColorTemperature: previous ? 0 : Number(value),
+                });
+                return {state: {color_temp_startup: previous ? 65535 : Number(value)}};
+            },
+            convertGet: async (entity) => {
+                await entity.read("lightingColorCtrl", ["startUpColorTemperature"]);
+            },
+        }],
+    }),
+    colorTempStartupPreviousRead: (endpointNamesById) => ({
+        isModernExtend: true,
+        fromZigbee: [{
+            cluster: "lightingColorCtrl",
+            type: ["attributeReport", "readResponse"],
+            convert: (model, msg) => {
+                if (msg.data.startUpColorTemperature !== 0) return;
+                const name = endpointNamesById[msg.endpoint.ID];
+                if (name === undefined) return;
+                return {[`color_temp_startup_${name}`]: 65535};
+            },
+        }],
+    }),
     // One fade time per light rather than per channel: a tunable white has to
     // fade cold and warm together, and an RGB light must not end up with three
     // separate transitions.
@@ -1967,7 +2010,9 @@ const definitions = [
             romasku.bindedMode("switch_right_binded_mode", "switch_right"),
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
+            romasku.colorTempStartupPreviousWrite(),
             light({ endpointNames: ["light_0", "light_1"], colorTemp: {range: [167, 333]}, effect: false }),
+            romasku.colorTempStartupPreviousRead({3: "light_0", 4: "light_1", }),
             romasku.lightTransition("light_0_transition", "light_0"),
             romasku.lightTransition("light_1_transition", "light_1"),
         ],

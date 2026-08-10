@@ -191,7 +191,49 @@ for (const c of JSON.parse(process.argv[4])) {
     out.perButtonResults.push(perButton);
 }
 
+// startUpColorTemperature 0xFFFF ("previous") is refused by zigbee-herdsman
+// 10.6.1 before it reaches the device, so the converter has to put a different
+// value on the wire and keep showing 65535 in the state.
+const runColorTempStartup = (zbModel) => {
+    const d = findByModel(zbModel);
+    const written = [];
+    const entity = {
+        write: async (cluster, payload) => written.push([cluster, payload]),
+        read: async () => {},
+    };
+    // z-h-c concatenates the extends in order: the first matching toZigbee
+    // wins, while every matching fromZigbee runs and later results overwrite.
+    const toZigbee = d.extend.flatMap((e) => e.toZigbee || []);
+    const fromZigbee = d.extend.flatMap((e) => e.fromZigbee || []);
+    const tz = toZigbee.find((c) => c.key?.includes("color_temp_startup"));
+    if (!tz) return {error: "no color_temp_startup converter"};
+    const fz = fromZigbee.filter(
+        (c) => c.cluster === "lightingColorCtrl" && c.type?.includes("readResponse"));
+
+    const readBack = (endpointID, value) => {
+        const msg = {endpoint: {ID: endpointID}, data: {startUpColorTemperature: value},
+                     type: "readResponse", cluster: "lightingColorCtrl"};
+        let payload = {};
+        for (const c of fz) Object.assign(payload, c.convert(d, msg, () => {}, {}, {}) || {});
+        return payload;
+    };
+
+    return (async () => ({
+        previous: {
+            state: (await tz.convertSet(entity, "color_temp_startup", 65535, {})).state,
+            written: written.splice(0).pop(),
+        },
+        plain: {
+            state: (await tz.convertSet(entity, "color_temp_startup", 250, {})).state,
+            written: written.splice(0).pop(),
+        },
+        readPrevious: readBack(3, 0),
+        readPlain: readBack(3, 250),
+    }))();
+};
+
 (async () => {
+    out.colorTempStartup = await runColorTempStartup("GL-C-006P-CCT");
     // BSLR1 has switch=1, relay=2, switch_long=3.
     out.configure = {
         all_endpoints: await runConfigure("BSLR1", [1, 2, 3]),
@@ -318,6 +360,37 @@ def test_the_combined_action_is_unchanged(converter_run):
     assert "switch_0_press" in combined
     assert "switch_1_long_press" in combined
     assert "switch_1_long_toggle" in combined
+
+
+def test_previous_colour_temp_startup_avoids_the_rejected_sentinel(converter_run):
+    """0xFFFF never reaches the device on zigbee-herdsman 10.6.1.
+
+    Its attribute definition caps startUpColorTemperature at 0xFEFF and the
+    write path does not consult the sentinel it defines for exactly this, so
+    the write is refused with INVALID_VALUE before it is sent. 0 goes on the
+    wire instead - the firmware reads it as "previous" too - while the state
+    keeps saying 65535 so the UI's "previous" preset stays selected.
+    """
+    got = converter_run["colorTempStartup"]
+    assert got["previous"]["written"] == [
+        "lightingColorCtrl", {"startUpColorTemperature": 0}
+    ]
+    assert got["previous"]["state"] == {"color_temp_startup": 65535}
+
+
+def test_an_ordinary_colour_temp_startup_is_passed_through(converter_run):
+    got = converter_run["colorTempStartup"]
+    assert got["plain"]["written"] == [
+        "lightingColorCtrl", {"startUpColorTemperature": 250}
+    ]
+    assert got["plain"]["state"] == {"color_temp_startup": 250}
+
+
+def test_the_read_back_shows_previous_again(converter_run):
+    got = converter_run["colorTempStartup"]
+    assert got["readPrevious"] == {"color_temp_startup_light_0": 65535}
+    # Anything else is reported as-is by the stock converter.
+    assert got["readPlain"].get("color_temp_startup_light_0") != 65535
 
 
 def test_configure_survives_a_missing_2ep_endpoint(converter_run):
