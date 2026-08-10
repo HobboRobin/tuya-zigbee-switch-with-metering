@@ -1017,13 +1017,17 @@ const definitions = [
             romasku.ledTransition("{{relayName}}_led_transition", "{{relayName}}"),
             {% endfor %}
             {% if device.dimmerNames %}
-            light({ endpointNames: {{device.dimmerNames | tojson}} }),
+            {# `effect` maps onto genIdentify triggerEffect, which the light
+               endpoints do not carry - Identify lives on endpoint 1 for the
+               whole device. Leaving it on would advertise a control that can
+               only ever answer UNSUP_COMMAND. #}
+            light({ endpointNames: {{device.dimmerNames | tojson}}, effect: false }),
             {% endif %}
             {% if device.cctNames %}
             {# Range must match the strip: the firmware mixes cold and warm by
                where the requested value sits inside it, so a wider range here
                would leave the ends of the slider doing nothing. #}
-            light({ endpointNames: {{device.cctNames | tojson}}, colorTemp: {range: [167, 333]} }),
+            light({ endpointNames: {{device.cctNames | tojson}}, colorTemp: {range: [167, 333]}, effect: false }),
             {% endif %}
             {% for lightName in device.lightNames %}
             romasku.lightTransition("{{lightName}}_transition", "{{lightName}}"),

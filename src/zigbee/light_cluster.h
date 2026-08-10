@@ -41,8 +41,10 @@ typedef struct {
     uint16_t             color_temp;    // mireds, tunable white only
     uint16_t             transition_ms; // fade time for on/off/level/colour
 
-    uint8_t              startup_mode;  // 0 = off, 1 = on, 2 = previous
-    uint8_t              startup_level; // level restored in "previous" mode
+    // startUpOnOff, ZCL values: 0 off, 1 on, 2 toggle, 0xFF previous.
+    uint8_t              startup_mode;
+    uint8_t              startup_on;    // on/off the light last had
+    uint8_t              startup_level; // level it last had
     uint16_t             startup_color_temp;
 
     // startUpColorTemperature: 0xFFFF ("previous") restores startup_color_temp,

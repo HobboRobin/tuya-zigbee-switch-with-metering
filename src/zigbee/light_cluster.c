@@ -6,12 +6,13 @@
 #include "device_config/nvm_items.h"
 #include <string.h>
 
-#define LIGHT_LEVEL_MIN           1
-#define LIGHT_LEVEL_MAX           254
+#define LIGHT_LEVEL_MIN    1
+#define LIGHT_LEVEL_MAX    254
 
-#define LIGHT_STARTUP_OFF         0
-#define LIGHT_STARTUP_ON          1
-#define LIGHT_STARTUP_PREVIOUS    2
+// startUpOnOff is a ZCL enum, so its values are dictated by the spec rather
+// than chosen here: 0 off, 1 on, 2 toggle, 0xFF previous. Numbering "previous"
+// as 2 would silently mean "toggle" to every coordinator, and the real
+// "previous" (0xFF) would fall through to off - a light that never comes back.
 
 // Fixed attribute values; the stack needs an address for every attribute.
 static uint16_t color_temp_phys_min = LIGHT_COLOR_TEMP_MIN_MIREDS;
@@ -27,6 +28,10 @@ static void light_cluster_load_from_nv(zigbee_light_cluster *cluster);
 
 typedef struct {
     uint8_t  startup_mode;
+    // Whether the light was on, kept apart from the level: the level is clamped
+    // to 1..254 and so is never 0, and deriving on/off from it would make
+    // "previous" mean "always on".
+    uint8_t  was_on;
     uint8_t  level;
     uint16_t color_temp;
     uint16_t transition_ms;
@@ -166,6 +171,7 @@ void light_clusters_restore(void) {
 static void light_cluster_store_to_nv(zigbee_light_cluster *cluster) {
     light_nv_data_t data = {
         .startup_mode  = cluster->startup_mode,
+        .was_on        = cluster->on,
         .level         = cluster->level,
         .color_temp    = cluster->color_temp,
         .transition_ms = cluster->transition_ms,
@@ -187,6 +193,7 @@ static void light_cluster_load_from_nv(zigbee_light_cluster *cluster) {
         return;
     }
     cluster->startup_mode               = data.startup_mode;
+    cluster->startup_on                 = data.was_on;
     cluster->startup_level              = data.level;
     cluster->startup_color_temp         = data.color_temp;
     cluster->transition_ms              = data.transition_ms;
@@ -205,25 +212,32 @@ static void light_cluster_handle_startup(zigbee_light_cluster *cluster) {
     }
 
     switch (cluster->startup_mode) {
-    case LIGHT_STARTUP_ON:
+    case ZCL_START_UP_ONOFF_SET_ONOFF_TO_ON:
         cluster->on = 1;
         break;
 
-    case LIGHT_STARTUP_PREVIOUS:
+    case ZCL_START_UP_ONOFF_SET_ONOFF_TOGGLE:
+        cluster->on = !cluster->startup_on;
+        break;
+
+    case ZCL_START_UP_ONOFF_SET_ONOFF_TO_PREVIOUS:
         // Brightness and colour come back too, not just on/off - a light that
         // returns at full white after a power cut is worse than one that stays
         // off.
-        cluster->on = cluster->startup_level > 0;
-        if (cluster->startup_level > 0) {
-            cluster->level = cluster->startup_level;
-        }
+        cluster->on = cluster->startup_on;
         // The colour is already restored above, for every startup mode.
         break;
 
-    case LIGHT_STARTUP_OFF:
+    case ZCL_START_UP_ONOFF_SET_ONOFF_TO_OFF:
     default:
         cluster->on = 0;
         break;
+    }
+
+    // The brightness is what the light last showed whatever brings it back on,
+    // so a light that comes up ON does not jump to full.
+    if (cluster->startup_level > 0) {
+        cluster->level = cluster->startup_level;
     }
 }
 
