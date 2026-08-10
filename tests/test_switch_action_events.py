@@ -153,11 +153,15 @@ for (const zbModel of JSON.parse(process.argv[3])) {
 // A device joined before `2EP` was enabled has no companion endpoint yet, so
 // getEndpoint() returns undefined for it. configure() must skip it rather than
 // throw - a throw aborts the whole configure and leaves reporting unset.
-const runConfigure = async (zbModel, availableEndpoints) => {
+const runConfigure = async (zbModel, availableEndpoints, calls) => {
     const endpoint = (ID) => ({
         ID,
-        configureReporting: async () => {},
-        read: async () => {},
+        configureReporting: async (cluster, items) => {
+            if (calls) calls.reporting.push([ID, cluster, items]);
+        },
+        read: async (cluster, attrs) => {
+            if (calls) calls.read.push([ID, cluster, attrs]);
+        },
         bind: async () => {},
     });
     const device = {
@@ -234,6 +238,11 @@ const runColorTempStartup = (zbModel) => {
 
 (async () => {
     out.colorTempStartup = await runColorTempStartup("GL-C-006P-CCT");
+    // The overload alarm is only ever pushed by the device, so it is worth
+    // nothing unless configure() asks for it to be reported.
+    const meterCalls = {reporting: [], read: []};
+    out.meterConfigure = await runConfigure("TS011F-A1Z", [1, 2, 3], meterCalls);
+    out.meterCalls = meterCalls;
     // BSLR1 has switch=1, relay=2, switch_long=3.
     out.configure = {
         all_endpoints: await runConfigure("BSLR1", [1, 2, 3]),
@@ -391,6 +400,37 @@ def test_the_read_back_shows_previous_again(converter_run):
     assert got["readPrevious"] == {"color_temp_startup_light_0": 65535}
     # Anything else is reported as-is by the stock converter.
     assert got["readPlain"].get("color_temp_startup_light_0") != 65535
+
+
+def test_the_overload_alarm_is_configured_to_report(converter_run):
+    """The alarm only ever arrives unsolicited.
+
+    It is the attribute that says the relay tripped, and nothing polls it, so
+    without a reporting configuration the entity simply never changes - which
+    is exactly how a real overload passed unnoticed.
+    """
+    reporting = converter_run["meterCalls"]["reporting"]
+    elec = [items for _, cluster, items in reporting
+            if cluster == "haElectricalMeasurement"]
+    assert elec, "no haElectricalMeasurement reporting configured"
+    alarm = [
+        i for items in elec for i in items
+        if isinstance(i.get("attribute"), dict) and i["attribute"].get("ID") == 0xFF36
+    ]
+    assert len(alarm) == 1, alarm
+    # On change, and re-sent within the hour so a lost report cannot leave a
+    # tripped relay showing "none" all day.
+    assert alarm[0]["minimumReportInterval"] == 0
+    assert alarm[0]["maximumReportInterval"] <= 3600
+
+
+def test_the_overload_alarm_is_read_once_at_configure(converter_run):
+    """So the entity has a value before the first trip, not 'unknown'."""
+    reads = converter_run["meterCalls"]["read"]
+    assert any(
+        cluster == "haElectricalMeasurement" and 0xFF36 in attrs
+        for _, cluster, attrs in reads
+    ), reads
 
 
 def test_configure_survives_a_missing_2ep_endpoint(converter_run):

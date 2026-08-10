@@ -513,7 +513,9 @@ const romasku = {
             attribute: {ID: 0xFF36, type: 0x30}, // enum8
             lookup: {none: 0, power: 1, current: 2, peak: 3, voltage_high: 4, voltage_low: 5, locked_out: 6},
             description: "Overload protection status: what tripped the relay or is being warned about (locked_out = tripped too many times, switch on manually to re-arm)",
-            access: "STATE",
+            // Readable, not only reported: a device that tripped while Z2M was
+            // down would otherwise keep showing the state from before.
+            access: "STATE_GET",
             entityCategory: "diagnostic",
             endpointName,
         }),
@@ -1882,7 +1884,11 @@ const definitions = [
                 {attribute: "apparentPower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "reactivePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "powerFactor", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 5},
+                {attribute: {ID: 0xFF36, type: 0x30}, minimumReportInterval: 0, maximumReportInterval: 3600, reportableChange: 0},
             ]);
+            // Seed the current value, so the entity is populated before the
+            // first trip rather than showing "unknown" until one happens.
+            await emEndpoint.read("haElectricalMeasurement", [0xFF36]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
@@ -9136,7 +9142,11 @@ const definitions = [
                 {attribute: "apparentPower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "reactivePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "powerFactor", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 5},
+                {attribute: {ID: 0xFF36, type: 0x30}, minimumReportInterval: 0, maximumReportInterval: 3600, reportableChange: 0},
             ]);
+            // Seed the current value, so the entity is populated before the
+            // first trip rather than showing "unknown" until one happens.
+            await emEndpoint.read("haElectricalMeasurement", [0xFF36]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
@@ -9360,7 +9370,11 @@ const definitions = [
                 {attribute: "apparentPower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "reactivePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "powerFactor", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 5},
+                {attribute: {ID: 0xFF36, type: 0x30}, minimumReportInterval: 0, maximumReportInterval: 3600, reportableChange: 0},
             ]);
+            // Seed the current value, so the entity is populated before the
+            // first trip rather than showing "unknown" until one happens.
+            await emEndpoint.read("haElectricalMeasurement", [0xFF36]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
@@ -9584,7 +9598,11 @@ const definitions = [
                 {attribute: "apparentPower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "reactivePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "powerFactor", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 5},
+                {attribute: {ID: 0xFF36, type: 0x30}, minimumReportInterval: 0, maximumReportInterval: 3600, reportableChange: 0},
             ]);
+            // Seed the current value, so the entity is populated before the
+            // first trip rather than showing "unknown" until one happens.
+            await emEndpoint.read("haElectricalMeasurement", [0xFF36]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
@@ -9808,7 +9826,11 @@ const definitions = [
                 {attribute: "apparentPower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "reactivePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "powerFactor", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 5},
+                {attribute: {ID: 0xFF36, type: 0x30}, minimumReportInterval: 0, maximumReportInterval: 3600, reportableChange: 0},
             ]);
+            // Seed the current value, so the entity is populated before the
+            // first trip rather than showing "unknown" until one happens.
+            await emEndpoint.read("haElectricalMeasurement", [0xFF36]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);
@@ -10088,7 +10110,11 @@ const definitions = [
                 {attribute: "apparentPower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "reactivePower", minimumReportInterval: 5, maximumReportInterval: 36000, reportableChange: 5},
                 {attribute: "powerFactor", minimumReportInterval: 10, maximumReportInterval: 36000, reportableChange: 5},
+                {attribute: {ID: 0xFF36, type: 0x30}, minimumReportInterval: 0, maximumReportInterval: 3600, reportableChange: 0},
             ]);
+            // Seed the current value, so the entity is populated before the
+            // first trip rather than showing "unknown" until one happens.
+            await emEndpoint.read("haElectricalMeasurement", [0xFF36]);
             await emEndpoint.configureReporting("seMetering", [
                 {attribute: "currentSummDelivered", minimumReportInterval: 0, maximumReportInterval: 36000, reportableChange: 10},
             ]);

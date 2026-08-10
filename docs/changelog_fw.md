@@ -74,6 +74,13 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **An overload trip was never announced.** The alarm attribute is only ever
+    pushed by the device and nothing polls it, but no reporting was configured
+    for it - so the relay switched off correctly and Z2M went on showing
+    `none`. It is now reported the moment it changes, re-sent within the hour
+    so a lost report cannot leave a tripped relay looking fine all day, and
+    read once during configure so the entity starts with a value instead of
+    `unknown`. Existing devices need one **Reconfigure** in Z2M.
   - **"Previous" as the startup colour temperature is written as 0.** The ZCL
     sentinel for it is 0xFFFF, but zigbee-herdsman 10.6.1 caps
     `startUpColorTemperature` at 0xFEFF and never consults the sentinel its own
