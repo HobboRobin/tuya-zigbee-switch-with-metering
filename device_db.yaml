@@ -4035,6 +4035,50 @@ REMOTE_TUYA_TS004F:
   info: Should work, measured battery drain is ~5uA, but wasn't battle tested.
   threads: https://github.com/romasku/tuya-zigbee-switch/issues/171
   store: null
+SENSOR_MOES_CONTACT_TS0203:
+  human_name: Moes ZSS-S01-GWM-C-MS door/window contact
+  category: sensor
+  power: CR2032
+  neutral: without
+  output: nothing
+  device_type: end_device
+  stock_model_name: ZSS-S01-GWM-C-MS
+  stock_manufacturer_name: _TZ3000_8yhypbo7
+  stock_converter_manufacturer: Tuya
+  stock_converter_model: TS0203
+  override_z2m_device: null
+  tuya_module: ZTU
+  mcu_family: Telink
+  mcu: TLSR8258
+  config_str: 8yhypbo7;TS0203-MOES;BD3u;SD7f;IB4;BTB5;
+  alt_config_str: null
+  old_manufacturer_names: null
+  old_zb_models: null
+  stock_manufacturer_id: null
+  stock_image_type: null
+  firmware_image_type: 47120
+  build: yes
+  status: in_progress
+  info: >-
+    Reed contact on PD7, tactile pairing button on PD3, white LED on PB4, ZTU
+    module (TLSR8258). The reed runs from VDD to PD7, which the board holds down
+    with a 10M resistor (through a 0R link), so the level is defined on the
+    board and the internal pull must stay off: an internal pull-up would beat
+    the 10M ten to one and peg the pin high, and the internal 100K pull-down
+    would cost 30uA whenever the magnet is present. Measured that way the
+    contact costs 0.3uA, well under the cell's own ~2.5uA of self-discharge.
+    PD7 reads HIGH with the magnet present, so "pressed" is the door being
+    open. Battery is
+    measured in the chip's VBAT mode, which drives the chosen pin high and reads
+    it back - PB5 is used because it is unconnected on this board and is one of
+    the ten pins that have an ADC channel at all (PB0-PB7, PC4, PC5). The LED is
+    an indicator rather than the network LED on purpose: a network LED stays lit
+    while joined, which a coin cell cannot afford. The stock firmware reports the
+    contact over IAS Zone, which this firmware does not implement yet, so for now
+    the reed appears as a switch in toggle mode (position_on / position_off).
+    LED polarity is unverified - add `i` to the I token if it is inverted.
+  threads: null
+  store: null
 SWITCH_AVATTO_TOUCH_TS0001:
   human_name: AVATTO ZTS02RD-US-W1
   category: switch

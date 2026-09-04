@@ -13,30 +13,67 @@
         },
         "category": {
           "type": "string",
-          "enum": ["module", "switch", "remote", "outlet", "board", "plug", "din_relay", "light"],
+          "enum": [
+            "module",
+            "switch",
+            "remote",
+            "outlet",
+            "board",
+            "plug",
+            "din_relay",
+            "light",
+            "sensor"
+          ],
           "description": "Device category"
         },
         "power": {
           "type": "string",
-          "enum": ["mains", "DC", "USB", "AA", "AAA", "CR2016", "CR2025", "CR2032", "CR2430", "CR2450", "LR23A", "18650"],
+          "enum": [
+            "mains",
+            "DC",
+            "USB",
+            "AA",
+            "AAA",
+            "CR2016",
+            "CR2025",
+            "CR2032",
+            "CR2430",
+            "CR2450",
+            "LR23A",
+            "18650"
+          ],
           "description": "Power source"
         },
         "neutral": {
           "oneOf": [
-            {"type": "null"},
+            {
+              "type": "null"
+            },
             {
               "type": "string",
-              "enum": ["required", "optional", "without"]
+              "enum": [
+                "required",
+                "optional",
+                "without"
+              ]
             }
           ],
           "description": "Whether neutral wire is required or optional"
         },
         "output": {
           "oneOf": [
-            {"type": "null"},
+            {
+              "type": "null"
+            },
             {
               "type": "string",
-              "enum": ["relay", "relay_latching", "triac", "pwm", "nothing"]
+              "enum": [
+                "relay",
+                "relay_latching",
+                "triac",
+                "pwm",
+                "nothing"
+              ]
             }
           ],
           "description": "Type of AC output"
@@ -45,9 +82,14 @@
           "oneOf": [
             {
               "type": "string",
-              "enum": ["router", "end_device"]
+              "enum": [
+                "router",
+                "end_device"
+              ]
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "Zigbee device type"
         },
@@ -55,48 +97,80 @@
           "oneOf": [
             {
               "type": "string",
-              "enum": ["TLSR825x", "TLSR8253", "TLSR8253F512AT32", "TLSR8258", "EFR32MG21A020F768IM32", "EFR32MG22C224F512GN32", "JN5169"]
+              "enum": [
+                "TLSR825x",
+                "TLSR8253",
+                "TLSR8253F512AT32",
+                "TLSR8258",
+                "EFR32MG21A020F768IM32",
+                "EFR32MG22C224F512GN32",
+                "JN5169"
+              ]
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "Microcontroller unit type"
         },
         "stock_model_name": {
           "oneOf": [
-            {"type": "null"},
+            {
+              "type": "null"
+            },
             {
               "type": "array",
-              "items": {"type": "string"}
+              "items": {
+                "type": "string"
+              }
             },
-            {"type": "string"}
+            {
+              "type": "string"
+            }
           ],
           "description": "Tuya model name (e.g., TS0001, TS0002)"
         },
         "stock_manufacturer_name": {
           "oneOf": [
-            {"type": "null"},
-            {"type": "string"}
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
           ],
           "description": "Tuya manufacturer identifier"
         },
         "stock_converter_manufacturer": {
           "oneOf": [
-            {"type": "null"},
-            {"type": "string"}
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
           ],
           "description": "Stock converter manufacturer"
         },
         "stock_converter_model": {
           "oneOf": [
-            {"type": "null"},
-            {"type": "string"}
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
           ],
           "description": "Stock converter model"
         },
         "override_z2m_device": {
           "oneOf": [
-            {"type": "string"},
-            {"type": "null"}
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Override device name for Zigbee2MQTT"
         },
@@ -104,9 +178,25 @@
           "oneOf": [
             {
               "type": "string",
-              "enum": ["ZTU", "ZT3L", "ZT2S_real", "ZT2S_real_no_shield", "ZT2S_fake_no_shield", "ZT5", "ZTC", "ZTLC9", "ZTLC9S", "ZS2S", "ZS3L", "TYZS3", "none"]
+              "enum": [
+                "ZTU",
+                "ZT3L",
+                "ZT2S_real",
+                "ZT2S_real_no_shield",
+                "ZT2S_fake_no_shield",
+                "ZT5",
+                "ZTC",
+                "ZTLC9",
+                "ZTLC9S",
+                "ZS2S",
+                "ZS3L",
+                "TYZS3",
+                "none"
+              ]
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "Zigbee module type"
         },
@@ -114,9 +204,15 @@
           "oneOf": [
             {
               "type": "string",
-              "enum": ["Telink", "Silabs", "NXP"]
+              "enum": [
+                "Telink",
+                "Silabs",
+                "NXP"
+              ]
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "Zigbee module type"
         },
@@ -128,10 +224,16 @@
           "oneOf": [
             {
               "type": "array",
-              "items": {"type": "string"}
+              "items": {
+                "type": "string"
+              }
             },
-            {"type": "string"},
-            {"type": "null"}
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Alternative configuration string"
         },
@@ -139,9 +241,13 @@
           "oneOf": [
             {
               "type": "array",
-              "items": {"type": "string"}
+              "items": {
+                "type": "string"
+              }
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "Legacy manufacturer names"
         },
@@ -149,23 +255,35 @@
           "oneOf": [
             {
               "type": "array",
-              "items": {"type": "string"}
+              "items": {
+                "type": "string"
+              }
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "Legacy Zigbee model names"
         },
         "stock_manufacturer_id": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Tuya manufacturer ID"
         },
         "stock_image_type": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Tuya image type identifier"
         },
@@ -175,60 +293,96 @@
         },
         "hlw8012_voltage_multiplier": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Optional per-board override for HLW8012_VOLTAGE_MULTIPLIER (different hardware revisions can have different voltage dividers)"
         },
         "hlw8012_current_multiplier": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Optional per-board override for HLW8012_CURRENT_MULTIPLIER"
         },
         "hlw8012_power_multiplier": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Optional per-board override for HLW8012_POWER_MULTIPLIER"
         },
         "bl0942_voltage_multiplier": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Optional per-board override for BL0942_VOLTAGE_MULTIPLIER. Ships the factory calibration in the firmware itself, so a freshly flashed device reads correctly without writing calibration_values by hand (and without lengthening the config_str)"
         },
         "bl0942_current_multiplier": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Optional per-board override for BL0942_CURRENT_MULTIPLIER"
         },
         "bl0942_power_multiplier": {
           "oneOf": [
-            {"type": "integer"},
-            {"type": "null"}
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Optional per-board override for BL0942_POWER_MULTIPLIER"
         },
         "build": {
           "type": "string",
-          "enum": ["yes", "no"],
+          "enum": [
+            "yes",
+            "no"
+          ],
           "description": "Whether the device should be built"
         },
         "status": {
           "type": "string",
-          "enum": ["fully_supported", "mostly_supported", "in_progress", "unsupported"],
+          "enum": [
+            "fully_supported",
+            "mostly_supported",
+            "in_progress",
+            "unsupported"
+          ],
           "description": "Support status of the device"
         },
         "info": {
           "oneOf": [
-            {"type": "string"},
-            {"type": "null"}
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ],
           "description": "Additional information about the device"
         },
@@ -245,7 +399,9 @@
                 "format": "uri"
               }
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "GitHub issue URL"
         },
@@ -262,7 +418,9 @@
                 "format": "uri"
               }
             },
-            {"type": "null"}
+            {
+              "type": "null"
+            }
           ],
           "description": "Store URL(s) where device can be purchased"
         }
