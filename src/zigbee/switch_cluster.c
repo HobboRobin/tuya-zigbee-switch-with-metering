@@ -156,6 +156,8 @@ static void switch_cluster_flash_indicator(zigbee_switch_cluster *cluster) {
 
 void switch_cluster_store_attrs_to_nv(zigbee_switch_cluster *cluster);
 void switch_cluster_load_attrs_from_nv(zigbee_switch_cluster *cluster);
+void switch_cluster_store_multi_press_reset_to_nv(zigbee_switch_cluster *cluster);
+void switch_cluster_load_multi_press_reset_from_nv(zigbee_switch_cluster *cluster);
 void switch_cluster_on_write_attr(zigbee_switch_cluster *cluster,
                                   uint16_t attribute_id);
 
@@ -172,6 +174,7 @@ void switch_cluster_add_to_endpoint(zigbee_switch_cluster *cluster,
     switch_cluster_by_endpoint[endpoint->endpoint] = cluster;
     cluster->endpoint = endpoint->endpoint;
     switch_cluster_load_attrs_from_nv(cluster);
+    switch_cluster_load_multi_press_reset_from_nv(cluster);
 
     cluster->button->on_press =
         (ev_button_callback_t)switch_cluster_on_button_press;
@@ -198,11 +201,13 @@ void switch_cluster_add_to_endpoint(zigbee_switch_cluster *cluster,
                ZCL_DATA_TYPE_UINT8, ATTR_WRITABLE, cluster->level_move_rate);
     SETUP_ATTR(7, ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_BINDING_MODE,
                ZCL_DATA_TYPE_ENUM8, ATTR_WRITABLE, cluster->binded_mode);
+    SETUP_ATTR(8, ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_MULTI_PRESS_RESET,
+               ZCL_DATA_TYPE_BOOLEAN, ATTR_WRITABLE, cluster->multi_press_reset);
 
     // Configuration
     endpoint->clusters[endpoint->cluster_count].cluster_id =
         ZCL_CLUSTER_ON_OFF_SWITCH_CONFIG;
-    endpoint->clusters[endpoint->cluster_count].attribute_count = 8;
+    endpoint->clusters[endpoint->cluster_count].attribute_count = 9;
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->cluster_count++;
@@ -544,7 +549,34 @@ void switch_cluster_on_write_attr(zigbee_switch_cluster *cluster,
             cluster->button->pressed_when_high = 0;
         }
     }
+    if (attribute_id == ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_MULTI_PRESS_RESET) {
+        cluster->multi_press_reset = cluster->multi_press_reset ? 1 : 0;
+        switch_cluster_store_multi_press_reset_to_nv(cluster);
+    }
     switch_cluster_store_attrs_to_nv(cluster);
+}
+
+bool switch_cluster_multi_press_resets(const zigbee_switch_cluster *cluster) {
+    return cluster != NULL && cluster->multi_press_reset;
+}
+
+void switch_cluster_store_multi_press_reset_to_nv(zigbee_switch_cluster *cluster) {
+    uint8_t value = cluster->multi_press_reset ? 1 : 0;
+
+    hal_nvm_write(NV_ITEM_SWITCH_MULTI_PRESS_RESET(cluster->switch_idx),
+                  sizeof(value), &value);
+}
+
+void switch_cluster_load_multi_press_reset_from_nv(zigbee_switch_cluster *cluster) {
+    uint8_t value;
+
+    // No record means a device that has never been told otherwise, so the
+    // reset stays available - never lock a user out of their own switch.
+    if (hal_nvm_read(NV_ITEM_SWITCH_MULTI_PRESS_RESET(cluster->switch_idx),
+                     sizeof(value), &value) != HAL_NVM_SUCCESS) {
+        return;
+    }
+    cluster->multi_press_reset = value ? 1 : 0;
 }
 
 zigbee_switch_cluster_config nv_config_buffer;

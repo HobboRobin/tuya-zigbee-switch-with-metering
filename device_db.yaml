@@ -4079,8 +4079,10 @@ SENSOR_MOES_CONTACT_TS0203:
     The reed is the first switch on purpose: endpoint 1 carries the indicator
     LED, so the LED still blinks on every contact change. The tactile button on
     PD3 is the second switch (endpoint 2) rather than a `B` reset button, so it
-    sends an action of its own; ten presses within the multi-press window still
-    factory-reset the device, on either input.
+    sends an action of its own. Both inputs take part in the multi-press factory
+    reset by default; turn `switch_left_multi_press_reset` off so that opening
+    and closing the door ten times cannot wipe the device, and keep it on for
+    the button, which is then the way back in.
   threads: null
   store: null
 SWITCH_AVATTO_TOUCH_TS0001:

@@ -132,6 +132,19 @@ void on_multi_press_reset(void *_, uint8_t press_count) {
     }
 }
 
+// A switch's button carries its cluster as the callback parameter, so the
+// reset can be asked per input rather than only per device. That matters for
+// an input that is not operated by a person: a reed contact on a door reaches
+// ten "presses" on its own, and wiping the device is not what opening a door
+// ten times should do.
+void on_switch_multi_press_reset(void *cluster, uint8_t press_count) {
+    if (!switch_cluster_multi_press_resets(
+            (const zigbee_switch_cluster *)cluster)) {
+        return;
+    }
+    on_multi_press_reset(cluster, press_count);
+}
+
 #define ARRAY_LEN(a)    (sizeof(a) / sizeof((a)[0]))
 
 // A config string asking for more peripherals than the static tables above can
@@ -290,7 +303,7 @@ void parse_config() {
             buttons[buttons_cnt].long_press_duration_ms  = 800;
             buttons[buttons_cnt].multi_press_duration_ms = 800;
             buttons[buttons_cnt].debounce_delay_ms       = debounce_ms;
-            buttons[buttons_cnt].on_multi_press          = on_multi_press_reset;
+            buttons[buttons_cnt].on_multi_press          = on_switch_multi_press_reset;
 
             if (entry[3] == 'd')
                 buttons[buttons_cnt].pressed_when_high = 1;
@@ -303,6 +316,7 @@ void parse_config() {
                 ZCL_ONOFF_CONFIGURATION_RELAY_MODE_SHORT;
             switch_clusters[switch_clusters_cnt].binded_mode =
                 ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT;
+            switch_clusters[switch_clusters_cnt].multi_press_reset = 1;
             switch_clusters[switch_clusters_cnt].relay_index     = switch_clusters_cnt + 1;
             switch_clusters[switch_clusters_cnt].button          = &buttons[buttons_cnt];
             switch_clusters[switch_clusters_cnt].level_move_rate = 50;
