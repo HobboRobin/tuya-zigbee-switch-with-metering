@@ -12363,24 +12363,31 @@ const definitions = [
         description: "Custom switch (https://github.com/romasku/tuya-zigbee-switch)",
         extend: [
             romasku.batteryPercentage(),
-            deviceEndpoints({ endpoints: {"switch": 1, } }),
+            deviceEndpoints({ endpoints: {"switch_left": 1, "switch_right": 2, } }),
             romasku.actionEvent({
                 switches: [
-                    {endpoint: 1, prefix: "switch_0", name: "switch"},
+                    {endpoint: 1, prefix: "switch_0", name: "switch_left"},
+                    {endpoint: 2, prefix: "switch_1", name: "switch_right"},
                 ],
                 longSwitches: [
                 ],
                 coverSwitches: [
                 ],
             }),
-            romasku.deviceConfig("device_config", "switch"),
-            romasku.multiPressResetCount("multi_press_reset_count", "switch"),
-            romasku.pressAction("switch_press_action", "switch"),
-            romasku.switchMode("switch_mode", "switch"),
-            romasku.switchAction("switch_action_mode", "switch"),
-            romasku.bindedMode("switch_binded_mode", "switch"),
-            romasku.longPressDuration("switch_long_press_duration", "switch"),
-            romasku.levelMoveRate("switch_level_move_rate", "switch"),
+            romasku.deviceConfig("device_config", "switch_left"),
+            romasku.multiPressResetCount("multi_press_reset_count", "switch_left"),
+            romasku.pressAction("switch_left_press_action", "switch_left"),
+            romasku.switchMode("switch_left_mode", "switch_left"),
+            romasku.switchAction("switch_left_action_mode", "switch_left"),
+            romasku.bindedMode("switch_left_binded_mode", "switch_left"),
+            romasku.longPressDuration("switch_left_long_press_duration", "switch_left"),
+            romasku.levelMoveRate("switch_left_level_move_rate", "switch_left"),
+            romasku.pressAction("switch_right_press_action", "switch_right"),
+            romasku.switchMode("switch_right_mode", "switch_right"),
+            romasku.switchAction("switch_right_action_mode", "switch_right"),
+            romasku.bindedMode("switch_right_binded_mode", "switch_right"),
+            romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
+            romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12389,6 +12396,18 @@ const definitions = [
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:
             await endpoint1.configureReporting("genMultistateInput", [
+                {
+                    attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
+                    minimumReportInterval: 0,
+                    maximumReportInterval: constants.repInterval.MAX,
+                    reportableChange: 1,
+                },
+            ]);
+            const endpoint2 = device.getEndpoint(2);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genMultistateInput"]);
+            await reporting.bind(endpoint2, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
+            // switch action:
+            await endpoint2.configureReporting("genMultistateInput", [
                 {
                     attribute: {ID: 0x0055 /* presentValue */, type: 0x21}, // uint16
                     minimumReportInterval: 0,
