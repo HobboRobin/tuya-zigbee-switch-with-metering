@@ -96,6 +96,41 @@ const romasku = {
             description: "When turn on/off binded device",
             entityCategory: "config",
         }),
+    multiPressReset: (name, endpointName) =>
+        binary({
+            name,
+            endpointName,
+            valueOn: ["ON", 1],
+            valueOff: ["OFF", 0],
+            cluster: "genOnOffSwitchCfg",
+            attribute: { ID: 0xff06, type: 0x10 }, // Boolean
+            description: "Whether repeatedly triggering this input resets the device to factory defaults. Turn off for an input that is not operated by hand - a reed contact reaches the press count on its own",
+            access: "ALL",
+            entityCategory: "config",
+        }),
+    switchFlash: (name, endpointName) =>
+        binary({
+            name,
+            endpointName,
+            valueOn: ["ON", 1],
+            valueOff: ["OFF", 0],
+            cluster: "genOnOffSwitchCfg",
+            attribute: { ID: 0xff07, type: 0x10 }, // Boolean
+            description: "Briefly light the indicator LED to confirm a press",
+            access: "ALL",
+            entityCategory: "config",
+        }),
+    switchFlashBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOffSwitchCfg",
+            attribute: { ID: 0xff08, type: 0x20 }, // uint8
+            description: "How bright the confirmation flash is (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
     longPressDuration: (name, endpointName) =>
         numeric({
             name,
@@ -1052,6 +1087,13 @@ const definitions = [
             romasku.bindedMode("{{switchName}}_binded_mode", "{{switchName}}"),
             romasku.longPressDuration("{{switchName}}_long_press_duration", "{{switchName}}"),
             romasku.levelMoveRate("{{switchName}}_level_move_rate", "{{switchName}}"),
+            romasku.multiPressReset("{{switchName}}_multi_press_reset", "{{switchName}}"),
+            {% endfor %}
+            {% for switchName in device.switchFlashNames %}
+            romasku.switchFlash("{{switchName}}_flash", "{{switchName}}"),
+            {% endfor %}
+            {% for switchName in device.dimmableSwitchFlashNames %}
+            romasku.switchFlashBrightness("{{switchName}}_flash_brightness", "{{switchName}}"),
             {% endfor %}
             {% for relayName in device.relayIndicatorNames %}
             romasku.relayIndicatorMode("{{relayName}}_indicator_mode", "{{relayName}}"),

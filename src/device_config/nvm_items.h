@@ -54,4 +54,13 @@
 #define MAX_LIGHTS    5
 #define NV_ITEM_LIGHT_CLUSTER_DATA(light_idx)    (52 + (light_idx))
 
+// Per-switch settings added after the original switch config: whether the
+// switch takes part in the multi-press factory reset, and its confirmation
+// flash. Separate from the switch config for the same reason as the LED
+// dimming above: the NV layer rejects a record whose length does not match, so
+// growing that struct would silently reset every stored switch setting on
+// upgrade. Growing *this* one has the same cost, so it only ever loses the
+// settings below - all of which have a safe default.
+#define NV_ITEM_SWITCH_EXTRA_CONFIG(switch_idx)    (57 + (switch_idx))
+
 #endif /* DEVICE_CONFIG_NVM_ITEMS_H_ */
