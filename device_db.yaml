@@ -4050,7 +4050,7 @@ SENSOR_MOES_CONTACT_TS0203:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 8yhypbo7;TS0203-MOES;BD3u;SD7U;IB4;BTB5;
+  config_str: 8yhypbo7;TS0203-MOES;BD3u;SD7f;IB4;BTB5;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4061,9 +4061,14 @@ SENSOR_MOES_CONTACT_TS0203:
   status: in_progress
   info: >-
     Reed contact on PD7, tactile pairing button on PD3, white LED on PB4, ZTU
-    module (TLSR8258). The reed sits at GND while the magnet is present, so the
-    pull-up is on it for as long as the door is shut: 10K would draw 300uA and
-    flatten the CR2032 in about a month, hence the 1M pull-up (U). Battery is
+    module (TLSR8258). The reed runs from VDD to PD7, which the board holds down
+    with a 10M resistor (through a 0R link), so the level is defined on the
+    board and the internal pull must stay off: an internal pull-up would beat
+    the 10M ten to one and peg the pin high, and the internal 100K pull-down
+    would cost 30uA whenever the magnet is present. Measured that way the
+    contact costs 0.3uA, well under the cell's own ~2.5uA of self-discharge.
+    PD7 reads HIGH with the magnet present, so "pressed" is the door being
+    open. Battery is
     measured in the chip's VBAT mode, which drives the chosen pin high and reads
     it back - PB5 is used because it is unconnected on this board and is one of
     the ten pins that have an ADC channel at all (PB0-PB7, PC4, PC5). The LED is
