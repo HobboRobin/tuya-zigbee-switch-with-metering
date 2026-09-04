@@ -154,6 +154,21 @@ if __name__ == "__main__":
                 or device["stock_converter_model"],
                 "switchNames": switch_names,
                 "relayNames": relay_names,
+                # The confirmation flash is the switch's own, and only exists
+                # where no relay owns the indicator LED: with a relay the LED
+                # shows the relay's state and never flashes.
+                "switchFlashNames": (
+                    switch_names[:indicators_cnt] if not relay_cnt else []
+                ),
+                "dimmableSwitchFlashNames": (
+                    [
+                        switch_names[i]
+                        for i in range(min(indicators_cnt, len(switch_names)))
+                        if dimmable_indicators[i]
+                    ]
+                    if not relay_cnt
+                    else []
+                ),
                 "relayIndicatorNames": relay_names[:indicators_cnt],
                 "dimmableRelayIndicatorNames": [
                     relay_names[i]

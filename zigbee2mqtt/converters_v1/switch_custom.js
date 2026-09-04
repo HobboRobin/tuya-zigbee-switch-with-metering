@@ -106,6 +106,29 @@ const romasku = {
             access: "ALL",
             entityCategory: "config",
         }),
+    switchFlash: (name, endpointName) =>
+        binary({
+            name,
+            endpointName,
+            valueOn: ["ON", 1],
+            valueOff: ["OFF", 0],
+            cluster: "genOnOffSwitchCfg",
+            attribute: { ID: 0xff07, type: 0x10 }, // Boolean
+            description: "Briefly light the indicator LED to confirm a press",
+            access: "ALL",
+            entityCategory: "config",
+        }),
+    switchFlashBrightness: (name, endpointName) =>
+        numeric({
+            name,
+            endpointNames: [endpointName],
+            cluster: "genOnOffSwitchCfg",
+            attribute: { ID: 0xff08, type: 0x20 }, // uint8
+            description: "How bright the confirmation flash is (0-255, e.g. 128 = 50%)",
+            valueMin: 0,
+            valueMax: 255,
+            entityCategory: "config",
+        }),
     longPressDuration: (name, endpointName) =>
         numeric({
             name,
@@ -10759,6 +10782,10 @@ const definitions = [
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
             romasku.multiPressReset("switch_3_multi_press_reset", "switch_3"),
+            romasku.switchFlash("switch_0_flash", "switch_0"),
+            romasku.switchFlash("switch_1_flash", "switch_1"),
+            romasku.switchFlash("switch_2_flash", "switch_2"),
+            romasku.switchFlash("switch_3_flash", "switch_3"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -10857,6 +10884,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -10919,6 +10947,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11128,6 +11157,10 @@ const definitions = [
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
             romasku.multiPressReset("switch_3_multi_press_reset", "switch_3"),
+            romasku.switchFlash("switch_0_flash", "switch_0"),
+            romasku.switchFlash("switch_1_flash", "switch_1"),
+            romasku.switchFlash("switch_2_flash", "switch_2"),
+            romasku.switchFlash("switch_3_flash", "switch_3"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11226,6 +11259,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11288,6 +11322,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11358,6 +11393,8 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            romasku.switchFlash("switch_left_flash", "switch_left"),
+            romasku.switchFlash("switch_right_flash", "switch_right"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11448,6 +11485,9 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            romasku.switchFlash("switch_left_flash", "switch_left"),
+            romasku.switchFlash("switch_middle_flash", "switch_middle"),
+            romasku.switchFlash("switch_right_flash", "switch_right"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11558,6 +11598,10 @@ const definitions = [
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
             romasku.multiPressReset("switch_3_multi_press_reset", "switch_3"),
+            romasku.switchFlash("switch_0_flash", "switch_0"),
+            romasku.switchFlash("switch_1_flash", "switch_1"),
+            romasku.switchFlash("switch_2_flash", "switch_2"),
+            romasku.switchFlash("switch_3_flash", "switch_3"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11680,6 +11724,10 @@ const definitions = [
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
             romasku.multiPressReset("switch_3_multi_press_reset", "switch_3"),
+            romasku.switchFlash("switch_0_flash", "switch_0"),
+            romasku.switchFlash("switch_1_flash", "switch_1"),
+            romasku.switchFlash("switch_2_flash", "switch_2"),
+            romasku.switchFlash("switch_3_flash", "switch_3"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11778,6 +11826,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11840,6 +11889,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11902,6 +11952,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -11972,6 +12023,8 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            romasku.switchFlash("switch_left_flash", "switch_left"),
+            romasku.switchFlash("switch_right_flash", "switch_right"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12062,6 +12115,9 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            romasku.switchFlash("switch_left_flash", "switch_left"),
+            romasku.switchFlash("switch_middle_flash", "switch_middle"),
+            romasku.switchFlash("switch_right_flash", "switch_right"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12164,6 +12220,9 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            romasku.switchFlash("switch_left_flash", "switch_left"),
+            romasku.switchFlash("switch_middle_flash", "switch_middle"),
+            romasku.switchFlash("switch_right_flash", "switch_right"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12274,6 +12333,10 @@ const definitions = [
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
             romasku.multiPressReset("switch_3_multi_press_reset", "switch_3"),
+            romasku.switchFlash("switch_0_flash", "switch_0"),
+            romasku.switchFlash("switch_1_flash", "switch_1"),
+            romasku.switchFlash("switch_2_flash", "switch_2"),
+            romasku.switchFlash("switch_3_flash", "switch_3"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12380,6 +12443,8 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            romasku.switchFlash("switch_left_flash", "switch_left"),
+            romasku.switchFlash("switch_right_flash", "switch_right"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12454,6 +12519,7 @@ const definitions = [
             romasku.longPressDuration("switch_long_press_duration", "switch"),
             romasku.levelMoveRate("switch_level_move_rate", "switch"),
             romasku.multiPressReset("switch_multi_press_reset", "switch"),
+            romasku.switchFlash("switch_flash", "switch"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12540,6 +12606,10 @@ const definitions = [
             romasku.longPressDuration("switch_3_long_press_duration", "switch_3"),
             romasku.levelMoveRate("switch_3_level_move_rate", "switch_3"),
             romasku.multiPressReset("switch_3_multi_press_reset", "switch_3"),
+            romasku.switchFlash("switch_0_flash", "switch_0"),
+            romasku.switchFlash("switch_1_flash", "switch_1"),
+            romasku.switchFlash("switch_2_flash", "switch_2"),
+            romasku.switchFlash("switch_3_flash", "switch_3"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
@@ -12646,6 +12716,8 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            romasku.switchFlash("switch_left_flash", "switch_left"),
+            romasku.switchFlashBrightness("switch_left_flash_brightness", "switch_left"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {

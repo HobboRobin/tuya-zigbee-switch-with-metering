@@ -317,6 +317,7 @@ void parse_config() {
             switch_clusters[switch_clusters_cnt].binded_mode =
                 ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT;
             switch_clusters[switch_clusters_cnt].multi_press_reset = 1;
+            switch_clusters[switch_clusters_cnt].flash_indicator   = 1;
             switch_clusters[switch_clusters_cnt].relay_index     = switch_clusters_cnt + 1;
             switch_clusters[switch_clusters_cnt].button          = &buttons[buttons_cnt];
             switch_clusters[switch_clusters_cnt].level_move_rate = 50;

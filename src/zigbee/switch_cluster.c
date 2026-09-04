@@ -139,7 +139,7 @@ static void switch_cluster_target_toggle(zigbee_switch_cluster *cluster) {
 }
 
 static void switch_cluster_flash_indicator(zigbee_switch_cluster *cluster) {
-    if (cluster->indicator_led == NULL) {
+    if (cluster->indicator_led == NULL || !cluster->flash_indicator) {
         return;
     }
     // Skip flash when relay is attached — the relay toggle itself changes the
@@ -156,8 +156,8 @@ static void switch_cluster_flash_indicator(zigbee_switch_cluster *cluster) {
 
 void switch_cluster_store_attrs_to_nv(zigbee_switch_cluster *cluster);
 void switch_cluster_load_attrs_from_nv(zigbee_switch_cluster *cluster);
-void switch_cluster_store_multi_press_reset_to_nv(zigbee_switch_cluster *cluster);
-void switch_cluster_load_multi_press_reset_from_nv(zigbee_switch_cluster *cluster);
+void switch_cluster_store_extras_to_nv(zigbee_switch_cluster *cluster);
+void switch_cluster_load_extras_from_nv(zigbee_switch_cluster *cluster);
 void switch_cluster_on_write_attr(zigbee_switch_cluster *cluster,
                                   uint16_t attribute_id);
 
@@ -174,7 +174,12 @@ void switch_cluster_add_to_endpoint(zigbee_switch_cluster *cluster,
     switch_cluster_by_endpoint[endpoint->endpoint] = cluster;
     cluster->endpoint = endpoint->endpoint;
     switch_cluster_load_attrs_from_nv(cluster);
-    switch_cluster_load_multi_press_reset_from_nv(cluster);
+    // Seeded from the LED before NV can override, so a board that dims its
+    // indicator keeps the brightness its config asked for until told otherwise.
+    if (cluster->indicator_led != NULL) {
+        cluster->flash_brightness = cluster->indicator_led->brightness;
+    }
+    switch_cluster_load_extras_from_nv(cluster);
 
     cluster->button->on_press =
         (ev_button_callback_t)switch_cluster_on_button_press;
@@ -203,11 +208,29 @@ void switch_cluster_add_to_endpoint(zigbee_switch_cluster *cluster,
                ZCL_DATA_TYPE_ENUM8, ATTR_WRITABLE, cluster->binded_mode);
     SETUP_ATTR(8, ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_MULTI_PRESS_RESET,
                ZCL_DATA_TYPE_BOOLEAN, ATTR_WRITABLE, cluster->multi_press_reset);
+    uint8_t switch_attr_count = 9;
+
+    // The flash is the switch's only say over the LED, and only where no relay
+    // has one: with a relay the LED shows the relay and never flashes, so
+    // offering the controls there would advertise settings that do nothing.
+    if (cluster->indicator_led != NULL && relay_clusters_cnt == 0) {
+        SETUP_ATTR(9, ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH,
+                   ZCL_DATA_TYPE_BOOLEAN, ATTR_WRITABLE, cluster->flash_indicator);
+        switch_attr_count = 10;
+
+        if (cluster->indicator_led->dimmable) {
+            SETUP_ATTR(10, ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH_BRIGHTNESS,
+                       ZCL_DATA_TYPE_UINT8, ATTR_WRITABLE,
+                       cluster->flash_brightness);
+            switch_attr_count = 11;
+            led_set_brightness(cluster->indicator_led, cluster->flash_brightness);
+        }
+    }
 
     // Configuration
     endpoint->clusters[endpoint->cluster_count].cluster_id =
         ZCL_CLUSTER_ON_OFF_SWITCH_CONFIG;
-    endpoint->clusters[endpoint->cluster_count].attribute_count = 9;
+    endpoint->clusters[endpoint->cluster_count].attribute_count = switch_attr_count;
     endpoint->clusters[endpoint->cluster_count].attributes      = cluster->attr_infos;
     endpoint->clusters[endpoint->cluster_count].is_server       = 1;
     endpoint->cluster_count++;
@@ -549,9 +572,16 @@ void switch_cluster_on_write_attr(zigbee_switch_cluster *cluster,
             cluster->button->pressed_when_high = 0;
         }
     }
-    if (attribute_id == ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_MULTI_PRESS_RESET) {
+    if (attribute_id == ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_MULTI_PRESS_RESET ||
+        attribute_id == ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH ||
+        attribute_id == ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH_BRIGHTNESS) {
         cluster->multi_press_reset = cluster->multi_press_reset ? 1 : 0;
-        switch_cluster_store_multi_press_reset_to_nv(cluster);
+        cluster->flash_indicator   = cluster->flash_indicator ? 1 : 0;
+        if (attribute_id == ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH_BRIGHTNESS &&
+            cluster->indicator_led != NULL) {
+            led_set_brightness(cluster->indicator_led, cluster->flash_brightness);
+        }
+        switch_cluster_store_extras_to_nv(cluster);
     }
     switch_cluster_store_attrs_to_nv(cluster);
 }
@@ -560,23 +590,36 @@ bool switch_cluster_multi_press_resets(const zigbee_switch_cluster *cluster) {
     return cluster != NULL && cluster->multi_press_reset;
 }
 
-void switch_cluster_store_multi_press_reset_to_nv(zigbee_switch_cluster *cluster) {
-    uint8_t value = cluster->multi_press_reset ? 1 : 0;
+typedef struct {
+    uint8_t multi_press_reset;
+    uint8_t flash_indicator;
+    uint8_t flash_brightness;
+} zigbee_switch_cluster_extras;
 
-    hal_nvm_write(NV_ITEM_SWITCH_MULTI_PRESS_RESET(cluster->switch_idx),
-                  sizeof(value), &value);
+void switch_cluster_store_extras_to_nv(zigbee_switch_cluster *cluster) {
+    zigbee_switch_cluster_extras nv = {
+        .multi_press_reset = cluster->multi_press_reset ? 1 : 0,
+        .flash_indicator   = cluster->flash_indicator ? 1 : 0,
+        .flash_brightness  = cluster->flash_brightness,
+    };
+
+    hal_nvm_write(NV_ITEM_SWITCH_EXTRA_CONFIG(cluster->switch_idx), sizeof(nv),
+                  (uint8_t *)&nv);
 }
 
-void switch_cluster_load_multi_press_reset_from_nv(zigbee_switch_cluster *cluster) {
-    uint8_t value;
+void switch_cluster_load_extras_from_nv(zigbee_switch_cluster *cluster) {
+    zigbee_switch_cluster_extras nv;
 
-    // No record means a device that has never been told otherwise, so the
-    // reset stays available - never lock a user out of their own switch.
-    if (hal_nvm_read(NV_ITEM_SWITCH_MULTI_PRESS_RESET(cluster->switch_idx),
-                     sizeof(value), &value) != HAL_NVM_SUCCESS) {
+    // No record means a device that has never been told otherwise: keep the
+    // reset available - never lock a user out of their own switch - and keep
+    // the flash, which is the only feedback a relay-less board gives.
+    if (hal_nvm_read(NV_ITEM_SWITCH_EXTRA_CONFIG(cluster->switch_idx), sizeof(nv),
+                     (uint8_t *)&nv) != HAL_NVM_SUCCESS) {
         return;
     }
-    cluster->multi_press_reset = value ? 1 : 0;
+    cluster->multi_press_reset = nv.multi_press_reset ? 1 : 0;
+    cluster->flash_indicator   = nv.flash_indicator ? 1 : 0;
+    cluster->flash_brightness  = nv.flash_brightness;
 }
 
 zigbee_switch_cluster_config nv_config_buffer;

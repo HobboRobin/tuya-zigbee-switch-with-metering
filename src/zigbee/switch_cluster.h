@@ -36,8 +36,13 @@ typedef struct {
     // An input that is not a button - a reed contact, a float switch - can
     // reach the press count on its own, so it can be taken out of the reset.
     uint8_t              multi_press_reset;
+    // The short confirmation flash of this switch's indicator LED: whether it
+    // happens at all, and how bright. Only in play where no relay owns the LED
+    // - with a relay attached the relay's own state drives it instead.
+    uint8_t              flash_indicator;
+    uint8_t              flash_brightness;
     button_t *           button;
-    hal_zigbee_attribute attr_infos[9];
+    hal_zigbee_attribute attr_infos[11];
     uint16_t             multistate_state;
     hal_zigbee_attribute multistate_attr_infos[4];
     uint8_t              level_move_rate;

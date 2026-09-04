@@ -89,6 +89,11 @@
 #define ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_LEVEL_MOVE_RATE    0xff04
 #define ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_BINDING_MODE       0xff05
 #define ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_MULTI_PRESS_RESET  0xff06
+// The short confirmation flash of the switch's own indicator LED, and how
+// bright it is. Only meaningful where no relay owns the LED - with a relay
+// attached the relay's state drives it and there is no flash to configure.
+#define ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH              0xff07
+#define ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH_BRIGHTNESS   0xff08
 
 
 // Multistate cluster
