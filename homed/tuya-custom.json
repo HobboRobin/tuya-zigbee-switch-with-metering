@@ -29079,7 +29079,8 @@
       ],
       "options": {
         "endpointName": {
-          "1": "switch"
+          "1": "switch_left",
+          "2": "switch_right"
         }
       }
     },
@@ -29246,7 +29247,8 @@
         }
       },
       "endpointId": [
-        1
+        1,
+        2
       ]
     },
     {
@@ -29292,7 +29294,7 @@
         }
       },
       "endpointId": [
-        2
+        3
       ]
     }
   ],

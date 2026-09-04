@@ -109,14 +109,33 @@ hal_gpio_pull_t hal_gpio_parse_pull(const char *pull_str) {
         return HAL_GPIO_PULL_INVALID;
     }
 
-    if (strcmp(pull_str, "") == 0)
+    // Same spelling as the Telink parser, and read the same way: only the
+    // first character is the pull, anything after it belongs to another flag.
+    // Diverging here made `f` (float) parse as INVALID in tests while the real
+    // device took it, so a board could pass its tests and still be wired wrong.
+    switch (pull_str[0]) {
+    case '\0':
         return HAL_GPIO_PULL_NONE;
 
-    if (strcmp(pull_str, "u") == 0)
+    case 'u':
         return HAL_GPIO_PULL_UP;
 
-    if (strcmp(pull_str, "d") == 0)
+    case 'U':
+        return HAL_GPIO_PULL_UP_1M;
+
+    case 'd':
+    case 'D':
         return HAL_GPIO_PULL_DOWN;
+
+    case 'f':
+    case 'F':
+    case 'n':
+    case 'N':
+        return HAL_GPIO_PULL_NONE;
+
+    default:
+        break;
+    }
 
     io_log("GPIO", "Error: Invalid GPIO pull string: '%s'", pull_str);
     return HAL_GPIO_PULL_INVALID;

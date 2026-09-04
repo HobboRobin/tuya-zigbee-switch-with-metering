@@ -4050,7 +4050,7 @@ SENSOR_MOES_CONTACT_TS0203:
   tuya_module: ZTU
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: 8yhypbo7;TS0203-MOES;BD3u;SD7f;IB4;BTB5;
+  config_str: 8yhypbo7;TS0203-MOES;SD7f;SD3u;IB4p;BTB5;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4076,7 +4076,11 @@ SENSOR_MOES_CONTACT_TS0203:
     while joined, which a coin cell cannot afford. The stock firmware reports the
     contact over IAS Zone, which this firmware does not implement yet, so for now
     the reed appears as a switch in toggle mode (position_on / position_off).
-    LED polarity is unverified - add `i` to the I token if it is inverted.
+    The reed is the first switch on purpose: endpoint 1 carries the indicator
+    LED, so the LED still blinks on every contact change. The tactile button on
+    PD3 is the second switch (endpoint 2) rather than a `B` reset button, so it
+    sends an action of its own; ten presses within the multi-press window still
+    factory-reset the device, on either input.
   threads: null
   store: null
 SWITCH_AVATTO_TOUCH_TS0001:
