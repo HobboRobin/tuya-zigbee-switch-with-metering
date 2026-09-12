@@ -1,0 +1,99 @@
+name: Debug Build
+
+# Builds one board with DEBUG=1 and hands back the binary as an artifact.
+#
+# The release build takes an hour and a half and commits its output; this
+# exists because a device that misbehaves on hardware needs a serial log, not
+# another guess, and getting one should not cost an afternoon or a toolchain
+# on your own machine. Nothing is committed and no index is touched.
+#
+# Flash the artifact, connect a 3.3V serial adapter's RX to the pin named in
+# the run summary, and read at 115200 8N1. See docs/contribute/debugging.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: "Board name from device_db.yaml (e.g. SENSOR_MOES_CONTACT_TS0203)"
+        required: true
+        type: string
+      device_type:
+        description: "Which variant to build"
+        required: true
+        default: end_device
+        type: choice
+        options:
+          - end_device
+          - router
+
+jobs:
+  debug-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make python3 yq unzip wget
+
+    - name: Cache Telink Tools
+      uses: actions/cache@v3
+      with:
+        path: telink_tools
+        key: telink-tools-v3.7.2.0
+
+    - name: Cache Python Virtual Environment
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: python-venv-${{ hashFiles('requirements.txt') }}
+
+    - name: Check the board exists and is a Telink one
+      run: |
+        BOARD="${{ inputs.board }}"
+        if ! yq -e ".${BOARD}" device_db.yaml >/dev/null 2>&1; then
+          echo "::error::No board '$BOARD' in device_db.yaml"
+          exit 1
+        fi
+        MCU=$(yq -r ".${BOARD}.mcu" device_db.yaml)
+        if [ "$MCU" != "TLSR8258" ]; then
+          echo "::error::'$BOARD' is an $MCU board; this workflow only does Telink, whose debug output is a UART pin"
+          exit 1
+        fi
+
+    - name: Install SDK and Toolchain
+      run: make telink/tools/all setup_venv
+
+    - name: Build with debug output enabled
+      run: |
+        source .venv/bin/activate
+        BOARD="${{ inputs.board }}" DEVICE_TYPE="${{ inputs.device_type }}" DEBUG=1 \
+          make board/build-firmware
+
+    - name: Say where the log comes out
+      run: |
+        BOARD="${{ inputs.board }}"
+        TYPE="${{ inputs.device_type }}"
+        DIR="bin/$TYPE/$BOARD"
+        [ "$TYPE" = "end_device" ] && DIR="bin/$TYPE/${BOARD}_END_DEVICE"
+        {
+          echo "## Debug build: \`$BOARD\` ($TYPE)"
+          echo
+          echo "Serial output on **PB1**, **115200** baud, 8N1 - connect it to your"
+          echo "programmer's RX. The device is otherwise the normal firmware."
+          echo
+          echo '```'
+          ls -la "$DIR" 2>/dev/null || echo "(no output directory - the build step should have failed)"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload the binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-${{ inputs.board }}-${{ inputs.device_type }}
+        path: bin/**/*
+        if-no-files-found: error
+        retention-days: 14
