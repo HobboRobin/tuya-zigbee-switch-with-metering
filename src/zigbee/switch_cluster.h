@@ -2,6 +2,7 @@
 #define _SWITCH_CLUSTER_H_
 
 #include "base_components/button.h"
+#include "zigbee/ias_zone_cluster.h"
 #include "base_components/led.h"
 #include "hal/zigbee.h"
 #include <stdbool.h>
@@ -24,35 +25,38 @@ typedef struct {
 } zigbee_switch_cluster_config;
 
 typedef struct {
-    uint8_t              switch_idx;
-    uint8_t              endpoint;
-    uint8_t              mode;
-    uint8_t              action;
-    uint8_t              relay_mode;
-    uint8_t              relay_index;
-    uint8_t              binded_mode;
+    uint8_t                  switch_idx;
+    uint8_t                  endpoint;
+    uint8_t                  mode;
+    uint8_t                  action;
+    uint8_t                  relay_mode;
+    uint8_t                  relay_index;
+    uint8_t                  binded_mode;
     // Whether hammering this input resets the device to factory defaults.
     // On by default, because on most boards the switch is the only way in.
     // An input that is not a button - a reed contact, a float switch - can
     // reach the press count on its own, so it can be taken out of the reset.
-    uint8_t              multi_press_reset;
+    uint8_t                  multi_press_reset;
     // The short confirmation flash of this switch's indicator LED: whether it
     // happens at all, and how bright. Only in play where no relay owns the LED
     // - with a relay attached the relay's own state drives it instead.
-    uint8_t              flash_indicator;
-    uint8_t              flash_brightness;
-    button_t *           button;
-    hal_zigbee_attribute attr_infos[11];
-    uint16_t             multistate_state;
-    hal_zigbee_attribute multistate_attr_infos[4];
-    uint8_t              level_move_rate;
-    uint8_t              level_move_direction;
-    led_t *              indicator_led;
+    uint8_t                  flash_indicator;
+    uint8_t                  flash_brightness;
+    button_t *               button;
+    hal_zigbee_attribute     attr_infos[11];
+    uint16_t                 multistate_state;
+    hal_zigbee_attribute     multistate_attr_infos[4];
+    uint8_t                  level_move_rate;
+    uint8_t                  level_move_direction;
+    led_t *                  indicator_led;
+    // Set when this input is also a sensor - a reed, a leak probe - so the
+    // same contact is reported as an IAS zone as well as a switch action.
+    zigbee_ias_zone_cluster *ias_zone;
     // Optional companion endpoint (0 = none) that carries its own OnOff client
     // cluster. On a long press the switch sends an OnOff toggle to this
     // endpoint's bindings, so a short press and a long press can drive two
     // different bound targets. Enabled per device with the `2EP` config token.
-    uint8_t              long_press_endpoint;
+    uint8_t                  long_press_endpoint;
 } zigbee_switch_cluster;
 
 void switch_cluster_add_to_endpoint(zigbee_switch_cluster *cluster,

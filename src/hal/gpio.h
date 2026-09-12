@@ -1,6 +1,7 @@
 #ifndef _HAL_GPIO_H_
 #define _HAL_GPIO_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define HAL_INVALID_PIN    0xFFFF
@@ -23,6 +24,15 @@ typedef enum {
  */
 void hal_gpio_init(hal_gpio_pin_t gpio_pin, uint8_t is_input,
                    hal_gpio_pull_t pull);
+
+/**
+ * @brief  Has hal_gpio_init() already been called for this pin?
+ *
+ * Used to keep two peripherals off the same pin - in particular to keep
+ * battery sensing, which drives its pin high to measure it, off a pin that
+ * something else already owns.
+ */
+bool hal_gpio_is_claimed(hal_gpio_pin_t gpio_pin);
 
 /**
  * Set output pin high

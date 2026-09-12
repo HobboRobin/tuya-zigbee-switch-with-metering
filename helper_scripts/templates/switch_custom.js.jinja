@@ -7,6 +7,7 @@ const {
     binary,
     windowCovering,
     light,
+    iasZoneAlarm,
     deviceAddCustomCluster,
 } = require("zigbee-herdsman-converters/lib/modernExtend");
 const {assertString} = require("zigbee-herdsman-converters/lib/utils");
@@ -1089,6 +1090,21 @@ const definitions = [
             romasku.levelMoveRate("{{switchName}}_level_move_rate", "{{switchName}}"),
             romasku.multiPressReset("{{switchName}}_multi_press_reset", "{{switchName}}"),
             {% endfor %}
+            {% if device.iasZoneType %}
+            {# The zone is what turns this input from "a switch changed
+               position" into a sensor the coordinator understands. It rides
+               alongside the switch action rather than replacing it, so
+               automations already written on the action keep working.
+
+               zoneStatusReporting is belt and braces: the device also sends a
+               status change notification, but that only lands if the zone is
+               bound, and a reported attribute arrives either way. #}
+            iasZoneAlarm({
+                zoneType: "{{device.iasZoneType}}",
+                zoneAttributes: ["alarm_1"],
+                zoneStatusReporting: true,
+            }),
+            {% endif %}
             {% for switchName in device.switchFlashNames %}
             romasku.switchFlash("{{switchName}}_flash", "{{switchName}}"),
             {% endfor %}
@@ -1153,6 +1169,12 @@ const definitions = [
         configure: async (device, coordinatorEndpoint, logger) => {
             {% for switchName in device.switchNames %}
             const endpoint{{loop.index}} = device.getEndpoint({{loop.index}});
+            {% if device.iasZoneType and loop.first %}
+            // Without this the zone's status change notification has nowhere
+            // to go: it is sent to the device's bindings, and nothing binds
+            // ssIasZone on its own.
+            await reporting.bind(endpoint{{loop.index}}, coordinatorEndpoint, ["ssIasZone"]);
+            {% endif %}
             await reporting.bind(endpoint{{loop.index}}, coordinatorEndpoint, ["genMultistateInput"]);
             {# The switch sends its ON/OFF/TOGGLE and dim commands to whatever is
                bound to it. Binding the coordinator too (next to the user's own

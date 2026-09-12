@@ -13,7 +13,10 @@ BATTERY_REFRESH_INTERVAL_MS = 300000
 
 @pytest.fixture
 def device_config() -> str:
-    return "StubManufacturer;StubDevice;BTC5;SA0u;"
+    # `A` = alkaline, i.e. the straight min-to-max line these tests describe.
+    # A plain `BT` is a lithium coin cell now, which has its own curve; that is
+    # covered in test_battery_coin_cell_curve.py.
+    return "StubManufacturer;StubDevice;BTC5A;SA0u;"
 
 
 def read_voltage(device: Device) -> int:

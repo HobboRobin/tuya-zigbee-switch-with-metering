@@ -96,6 +96,37 @@
 #define ZCL_ATTR_ONOFF_CONFIGURATION_SWITCH_FLASH_BRIGHTNESS    0xff08
 
 
+// IAS Zone cluster
+
+#define ZCL_CLUSTER_IAS_ZONE                     0x0500
+
+#define ZCL_ATTR_IAS_ZONE_STATE                  0x0000
+#define ZCL_ATTR_IAS_ZONE_TYPE                   0x0001
+#define ZCL_ATTR_IAS_ZONE_STATUS                 0x0002
+#define ZCL_ATTR_IAS_ZONE_CIE_ADDRESS            0x0010
+#define ZCL_ATTR_IAS_ZONE_ID                     0x0011
+
+#define ZCL_IAS_ZONE_STATE_NOT_ENROLLED          0x00
+#define ZCL_IAS_ZONE_STATE_ENROLLED              0x01
+
+#define ZCL_IAS_ZONE_TYPE_MOTION                 0x000D
+#define ZCL_IAS_ZONE_TYPE_CONTACT                0x0015
+#define ZCL_IAS_ZONE_TYPE_FIRE                   0x0028
+#define ZCL_IAS_ZONE_TYPE_WATER                  0x002A
+#define ZCL_IAS_ZONE_TYPE_CO                     0x002B
+#define ZCL_IAS_ZONE_TYPE_VIBRATION              0x002D
+
+#define ZCL_IAS_ZONE_STATUS_ALARM1               0x0001
+
+// Sent by us; the coordinator answers the enroll request.
+#define ZCL_CMD_IAS_ZONE_STATUS_CHANGE_NOTIFY    0x00
+#define ZCL_CMD_IAS_ZONE_ENROLL_REQUEST          0x01
+// Sent to us.
+#define ZCL_CMD_IAS_ZONE_ENROLL_RESPONSE         0x00
+
+#define ZCL_IAS_ZONE_ENROLL_SUCCESS              0x00
+#define ZCL_IAS_ZONE_ID_INVALID                  0xFF
+
 // Multistate cluster
 
 #define ZCL_ATTR_MULTISTATE_INPUT_NUMBER_OF_STATES    0x004A

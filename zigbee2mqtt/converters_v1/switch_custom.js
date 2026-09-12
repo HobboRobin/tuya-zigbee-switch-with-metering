@@ -7,6 +7,7 @@ const {
     binary,
     windowCovering,
     light,
+    iasZoneAlarm,
     deviceAddCustomCluster,
 } = require("zigbee-herdsman-converters/lib/modernExtend");
 const {assertString} = require("zigbee-herdsman-converters/lib/utils");
@@ -12716,12 +12717,21 @@ const definitions = [
             romasku.longPressDuration("switch_right_long_press_duration", "switch_right"),
             romasku.levelMoveRate("switch_right_level_move_rate", "switch_right"),
             romasku.multiPressReset("switch_right_multi_press_reset", "switch_right"),
+            iasZoneAlarm({
+                zoneType: "contact",
+                zoneAttributes: ["alarm_1"],
+                zoneStatusReporting: true,
+            }),
             romasku.switchFlash("switch_left_flash", "switch_left"),
             romasku.switchFlashBrightness("switch_left_flash_brightness", "switch_left"),
         ],
         meta: { multiEndpoint: true },
         configure: async (device, coordinatorEndpoint, logger) => {
             const endpoint1 = device.getEndpoint(1);
+            // Without this the zone's status change notification has nowhere
+            // to go: it is sent to the device's bindings, and nothing binds
+            // ssIasZone on its own.
+            await reporting.bind(endpoint1, coordinatorEndpoint, ["ssIasZone"]);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genMultistateInput"]);
             await reporting.bind(endpoint1, coordinatorEndpoint, ["genOnOff", "genLevelCtrl"]);
             // switch action:

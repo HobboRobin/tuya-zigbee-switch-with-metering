@@ -1,9 +1,11 @@
+#include "hal/adc.h"
 #include "hal/gpio.h"
 #include "hal/printf_selector.h"
 #include "hal/zigbee.h"
 #include "zigbee/basic_cluster.h"
 #include "zigbee/light_cluster.h"
 #include "zigbee/identify_cluster.h"
+#include "zigbee/ias_zone_cluster.h"
 #include "device_config/nvm_items.h"
 #include "zigbee/battery_cluster.h"
 #include "zigbee/consts.h"
@@ -59,7 +61,10 @@ zigbee_basic_cluster basic_cluster = {
 zigbee_group_cluster group_cluster = {};
 
 zigbee_switch_cluster switch_clusters[4];
-uint8_t switch_clusters_cnt = 0;
+// One zone per switch at most, and only for the inputs that ask for it.
+zigbee_ias_zone_cluster ias_zone_clusters[4];
+uint8_t ias_zone_clusters_cnt = 0;
+uint8_t switch_clusters_cnt   = 0;
 
 // Up to 6 relay endpoints (e.g. the UseeLink 4-AC + USB strip has 5). One
 // zigbee endpoint each, so this must stay within endpoints[]/clusters[] below.
@@ -120,6 +125,39 @@ static electrical_measurement_cluster_t elec_meas_cluster;
 static metering_cluster_t metering_cluster_inst;
 static uint8_t            energy_monitoring_enabled  = 0;
 static uint8_t            energy_monitoring_endpoint = 1;
+
+// Battery sensing drives its pin high and measures it against ground, so the
+// reading is the supply voltage whichever pin is used - but only the handful of
+// pins wired to the converter can be measured at all, and the pin must be free
+// or the measurement fights whatever else drives it.
+//
+// Neither mistake announces itself: an unmeasurable pin quietly selects "no
+// input" and the cell reads empty, and a shared pin gets driven high behind the
+// back of whatever owns it. Both are common in configs written from a stock
+// pinout, so rather than trust the string, take any free measurable pin - the
+// voltage is the same either way - and give up the battery entirely if there is
+// none, which at least reports nothing instead of reporting a lie.
+void resolve_battery_pin(void) {
+    if (battery.pin == HAL_INVALID_PIN) {
+        return;
+    }
+    if (hal_adc_pin_has_channel(battery.pin) &&
+        !hal_gpio_is_claimed(battery.pin)) {
+        battery_init(&battery);
+        return;
+    }
+
+    hal_gpio_pin_t fallback = hal_adc_find_free_channel_pin();
+    if (fallback == HAL_INVALID_PIN) {
+        printf("Battery pin cannot be measured and nothing is free, "
+               "disabling battery\r\n");
+        battery.pin = HAL_INVALID_PIN;
+        return;
+    }
+    printf("Battery pin cannot be measured, using a free one instead\r\n");
+    battery.pin = fallback;
+    battery_init(&battery);
+}
 
 void on_reset_clicked(void *_) {
     hal_factory_reset();
@@ -229,10 +267,18 @@ void parse_config() {
                 buttons[i].debounce_delay_ms = debounce_ms;
             }
         } else if (entry[0] == 'B' && entry[1] == 'T') {
-            // Battery: BT<pin>, e.g. BTC5
-            hal_gpio_pin_t pin = hal_gpio_parse_pin(entry + 2);
-            battery.pin = pin;
-            battery_init(&battery);
+            // Battery: BT<pin>[A], e.g. BTC5. The cell is a lithium coin cell
+            // unless `A` says alkaline: almost every battery board here runs
+            // on a CR20xx, whose voltage sits on a plateau and then falls off
+            // a cliff, so a straight line would report a nearly empty cell as
+            // most of the way full.
+            // Resolved after the whole string is parsed: the pin has to be
+            // checked against every other peripheral, and those may still be
+            // ahead of us in the string.
+            battery.pin   = hal_gpio_parse_pin(entry + 2);
+            battery.curve = (entry[4] == 'A' || entry[4] == 'a')
+                          ? BATTERY_CURVE_LINEAR
+                          : BATTERY_CURVE_COIN_CELL;
         } else if (entry[0] == 'B') {
             ensure_capacity(buttons_cnt, ARRAY_LEN(buttons), "buttons");
             hal_gpio_pin_t  pin  = hal_gpio_parse_pin(entry + 1);
@@ -316,6 +362,19 @@ void parse_config() {
                 ZCL_ONOFF_CONFIGURATION_RELAY_MODE_SHORT;
             switch_clusters[switch_clusters_cnt].binded_mode =
                 ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT;
+            // `Z<type>` after the pull turns this input into a sensor as well:
+            // it keeps its switch action and bindings, and additionally reports
+            // itself as an IAS zone, which is what makes a coordinator show a
+            // door contact rather than a button that presses itself.
+            if (entry[4] == 'Z' &&
+                ias_zone_clusters_cnt < ARRAY_LEN(ias_zone_clusters)) {
+                uint16_t zone_type = ias_zone_type_from_char(entry[5]);
+                ias_zone_clusters[ias_zone_clusters_cnt].zone_type =
+                    zone_type ? zone_type : ZCL_IAS_ZONE_TYPE_CONTACT;
+                switch_clusters[switch_clusters_cnt].ias_zone =
+                    &ias_zone_clusters[ias_zone_clusters_cnt];
+                ias_zone_clusters_cnt++;
+            }
             switch_clusters[switch_clusters_cnt].multi_press_reset = 1;
             switch_clusters[switch_clusters_cnt].flash_indicator   = 1;
             switch_clusters[switch_clusters_cnt].relay_index       = switch_clusters_cnt + 1;
@@ -583,6 +642,8 @@ void parse_config() {
         }
     }
 
+    resolve_battery_pin();
+
     // Each switch gets a trailing long-press binding endpoint when 2EP is set.
     uint8_t long_press_ep_cnt =
         long_press_bind_endpoints ? switch_clusters_cnt : 0;
@@ -656,6 +717,10 @@ void parse_config() {
             endpoints[index].clusters = cluster_ptr;
         }
         switch_cluster_add_to_endpoint(&switch_clusters[index], &endpoints[index]);
+        if (switch_clusters[index].ias_zone != NULL) {
+            ias_zone_cluster_add_to_endpoint(switch_clusters[index].ias_zone,
+                                             &endpoints[index]);
+        }
     }
 
     // Add energy measurement clusters to EP1 before the relay loop so that

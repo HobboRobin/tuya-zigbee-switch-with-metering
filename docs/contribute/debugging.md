@@ -8,9 +8,27 @@ Currently, debugging is very rudimentary.
 It consists of adding **prints in the code** and building with the DEBUG flag enabled.  
 (See [`make_scripts/make_debug_single.sh`](/make_scripts/make_debug_single.sh).)  
 
-After you flash the debug build, the device will output messages to the **UART TX pin**.  
-The TX pin is usually shared with the B1 GPIO pin. Check the [diagrams/](../diagrams/)  
-It is defined in [app_cfg.h](/src/app_cfg.h).  
+The flag is all it takes - the firmware is already full of prints, they are just
+compiled out of a release build:
+
+```bash
+BOARD=<board from device_db.yaml> DEVICE_TYPE=end_device DEBUG=1 make board/build-firmware
+```
+
+After you flash the debug build, the device will output messages to the **UART TX pin**
+at **115200 baud**, 8N1.  
+The TX pin is **PB1**. Check the [diagrams/](../diagrams/) for where it comes out on your board.  
+Both are defined in [app_cfg.h](/src/telink/configs/app_cfg.h)
+(`DEBUG_INFO_TX_PIN`, `DEBUG_BAUDRATE`).  
+
+> [!TIP]
+> This is the fastest way to tell *why* a device is not joining. A device that
+> never appears on the network at all looks identical from the coordinator
+> whether it is failing to parse its config, resetting in a loop, or sleeping
+> through commissioning - and the log says which. Build the **end_device**
+> variant with `DEBUG=1` when a battery device joins as a router but not as an
+> end device, since that difference lives entirely in the power-management
+> path.
 
 You can safely power and use the device with 3.3V DC from the programmer.  
 It behaves exactly the same way it does when powered with 220V AC.

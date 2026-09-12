@@ -75,4 +75,28 @@ Plug the UART into your PC, then open pvvx's [web flasher](https://pvvx.github.i
 > If the device does not join, check the wiring and repeat with the erase
 > before suspecting the firmware.
 
+> [!WARNING]
+> **"Erase All Flash" also erases the factory sectors**, which hold the
+> module's Zigbee MAC address and its RF calibration. They sit at the very top
+> of the flash - `0x76000` and `0x77000` on a 512 KB part, `0xFF000` and
+> `0xFE000` on a 1 MB one - and the erase takes the whole chip, those included.
+>
+> The device still works afterwards: with the MAC sector blank the firmware
+> generates one on first boot and stores it. But it is a *different* address,
+> so the device joins as a new device. Anything pinned to the old one - the
+> Zigbee2MQTT entry, its bindings, group memberships and every automation
+> naming those entities - points at a device that no longer exists, and has to
+> be set up again. Losing the calibration costs a little range and transmit
+> accuracy, which the firmware falls back on defaults for.
+>
+> **Read those two sectors out before erasing** if you want the device to come
+> back as itself. The web flasher cannot do it - it only transmits - so use a
+> tool that reads back over SWS, such as
+> [TlsrPgm](https://github.com/pvvx/TLSRPGM) (`make telink/tools` fetches it)
+> or TlsrComSwireWriter, and save both 4 KB sectors to a file. Writing the MAC
+> sector back restores the original address.
+>
+> This only matters if the sectors still hold anything: a module that has
+> already been erased once has nothing left to save.
+
 If done correctly, the onboard LED will start flashing automatically. You can try joining the device to a Zigbee network to verify that it connects properly. Once confirmed, disconnect everything, unsolder the wires, and reassemble the case.  
