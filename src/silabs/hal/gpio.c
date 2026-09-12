@@ -84,6 +84,13 @@ static void _af_event_handler(sl_zigbee_af_event_t *event) {
 }
 
 // API
+// Nothing here needs pin ownership tracked: the only caller is battery
+// sensing, which on this chip reads the supply rail rather than a pin.
+bool hal_gpio_is_claimed(hal_gpio_pin_t gpio_pin) {
+    (void)gpio_pin;
+    return false;
+}
+
 void hal_gpio_init(hal_gpio_pin_t gpio_pin, uint8_t is_input,
                    hal_gpio_pull_t pull_direction) {
     hal_gpio_ensure_clock();

@@ -3525,7 +3525,7 @@ REMOTE_IHSENO_TS0044:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: mh9px7cq;TS0044-CUS;LC0;SD2u;SC2u;SC3u;SB4u;BTD2;M;
+  config_str: mh9px7cq;TS0044-CUS;LC0;SD2u;SC2u;SC3u;SB4u;BTB7A;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3556,7 +3556,7 @@ REMOTE_IHSENO_TS0046:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: nrfkrgf4;TS0046-IH;SB5u;IC4;SA0u;IC4;SC2u;IC4;SD2u;IC4;BTC5;M;
+  config_str: nrfkrgf4;TS0046-IH;SB5u;IC4;SA0u;IC4;SC2u;IC4;SD2u;IC4;BTC5A;M;
   alt_config_str: nrfkrgf4;TS0046-IH;SB5u;IC4;SA0u;IC4;SC2u;IC4;SD2u;IC4;SC3u;IC4;SD7u;IC4;BTC5;M;
   old_manufacturer_names: null
   old_zb_models: null
@@ -3583,7 +3583,7 @@ REMOTE_LIDL_BUTTON_TS004F:
   tuya_module: none
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: rco1yzb1;TS004F-LIDL;BA0u;SB0u;ID0;BTC1;M;
+  config_str: rco1yzb1;TS004F-LIDL;BA0u;SB0u;ID0;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3610,7 +3610,7 @@ REMOTE_MOES_SWITCH_A_TS0041:
   tuya_module: ZS3L
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: axpdxqgu;TS0041-MA;SA4u;IC1i;BTA0;M;
+  config_str: axpdxqgu;TS0041-MA;SA4u;IC1i;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3639,7 +3639,7 @@ REMOTE_MOES_SWITCH_A_TS0042:
   tuya_module: ZS3L
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: 5e235jpa;TS0042-MA;SA0u;ID0i;SA3u;IC0i;BTA0;M;
+  config_str: 5e235jpa;TS0042-MA;SA0u;ID0i;SA3u;IC0i;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3668,7 +3668,7 @@ REMOTE_MOES_SWITCH_A_TS0043:
   tuya_module: ZS3L
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: gbm10jnj;TS0043-MA;SA0u;ID0i;SA4u;IC1i;SA3u;IC0i;BTA0;M;
+  config_str: gbm10jnj;TS0043-MA;SA0u;ID0i;SA4u;IC1i;SA3u;IC0i;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3697,7 +3697,7 @@ REMOTE_MOES_SWITCH_A_TS0044:
   tuya_module: ZS3L
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: a4xycprs;TS0044-MA;SA0u;ID0i;SA4u;IC1i;SA3u;IC0i;SB0u;ID1i;BTA0;M;
+  config_str: a4xycprs;TS0044-MA;SA0u;ID0i;SA4u;IC1i;SA3u;IC0i;SB0u;ID1i;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3753,7 +3753,7 @@ REMOTE_TUYA_BUTTON_TS0041:
   tuya_module: ZTC
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: mrpevh8p;TS0041-TB;BB4d;SB5u;ID2;BTB5;M;
+  config_str: mrpevh8p;TS0041-TB;BB4d;SB5u;ID2;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3807,7 +3807,7 @@ REMOTE_TUYA_SWITCH_TS0041:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: itb0omhv;TS0041-MOES;SC2u;IC4;BTC2;M;
+  config_str: itb0omhv;TS0041-MOES;SC2u;IC4;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3834,7 +3834,7 @@ REMOTE_TUYA_SWITCH_TS0042:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: tzvbimpq;TS0042-MOES;SD2u;ID4;SC3u;ID7;BTD2;M;
+  config_str: tzvbimpq;TS0042-MOES;SD2u;ID4;SC3u;ID7;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3861,7 +3861,7 @@ REMOTE_TUYA_SWITCH_TS0043:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: pkeqinnt;TS0043-MOES;SD2u;ID4;SC2u;IC4;SC3u;ID7;BTD4;M;
+  config_str: pkeqinnt;TS0043-MOES;SD2u;ID4;SC2u;IC4;SC3u;ID7;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3888,7 +3888,7 @@ REMOTE_TUYA_SWITCH_TS0043_1:
   tuya_module: ZT3L
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: sj7jbgks;TS0043-MB;SD2u;ID4;SC2u;IC4;SC3u;ID7;BTD4;M;
+  config_str: sj7jbgks;TS0043-MB;SD2u;ID4;SC2u;IC4;SC3u;ID7;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3942,7 +3942,7 @@ REMOTE_TUYA_TS0044:
   tuya_module: ZS3L
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: wkai4ga5;TS0044-TUYA;SA0d;IC1i;SA3d;IC2i;SA4d;IC0i;SB0d;ID0i;BTA0;M;
+  config_str: wkai4ga5;TS0044-TUYA;SA0d;IC1i;SA3d;IC2i;SA4d;IC0i;SB0d;ID0i;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -3969,7 +3969,7 @@ REMOTE_TUYA_TLSR82XX_2GANG:
   tuya_module: none
   mcu_family: Telink
   mcu: TLSR8258
-  config_str: TELINK;TLSR82xx-2G;SC0u;IB4;SD7u;IB4;BTB5;M;
+  config_str: TELINK;TLSR82xx-2G;SC0u;IB4;SD7u;IB4;BTB5A;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null
@@ -4023,7 +4023,7 @@ REMOTE_TUYA_TS004F:
   tuya_module: ZS3L
   mcu_family: Silabs
   mcu: EFR32MG21A020F768IM32
-  config_str: xabckq1v;TS004F-TUYA;SA0d;IC1i;SA3d;IC2i;SA4d;IC0i;SB0d;ID0i;BTA0;M;
+  config_str: xabckq1v;TS004F-TUYA;SA0d;IC1i;SA3d;IC2i;SA4d;IC0i;SB0d;ID0i;BTB7;M;
   alt_config_str: null
   old_manufacturer_names: null
   old_zb_models: null

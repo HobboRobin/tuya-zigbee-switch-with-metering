@@ -1,5 +1,6 @@
 #include "hal/gpio.h"
 #include "stub/machine_io.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,6 +77,10 @@ void hal_gpio_unreg_callback(hal_gpio_pin_t gpio_pin) {
     gpio_pins[gpio_pin].callback     = NULL;
     gpio_pins[gpio_pin].callback_arg = NULL;
     io_log("GPIO", "Unregistered callback for pin %d", gpio_pin);
+}
+
+bool hal_gpio_is_claimed(hal_gpio_pin_t gpio_pin) {
+    return gpio_pin < MAX_GPIO_PINS && gpio_pins[gpio_pin].initialized;
 }
 
 hal_gpio_pin_t hal_gpio_parse_pin(const char *s) {

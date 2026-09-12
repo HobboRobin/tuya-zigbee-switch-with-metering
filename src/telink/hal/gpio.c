@@ -5,6 +5,7 @@
 #include "tl_common.h"
 #pragma pack(pop)
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 // hal_gpio_pin_t directly stores GPIO_PinTypeDef values
@@ -86,6 +87,10 @@ void hal_gpio_init(hal_gpio_pin_t gpio_pin, uint8_t is_input,
     config->is_input = is_input;
     config->value    = 0;
     config->pull     = pull;
+}
+
+bool hal_gpio_is_claimed(hal_gpio_pin_t gpio_pin) {
+    return find_gpio_config(gpio_pin) != NULL;
 }
 
 void telink_gpio_reinit_after_deep_retention(void) {

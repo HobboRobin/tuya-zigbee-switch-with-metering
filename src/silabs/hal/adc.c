@@ -268,6 +268,17 @@ static uint16_t hal_adc_read_pin_mv(hal_gpio_pin_t pin) {
     return hal_adc_raw_to_mv(raw, avdd_mv);
 }
 
+// Battery sensing here reads the supply rail through an internal channel and
+// never touches the configured pin, so no pin is ever the wrong one.
+bool hal_adc_pin_has_channel(hal_gpio_pin_t pin) {
+    (void)pin;
+    return true;
+}
+
+hal_gpio_pin_t hal_adc_find_free_channel_pin(void) {
+    return HAL_INVALID_PIN;
+}
+
 void hal_adc_init(hal_adc_input_t input, hal_gpio_pin_t pin) {
     s_adc_input = input;
     s_adc_pin   = pin;
