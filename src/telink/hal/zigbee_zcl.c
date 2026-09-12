@@ -299,6 +299,29 @@ hal_zigbee_status_t hal_zigbee_send_cmd_to_bindings(const hal_zigbee_cmd *cmd) {
     return HAL_ZIGBEE_OK;
 }
 
+hal_zigbee_status_t hal_zigbee_send_cmd_to_coordinator(const hal_zigbee_cmd *cmd) {
+    epInfo_t dstEpInfo;
+
+    TL_SETSTRUCTCONTENT(dstEpInfo, 0);
+
+    // The coordinator is short address 0 by definition, and its ZCL endpoint
+    // is 1 on every coordinator this firmware is likely to meet.
+    dstEpInfo.profileId         = HA_PROFILE_ID;
+    dstEpInfo.dstAddrMode       = APS_SHORT_DSTADDR_WITHEP;
+    dstEpInfo.dstAddr.shortAddr = 0x0000;
+    dstEpInfo.dstEp             = 1;
+
+    zcl_sendCmd(cmd->endpoint, &dstEpInfo, cmd->cluster_id, cmd->command_id,
+                cmd->cluster_specific,
+                cmd->direction == HAL_ZIGBEE_DIR_CLIENT_TO_SERVER
+                  ? ZCL_FRAME_CLIENT_SERVER_DIR
+                  : ZCL_FRAME_SERVER_CLIENT_DIR,
+                cmd->disable_default_rsp, cmd->manufacturer_code, ZCL_SEQ_NUM,
+                cmd->payload_len, (u8 *)cmd->payload);
+
+    return HAL_ZIGBEE_OK;
+}
+
 hal_zigbee_status_t
 hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
                             uint16_t attr_id, uint8_t zcl_type_id,

@@ -165,6 +165,28 @@ void hal_zigbee_notify_attribute_changed(uint8_t endpoint, uint16_t cluster_id,
            cluster_id, attribute_id);
 }
 
+hal_zigbee_status_t hal_zigbee_send_cmd_to_coordinator(const hal_zigbee_cmd *cmd) {
+    if (!cmd)
+        return HAL_ZIGBEE_ERR_BAD_ARG;
+
+    if (network_status != HAL_ZIGBEE_NETWORK_JOINED) {
+        io_log("ZIGBEE", "Cannot send command - not joined to network");
+        return HAL_ZIGBEE_ERR_NOT_JOINED;
+    }
+
+    char buffer[cmd->payload_len * 2 + 1];
+    bytes_to_hexstr(cmd->payload, cmd->payload_len, buffer);
+
+    io_log("ZIGBEE", "Sending command to coordinator: ep=%d, cluster=0x%04x, "
+           "cmd=0x%02x, len=%d",
+           cmd->endpoint, cmd->cluster_id, cmd->command_id, cmd->payload_len);
+    io_evt("zcl_cmd_send ep=%u cluster=0x%04X cmd=0x%02X len=%u data_hex=%s dst=coordinator",
+           cmd->endpoint, cmd->cluster_id, cmd->command_id, cmd->payload_len,
+           buffer);
+
+    return HAL_ZIGBEE_OK;
+}
+
 hal_zigbee_status_t hal_zigbee_send_cmd_to_bindings(const hal_zigbee_cmd *cmd) {
     if (!cmd)
         return HAL_ZIGBEE_ERR_BAD_ARG;

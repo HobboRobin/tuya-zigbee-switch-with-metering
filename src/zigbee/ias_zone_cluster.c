@@ -46,7 +46,7 @@ static void send_enroll_request(void *arg) {
         .payload_len         = sizeof(payload),
     };
 
-    hal_zigbee_send_cmd_to_bindings(&cmd);
+    hal_zigbee_send_cmd_to_coordinator(&cmd);
 }
 
 static void send_status_change_notification(zigbee_ias_zone_cluster *cluster) {
@@ -73,7 +73,11 @@ static void send_status_change_notification(zigbee_ias_zone_cluster *cluster) {
         .payload_len         = sizeof(payload),
     };
 
-    hal_zigbee_send_cmd_to_bindings(&cmd);
+    // Straight to the coordinator rather than through the binding table: the
+    // CIE is the coordinator by definition, and a zone has to report from the
+    // moment it is enrolled - which is during the interview, before anything
+    // has been bound.
+    hal_zigbee_send_cmd_to_coordinator(&cmd);
 }
 
 void ias_zone_cluster_add_to_endpoint(zigbee_ias_zone_cluster *cluster,
@@ -147,7 +151,14 @@ void ias_zone_cluster_callback_attr_write_trampoline(uint8_t endpoint,
         cluster->zone_id    = ZCL_IAS_ZONE_ID_INVALID;
         return;
     }
-    printf("IAS CIE address written, asking to enrol\r\n");
+    // Being given a CIE address is itself the enrolment. A coordinator may
+    // follow it with an enroll response and never wait to be asked - Z2M does
+    // exactly that, then reads zoneState back and fails the whole interview if
+    // it is still zero. Waiting for a response that may never be addressed to
+    // us leaves the device stuck half-joined, so take the write at face value
+    // and let a later response refine the zone id.
+    cluster->zone_state = ZCL_IAS_ZONE_STATE_ENROLLED;
+    printf("IAS CIE address written, enrolled\r\n");
     hal_tasks_schedule(&cluster->enroll_task, ENROLL_DELAY_MS);
 }
 
@@ -167,6 +178,8 @@ hal_zigbee_cmd_result_t ias_zone_cluster_callback_cmd(uint8_t endpoint,
     }
     if (payload[0] != ZCL_IAS_ZONE_ENROLL_SUCCESS) {
         printf("IAS enrolment refused: %d\r\n", payload[0]);
+        cluster->zone_state = ZCL_IAS_ZONE_STATE_NOT_ENROLLED;
+        cluster->zone_id    = ZCL_IAS_ZONE_ID_INVALID;
         return HAL_ZIGBEE_CMD_PROCESSED;
     }
     cluster->zone_state = ZCL_IAS_ZONE_STATE_ENROLLED;
