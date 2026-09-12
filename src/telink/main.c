@@ -86,7 +86,14 @@ int real_main(startup_state_e state) {
         drv_wd_clear();
 
 #if PM_ENABLE
-        if (!tl_stackBusy() && zb_isTaskDone()) {
+        // bdb_isIdle() is the condition the SDK's own battery samples sleep
+        // on, and it is not implied by the two below: commissioning lives in
+        // the BDB state machine, which neither tl_stackBusy() nor
+        // zb_isTaskDone() speaks for. Sleeping through it means the radio is
+        // off while the coordinator is answering, so the device can spend its
+        // whole join window asleep and never appear on the network at all -
+        // while the router build, which never sleeps, joins first time.
+        if (bdb_isIdle() && !tl_stackBusy() && zb_isTaskDone()) {
             telink_gpio_hal_setup_wake_ups();
             // Only use deep retention for battery devices,
             // as it messes with GPIO output state, and relays cannot be
