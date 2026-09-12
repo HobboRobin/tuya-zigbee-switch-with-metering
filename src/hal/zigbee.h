@@ -154,6 +154,21 @@ typedef enum {
 hal_zigbee_status_t hal_zigbee_send_cmd_to_bindings(const hal_zigbee_cmd *cmd);
 
 /**
+ * Send a command straight to the coordinator, bypassing the binding table.
+ *
+ * Most of what this firmware sends is a switch driving whatever the user bound
+ * it to, and that belongs in the binding table. A few things are addressed to
+ * the coordinator itself by definition - an IAS zone reports to the CIE, which
+ * is the coordinator - and those must go out whether or not anything has been
+ * bound, because the first of them is sent during the interview, before any
+ * binding exists.
+ *
+ * @param cmd Command structure to send
+ * @return HAL_ZIGBEE_OK on success, error code otherwise
+ */
+hal_zigbee_status_t hal_zigbee_send_cmd_to_coordinator(const hal_zigbee_cmd *cmd);
+
+/**
  * Send attribute report to bound devices (notify of state changes)
  * @param endpoint Source endpoint
  * @param cluster_id Cluster containing the attribute

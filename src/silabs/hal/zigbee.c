@@ -315,6 +315,23 @@ hal_zigbee_status_t hal_zigbee_send_cmd_to_bindings(const hal_zigbee_cmd *cmd) {
     return (st == SL_STATUS_OK) ? HAL_ZIGBEE_OK : HAL_ZIGBEE_ERR_SEND_FAILED;
 }
 
+hal_zigbee_status_t hal_zigbee_send_cmd_to_coordinator(const hal_zigbee_cmd *cmd) {
+    if (!cmd)
+        return HAL_ZIGBEE_ERR_BAD_ARG;
+
+    if (sl_zigbee_af_network_state() != SL_ZIGBEE_JOINED_NETWORK)
+        return HAL_ZIGBEE_ERR_NOT_JOINED;
+
+    fill_cmd(cmd);
+
+    // The coordinator is short address 0 by definition, and its ZCL endpoint
+    // is 1 on every coordinator this firmware is likely to meet.
+    sl_zigbee_af_set_command_endpoints(cmd->endpoint, 1);
+    sl_status_t st = sl_zigbee_af_send_command_unicast(
+        SL_ZIGBEE_OUTGOING_DIRECT, 0x0000);
+    return (st == SL_STATUS_OK) ? HAL_ZIGBEE_OK : HAL_ZIGBEE_ERR_SEND_FAILED;
+}
+
 hal_zigbee_status_t
 hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
                             uint16_t attr_id, uint8_t zcl_type_id,

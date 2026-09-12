@@ -96,6 +96,37 @@ def test_writing_the_cie_address_asks_to_be_enrolled(device: Device):
     assert sent.data == bytes([0x15, 0x00, 0, 0])
 
 
+def test_the_zone_talks_to_the_coordinator_not_to_bindings(device: Device):
+    """Nothing is bound while the interview is running, so a zone that sends
+    through the binding table sends into nowhere exactly when it matters."""
+    device.clear_events()
+    device.write_zigbee_attr(
+        1, ZCL_CLUSTER_IAS_ZONE, ZCL_ATTR_IAS_ZONE_CIE_ADDRESS, COORDINATOR_IEEE
+    )
+    device.step_time(500)
+    device.wait_for_cmd_send(1, ZCL_CLUSTER_IAS_ZONE, ENROLL_REQUEST)
+    device.press_button(REED)
+    device.wait_for_cmd_send(1, ZCL_CLUSTER_IAS_ZONE, STATUS_CHANGE_NOTIFICATION)
+
+    for event in device._events:
+        if event.kind != "zcl_cmd_send":
+            continue
+        if int(event.payload["cluster"], 16) != ZCL_CLUSTER_IAS_ZONE:
+            continue
+        assert event.payload.get("dst") == "coordinator", event.payload
+
+
+def test_the_cie_write_is_itself_the_enrolment(device: Device):
+    """Z2M sends the enroll response unprompted and then reads zoneState back,
+    failing the whole interview if it is still zero. A device that waits to be
+    asked first is a device that never finishes joining."""
+    device.write_zigbee_attr(
+        1, ZCL_CLUSTER_IAS_ZONE, ZCL_ATTR_IAS_ZONE_CIE_ADDRESS, COORDINATOR_IEEE
+    )
+
+    assert attr(device, ZCL_ATTR_IAS_ZONE_STATE) == ZONE_STATE_ENROLLED
+
+
 def test_the_enroll_response_is_taken(device: Device):
     enroll(device)
 
@@ -113,6 +144,7 @@ def test_a_refused_enrolment_leaves_it_unenrolled(device: Device):
     )
 
     assert attr(device, ZCL_ATTR_IAS_ZONE_STATE) == ZONE_STATE_NOT_ENROLLED
+    assert attr(device, ZCL_ATTR_IAS_ZONE_ID) == ZONE_ID_INVALID
 
 
 def test_the_contact_moves_the_alarm_bit(device: Device):
