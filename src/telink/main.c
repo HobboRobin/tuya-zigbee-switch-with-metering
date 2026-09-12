@@ -1,5 +1,6 @@
 #include "ota_reformating/ensure_ota_scheme.h"
 #include "stdint.h"
+#include <stdbool.h>
 
 #pragma pack(push, 1)
 #include "tl_common.h"
@@ -13,6 +14,7 @@
 
 #include "app.h"
 #include "hal/gpio.h"
+#include "hal/timer.h"
 #include "hal/telink_zigbee_hal.h"
 #include "hal/zigbee.h"
 
@@ -41,6 +43,45 @@ _attribute_ram_code_sec_ int main(void) {
 
     return real_main(state);
 }
+
+#if PM_ENABLE
+// How long an end device stays awake after joining, before it is allowed to
+// start sleeping between polls.
+//
+// Joining is not the end of the conversation, it is the start of one: the
+// coordinator then asks for the active endpoints, a simple descriptor for each
+// of them, the basic attributes, and runs whatever enrolment and binding the
+// device's clusters call for. That is a minute of back-and-forth on a busy
+// network, and a device that goes to sleep the moment commissioning reports
+// "done" answers none of it - the interview fails on the very first request
+// and the device is left paired but useless, with no bindings and no
+// reporting, so not even its buttons work.
+//
+// The cost is one minute of running current, once, per join.
+#define ED_AWAKE_AFTER_JOIN_MS    60000
+
+static uint32_t joined_at_ms = 0;
+static uint8_t  was_joined   = 0;
+
+// True once the device has been joined long enough for the coordinator to have
+// finished asking. Rejoining restarts the clock, because a coordinator that
+// lost us will ask again.
+static bool ed_may_sleep_now(void) {
+    uint8_t joined =
+        (hal_zigbee_get_network_status() == HAL_ZIGBEE_NETWORK_JOINED) ? 1 : 0;
+
+    if (joined && !was_joined) {
+        joined_at_ms = hal_millis();
+    }
+    was_joined = joined;
+
+    if (!joined) {
+        return true;
+    }
+    return (hal_millis() - joined_at_ms) >= ED_AWAKE_AFTER_JOIN_MS;
+}
+
+#endif
 
 int real_main(startup_state_e state) {
     uint8_t isRetention = (state == SYSTEM_DEEP_RETENTION) ? 1 : 0;
@@ -93,12 +134,21 @@ int real_main(startup_state_e state) {
         // off while the coordinator is answering, so the device can spend its
         // whole join window asleep and never appear on the network at all -
         // while the router build, which never sleeps, joins first time.
-        if (bdb_isIdle() && !tl_stackBusy() && zb_isTaskDone()) {
+        if (bdb_isIdle() && !tl_stackBusy() && zb_isTaskDone() &&
+            ed_may_sleep_now()) {
             telink_gpio_hal_setup_wake_ups();
             // Only use deep retention for battery devices,
             // as it messes with GPIO output state, and relays cannot be
             // driven via PULL-ups, it may cause issues.
             if (battery.pin != HAL_INVALID_PIN) {
+                // Never hand drv_pm_lowPowerEnter() an empty timer queue: with
+                // nothing to wake it on a schedule it picks plain deep sleep,
+                // which loses RAM and can only be ended by a pin. A contact
+                // nobody touches then never comes back, and from the network
+                // it looks like a device that announced once and died.
+                if (ev_timer_nearestGet() == NULL) {
+                    continue;
+                }
                 telink_gpio_to_pull_for_deep_retention();
                 drv_pm_lowPowerEnter();
                 // If we didn't actually enter deep retention, restore GPIO
