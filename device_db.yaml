@@ -6027,7 +6027,7 @@ SWITCH_TUYA_A_TS0003:
   output: relay
   device_type: router
   stock_model_name: TS0003
-  stock_manufacturer_name: _TZ3000_aa5t61rh
+  stock_manufacturer_name: _TZ3000_rhkfbfcv
   stock_converter_manufacturer: Tuya
   stock_converter_model: TS0003_switch_3_gang_with_backlight
   override_z2m_device: X703A

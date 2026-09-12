@@ -142,6 +142,9 @@ if __name__ == "__main__":
         manufacturer_names.append(
             device["config_str"].split(";")[0]
         )
+        # A stock name that already matches the custom one (LELLKI, say) would
+        # otherwise be listed twice. Keep the order, drop the repeats.
+        manufacturer_names = list(dict.fromkeys(manufacturer_names))
 
     entry = make_ota_index_entry(
         file=Path(args.filename),
