@@ -112,6 +112,19 @@ fixed PWM channel (pins with PWM: A0, A2-A4, B0-B5, C0-C7, D2-D5; two LEDs
 must not share a channel — e.g. B4 and C6 both use PWM4). If the pin has no
 PWM the LED silently falls back to plain on/off.
 
+A switch that is not operated by a person - a reed contact, a float switch, a
+PIR output - takes **`Z<type>`** after its pull, which additionally reports the
+input as an **IAS Zone**. That is what makes a coordinator show a door contact
+or a leak sensor instead of a button that presses itself; the switch keeps its
+action, its bindings and its relay targeting, so nothing is traded away for it.
+The type letter is `C` contact (the default), `M` motion, `W` water leak,
+`F` smoke, `G` carbon monoxide, `V` vibration - e.g. `SD7fZC`.
+The zone is alarmed while the input reads as pressed, so the pull and the
+wiring decide which way round it is, exactly as they do for the switch action.
+Consider turning the multi-press factory reset off for such an input
+(`<name>_multi_press_reset`): a door opened ten times in a row would otherwise
+reset the device.
+
 Light outputs (`W`, `T`) are always PWM-dimmable, so they only take the `i`
 flag - and it goes **after the last pin**, applying to every channel of that
 light (`TC4C3i`, not `TC4iC3i`). If the light gets brighter as you dim it, or
@@ -124,7 +137,7 @@ Additional options:
 | **`D<N>`**   | Debounce delay               | • Set software debounce in ms for all buttons/switches <br> • Example: `D0` disables it |
 | **`i00000`** | Image type                   | • Change OTA image_type (migrate to another build)                                |
 | **`M`**      | Momentary                    | • Defaults buttons to momentary mode (for devices with built-in switches)         |
-| **`BT<pin>`** | Battery mode                | • Enables battery-powered behavior <br> • Adds battery measurement/reporting using the selected ADC pin |
+| **`BT<pin>[A]`** | Battery mode             | • Enables battery-powered behavior <br> • Adds battery measurement/reporting using the selected ADC pin <br> • The cell is treated as a lithium coin cell (CR20xx) unless `A` says alkaline: a coin cell sits just under 3 V for most of its life and then drops away, so a straight line would report a nearly empty cell as most of the way full <br> • Only ten pins on TLSR825x have an ADC channel (B0-B7, C4, C5) and the pin must not be used by anything else; the firmware silently takes a free one if the named pin is neither |
 | **`SLP`**    | Simultaneous Latching Pulses |  • Enable simultaneous pulses for latching relays (they are disallowed by default)|
 | **`EP<CF><CF1><SEL>`** | Energy monitoring (HLW8012/BL0937) | • Adds power/voltage/current/energy on EP1 <br> • 3 pins: CF (power), CF1 (voltage+current, time-multiplexed), SEL (mode select) <br> • Example: `EPC0C2C1` (CF=C0, CF1=C2, SEL=C1) |
 | **`EB<TX><RX>`** | Energy monitoring (BL0942, UART) | • Adds power/voltage/current/energy on EP1 <br> • 2 pins from the MCU's point of view: TX (poll command out), RX (data in) <br> • Optional `S<baud>` overrides the 4800 default (e.g. `EBB0B7S9600`) <br> • On TLSR825x RX must be a UART RX pin (A0/B0/B7/C3/C5/D6); TX may be any pin (bit-banged if not A2/B1/C2/D0/D3/D7) <br> • On EFR32 (Silabs) any two pins work (flexible routing) |

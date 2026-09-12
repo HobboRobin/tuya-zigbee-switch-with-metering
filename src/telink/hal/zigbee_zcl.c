@@ -68,6 +68,9 @@ static cluster_registerFunc_t get_register_func_by_cluster_id(u16 cluster_id) {
     if (cluster_id == ZCL_CLUSTER_ELECTRICAL_MEASUREMENT) {
         return zcl_electricalMeasure_register;
     }
+    if (cluster_id == ZCL_CLUSTER_SS_IAS_ZONE) {
+        return zcl_iasZone_register;
+    }
     if (cluster_id == ZCL_CLUSTER_METERING) {
         return zcl_metering_register;
     }
@@ -135,6 +138,14 @@ static status_t cmd_callback_color_control(zclIncomingAddrInfo_t *pAddrInfo,
                         cmdId, pInMsg->pData, pInMsg->dataLen);
 }
 
+static status_t cmd_callback_ias_zone(zclIncomingAddrInfo_t *pAddrInfo,
+                                      u8 cmdId, void *cmdPayload) {
+    zclIncoming_t *pInMsg = cmd_incoming_from_addr_info(pAddrInfo);
+
+    return cmd_callback(pAddrInfo->dstEp, ZCL_CLUSTER_SS_IAS_ZONE, cmdId,
+                        pInMsg->pData, pInMsg->dataLen);
+}
+
 static status_t cmd_callback_poll_control(zclIncomingAddrInfo_t *pAddrInfo,
                                           u8 cmdId, void *cmdPayload) {
     zclIncoming_t *pInMsg = cmd_incoming_from_addr_info(pAddrInfo);
@@ -158,6 +169,9 @@ static cluster_forAppCb_t get_cmd_callback_by_cluster_id(u16 cluster_id) {
     }
     if (cluster_id == ZCL_CLUSTER_GEN_POLL_CONTROL) {
         return cmd_callback_poll_control;
+    }
+    if (cluster_id == ZCL_CLUSTER_SS_IAS_ZONE) {
+        return cmd_callback_ias_zone;
     }
     return NULL;
 }

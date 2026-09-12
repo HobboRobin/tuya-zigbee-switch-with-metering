@@ -430,8 +430,20 @@ void switch_cluster_level_control(zigbee_switch_cluster *cluster) {
     }
 }
 
+// A sensor's zone follows the contact directly: pressed means tripped. Which
+// way round that is on the board is the wiring's business, the same as it is
+// for the switch action - a reed that closes on the magnet is wired to read
+// the way its config string says.
+static void switch_cluster_sync_zone(zigbee_switch_cluster *cluster,
+                                     bool pressed) {
+    if (cluster->ias_zone != NULL) {
+        ias_zone_cluster_set_alarm(cluster->ias_zone, pressed);
+    }
+}
+
 void switch_cluster_on_button_press(zigbee_switch_cluster *cluster) {
     switch_cluster_flash_indicator(cluster);
+    switch_cluster_sync_zone(cluster, true);
 
     if (cluster->mode == ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_TOGGLE) {
         // Toggle does not support modes (RISE, SHORT, LONG)
@@ -461,6 +473,8 @@ void switch_cluster_on_button_press(zigbee_switch_cluster *cluster) {
 }
 
 void switch_cluster_on_button_release(zigbee_switch_cluster *cluster) {
+    switch_cluster_sync_zone(cluster, false);
+
     if (cluster->mode == ZCL_ONOFF_CONFIGURATION_SWITCH_TYPE_TOGGLE) {
         // Only flash on release for toggles,
         // for momentary flash on press only

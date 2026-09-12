@@ -5,6 +5,7 @@
 #include "zigbee/basic_cluster.h"
 #include "zigbee/light_cluster.h"
 #include "zigbee/identify_cluster.h"
+#include "zigbee/ias_zone_cluster.h"
 #include "device_config/nvm_items.h"
 #include "zigbee/battery_cluster.h"
 #include "zigbee/consts.h"
@@ -60,7 +61,10 @@ zigbee_basic_cluster basic_cluster = {
 zigbee_group_cluster group_cluster = {};
 
 zigbee_switch_cluster switch_clusters[4];
-uint8_t switch_clusters_cnt = 0;
+// One zone per switch at most, and only for the inputs that ask for it.
+zigbee_ias_zone_cluster ias_zone_clusters[4];
+uint8_t ias_zone_clusters_cnt = 0;
+uint8_t switch_clusters_cnt   = 0;
 
 // Up to 6 relay endpoints (e.g. the UseeLink 4-AC + USB strip has 5). One
 // zigbee endpoint each, so this must stay within endpoints[]/clusters[] below.
@@ -358,6 +362,19 @@ void parse_config() {
                 ZCL_ONOFF_CONFIGURATION_RELAY_MODE_SHORT;
             switch_clusters[switch_clusters_cnt].binded_mode =
                 ZCL_ONOFF_CONFIGURATION_BINDED_MODE_SHORT;
+            // `Z<type>` after the pull turns this input into a sensor as well:
+            // it keeps its switch action and bindings, and additionally reports
+            // itself as an IAS zone, which is what makes a coordinator show a
+            // door contact rather than a button that presses itself.
+            if (entry[4] == 'Z' &&
+                ias_zone_clusters_cnt < ARRAY_LEN(ias_zone_clusters)) {
+                uint16_t zone_type = ias_zone_type_from_char(entry[5]);
+                ias_zone_clusters[ias_zone_clusters_cnt].zone_type =
+                    zone_type ? zone_type : ZCL_IAS_ZONE_TYPE_CONTACT;
+                switch_clusters[switch_clusters_cnt].ias_zone =
+                    &ias_zone_clusters[ias_zone_clusters_cnt];
+                ias_zone_clusters_cnt++;
+            }
             switch_clusters[switch_clusters_cnt].multi_press_reset = 1;
             switch_clusters[switch_clusters_cnt].flash_indicator   = 1;
             switch_clusters[switch_clusters_cnt].relay_index       = switch_clusters_cnt + 1;
@@ -700,6 +717,10 @@ void parse_config() {
             endpoints[index].clusters = cluster_ptr;
         }
         switch_cluster_add_to_endpoint(&switch_clusters[index], &endpoints[index]);
+        if (switch_clusters[index].ias_zone != NULL) {
+            ias_zone_cluster_add_to_endpoint(switch_clusters[index].ias_zone,
+                                             &endpoints[index]);
+        }
     }
 
     // Add energy measurement clusters to EP1 before the relay loop so that

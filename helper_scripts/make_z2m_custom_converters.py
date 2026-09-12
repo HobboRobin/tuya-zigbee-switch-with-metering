@@ -5,6 +5,16 @@ from pathlib import Path
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+# Config-string zone letters to the names Z2M's iasZoneAlarm knows.
+IAS_ZONE_TYPES = {
+    "C": "contact",
+    "M": "occupancy",
+    "W": "water_leak",
+    "F": "smoke",
+    "G": "carbon_monoxide",
+    "V": "vibration",
+}
+
 env = Environment(
     loader=FileSystemLoader("helper_scripts/templates"),
     autoescape=select_autoescape(),
@@ -44,6 +54,7 @@ if __name__ == "__main__":
         cover_switch_cnt = 0
         cover_cnt = 0
         light_kinds: list[str] = []
+        zone_types: list[str] = []
         indicators_cnt = 0
         dimmable_indicators = []
         has_dedicated_net_led = False
@@ -66,6 +77,12 @@ if __name__ == "__main__":
                 relay_cnt += 1
             if peripheral[0] == "S":
                 switch_cnt += 1
+                # `S<pin><pull>Z<type>`: the input is also an IAS zone, which
+                # is what makes a coordinator render a door contact instead of
+                # a switch that presses itself.
+                flags = peripheral[4:]
+                if flags.startswith("Z"):
+                    zone_types.append(flags[1:2] or "C")
             if peripheral[0] == "X":
                 cover_switch_cnt += 1
             if peripheral[0] == "C":
@@ -157,6 +174,10 @@ if __name__ == "__main__":
                 # The confirmation flash is the switch's own, and only exists
                 # where no relay owns the indicator LED: with a relay the LED
                 # shows the relay's state and never flashes.
+                # Z2M's iasZoneAlarm is device-wide - it has no endpoint
+                # argument - so only the first zone is described. A board with
+                # two sensors would need the upstream extend to grow one.
+                "iasZoneType": IAS_ZONE_TYPES.get(zone_types[0]) if zone_types else None,
                 "switchFlashNames": (
                     switch_names[:indicators_cnt] if not relay_cnt else []
                 ),

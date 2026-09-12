@@ -3,6 +3,7 @@
 #include "cover_cluster.h"
 #include "cover_switch_cluster.h"
 #include "electrical_measurement_cluster.h"
+#include "ias_zone_cluster.h"
 #include "hal/printf_selector.h"
 #include "light_cluster.h"
 #include "metering_cluster.h"
@@ -28,6 +29,8 @@ static void zigbee_on_attr_change(uint8_t endpoint, uint16_t cluster_id,
     } else if (cluster_id == ZCL_CLUSTER_LEVEL_CONTROL ||
                cluster_id == ZCL_CLUSTER_COLOR_CONTROL) {
         light_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
+    } else if (cluster_id == ZCL_CLUSTER_IAS_ZONE) {
+        ias_zone_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
     } else if (cluster_id == ZCL_CLUSTER_WINDOW_COVERING) {
         cover_cluster_callback_attr_write_trampoline(endpoint, attribute_id);
     } else if (cluster_id == ZCL_CLUSTER_METERING) {
