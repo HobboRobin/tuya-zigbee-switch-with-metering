@@ -201,7 +201,18 @@ void telink_zigbee_hal_network_init(void) {
 }
 
 void telink_zigbee_hal_bdb_init(af_simple_descriptor_t *endpoint_descriptor) {
-    // BDB init
-    // TODO: Support from restore from deep sleep here
-    bdb_init(endpoint_descriptor, &bdb_commission_setting, &device_bdb_cb, 1);
+    // The last argument tells BDB whether the device has just been powered on.
+    // It had been pinned to "yes", which is a lie every time an end device
+    // comes back from deep sleep: the stack then rebuilds its network state
+    // from scratch instead of picking up the network it is still joined to, so
+    // the radio comes up, stays up drawing milliamps, and the device never
+    // speaks to its coordinator again. From the outside it looks like a device
+    // that wakes and then does nothing, which is exactly what it is.
+    //
+    // A cold start still reports 1: the flag is only set by a real deep-sleep
+    // wake, and reads 0 on a chip that has just been given power.
+    u8 repower = drv_pm_deepSleep_flag_get() ? 0 : 1;
+
+    bdb_init(endpoint_descriptor, &bdb_commission_setting, &device_bdb_cb,
+             repower);
 }
