@@ -70,8 +70,27 @@ jobs:
     - name: Build with debug output enabled
       run: |
         source .venv/bin/activate
+        # The repository ships a released binary for every board, and they land
+        # in the same directory this build writes to. Leaving them there means
+        # handing back an artifact with two near-identically named files in it,
+        # one of which says nothing on the wire - so clear the tree first and
+        # let this run be the only thing in it.
+        rm -rf bin
         BOARD="${{ inputs.board }}" DEVICE_TYPE="${{ inputs.device_type }}" DEBUG=1 \
           make board/build-firmware
+
+    - name: Give it a name that cannot be confused with a release build
+      run: |
+        BOARD="${{ inputs.board }}"
+        TYPE="${{ inputs.device_type }}"
+        DIR="bin/$TYPE/$BOARD"
+        [ "$TYPE" = "end_device" ] && DIR="bin/$TYPE/${BOARD}_END_DEVICE"
+        BUILT=$(ls "$DIR"/*.bin 2>/dev/null | head -1)
+        if [ -z "$BUILT" ]; then
+          echo "::error::The build produced no .bin in $DIR"
+          exit 1
+        fi
+        mv "$BUILT" "$DIR/${BOARD}-${TYPE}-DEBUG.bin"
 
     - name: Say where the log comes out
       run: |
@@ -81,6 +100,9 @@ jobs:
         [ "$TYPE" = "end_device" ] && DIR="bin/$TYPE/${BOARD}_END_DEVICE"
         {
           echo "## Debug build: \`$BOARD\` ($TYPE)"
+          echo
+          echo "Flash **\`${BOARD}-${TYPE}-DEBUG.bin\`** - it is the only file in the"
+          echo "artifact, so there is nothing to pick wrong."
           echo
           echo "Serial output on **PB1**, **115200** baud, 8N1 - connect it to your"
           echo "programmer's RX. The device is otherwise the normal firmware."
@@ -94,6 +116,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: debug-${{ inputs.board }}-${{ inputs.device_type }}
-        path: bin/**/*
+        path: bin/**/*-DEBUG.bin
         if-no-files-found: error
         retention-days: 14
