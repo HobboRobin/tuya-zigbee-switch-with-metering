@@ -263,7 +263,10 @@ retention-budget: $(ELF_FILE)
 	LIMIT=$$(( $(RETENTION_END) - $(RAM_START) )); \
 	echo "Retention budget: $$USED of $$LIMIT bytes (ends at 0x$$END_BSS)"; \
 	if [ "$$USED" -gt "$$LIMIT" ]; then \
-		echo "  Over by $$(( USED - LIMIT )) bytes."; \
+		echo "  Over by $$(( USED - LIMIT )) bytes. Largest objects in RAM:"; \
+		$(OBJDUMP) -t $(ELF_FILE) \
+		 | awk '$$4 == ".bss" || $$4 == ".data" { print strtonum("0x" $$5), $$4, $$NF }' \
+		 | sort -rn | head -20 | awk '{ printf "    %7d  %-6s %s\n", $$1, $$2, $$3 }'; \
 		if [ "$(DEVICE_TYPE)" = "end_device" ]; then \
 			echo "::error::RAM above 0x848000 is lost on every deep sleep, so this end device cannot wake up intact."; \
 			exit 1; \
