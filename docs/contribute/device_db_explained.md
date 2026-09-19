@@ -32,3 +32,27 @@ Information about all supported devices is kept inside [`device_db.yaml`](../../
 | `info`                         | Status explained briefly                                                                                                                                                                                                                                                                 |
 | `threads`                      | Link to device-related GitHub issue or pull request                                                                                                                                                                                                                                      |
 | `store`                        | Links to buy the exact same device: <br> • Preferably AliExpress (international, English, no affiliation)                                                                                                                                                                                |
+
+## `config_str` is a default, not a setting
+
+The config string in `device_db.yaml` is compiled into the firmware as the
+**fallback** value. On every boot the device reads its config string from NVM
+first and only falls back to the compiled-in one when NVM holds nothing — which
+is the case exactly once, on a chip that has never run this firmware before.
+
+That has one consequence worth spelling out, because it is easy to get wrong:
+
+> **Changing `config_str` in `device_db.yaml` does not change an
+> already-flashed device.** Not by rebuilding, not by reflashing, not by OTA.
+> The device keeps the string that is in its NVM.
+
+So a pinout fix committed here reaches new devices only. To move an existing
+device onto the new string, write it to the `device_config` attribute in
+Zigbee2MQTT (Device ➡ Exposes ➡ *Device config*), or erase the NVM sectors when
+flashing over the wire.
+
+After the string changes, Zigbee2MQTT still knows the old one: the endpoints and
+clusters it has on file come from the interview. Run **Re-interview** whenever
+the new string adds or removes an endpoint or a cluster — a new switch input, a
+`2EP` companion, an IAS zone — otherwise the device reports things the
+coordinator is not listening for.
