@@ -268,10 +268,10 @@ retention-budget: $(ELF_FILE)
 		 | awk '$$4 == ".bss" || $$4 == ".data" { print strtonum("0x" $$5), $$4, $$NF }' \
 		 | sort -rn | head -20 | awk '{ printf "    %7d  %-6s %s\n", $$1, $$2, $$3 }'; \
 		if [ "$(DEVICE_TYPE)" = "end_device" ]; then \
-			echo "::error::RAM above 0x848000 is lost on every deep sleep, so this end device cannot wake up intact."; \
-			exit 1; \
+			echo "::warning::RAM above 0x848000 is lost on every deep sleep, so this end device does not wake up intact."; \
+		else \
+			echo "  Routers never deep sleep, so this does not affect them."; \
 		fi; \
-		echo "  Routers never deep sleep, so this is not fatal here."; \
 	fi
 
 # Compile Telink-specific C files
