@@ -16,6 +16,13 @@ SIMPLICITY_SDK_URL := $(SIMPLICITY_SDK_REPO)/releases/download/v$(SIMPLICITY_SDK
 COMMANDER_URL := https://www.silabs.com/documents/public/software/SimplicityCommander-Linux.zip
 SLC_CLI_URL := https://www.silabs.com/documents/public/software/slc_cli_linux.zip
 
+# www.silabs.com answers a bare curl with 403 Forbidden, so the downloads from
+# there identify as a browser. GitHub's cache hid this for as long as the tools
+# stayed cached; it evicts entries unused for seven days, and the first release
+# build after a quiet fortnight could not get past this step.
+SILABS_CURL_OPTS := --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36" \
+	--retry 3 --retry-delay 5
+
 # ZAP tool configuration
 ZAP_VERSION := 2025.10.23
 ZAP_ARCHIVE := zap-linux-x64.zip
@@ -102,7 +109,7 @@ $(TOOLS_DIR)/commander: | $(DOWNLOAD_DIR)
 	@echo "Downloading Simplicity Commander..."
 	@if [ ! -f "$(DOWNLOAD_DIR)/SimplicityCommander-Linux.zip" ]; then \
 		echo "Attempting to download from: $(COMMANDER_URL)"; \
-		if ! curl -L "$(COMMANDER_URL)" \
+		if ! curl -L $(SILABS_CURL_OPTS) "$(COMMANDER_URL)" \
 			-o "$(DOWNLOAD_DIR)/SimplicityCommander-Linux.zip" \
 			--fail --show-error --connect-timeout 30; then \
 			echo "Download failed. Please manually download SimplicityCommander-Linux.zip"; \
@@ -146,7 +153,7 @@ $(TOOLS_DIR)/slc-cli: | $(DOWNLOAD_DIR)
 	@echo "Downloading SLC CLI..."
 	@if [ ! -f "$(DOWNLOAD_DIR)/slc_cli_linux.zip" ]; then \
 		echo "Attempting to download from: $(SLC_CLI_URL)"; \
-		if ! curl -L "$(SLC_CLI_URL)" \
+		if ! curl -L $(SILABS_CURL_OPTS) "$(SLC_CLI_URL)" \
 			-o "$(DOWNLOAD_DIR)/slc_cli_linux.zip" \
 			--fail --show-error --connect-timeout 30; then \
 			echo "Download failed. Please manually download slc_cli_linux.zip"; \
