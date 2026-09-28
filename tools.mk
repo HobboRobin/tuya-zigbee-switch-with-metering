@@ -23,11 +23,10 @@ help:
 
 
 # Clear all Zigbee2MQTT index files
+# KEEP_MCU=EFR32 keeps the entries of boards on that MCU family, for a build
+# that cannot rebuild them (see helper_scripts/clean_z2m_index.py).
 clean_z2m_index:
-	@echo "[]" > zigbee2mqtt/ota/index_router-FORCE.json
-	@echo "[]" > zigbee2mqtt/ota/index_end_device-FORCE.json
-	@echo "[]" > zigbee2mqtt/ota/index_router.json
-	@echo "[]" > zigbee2mqtt/ota/index_end_device.json
+	@python3 helper_scripts/clean_z2m_index.py $(if $(KEEP_MCU),--keep-mcu $(KEEP_MCU))
 
 # Update Zigbee2MQTT converter files
 update_converters:
