@@ -3,6 +3,7 @@
 #include "consts.h"
 #include "device_config/nvm_items.h"
 #include "hal/nvm.h"
+#include "hal/tasks.h"
 #include "hal/printf_selector.h"
 
 hal_zigbee_cmd_result_t relay_cluster_callback(zigbee_relay_cluster *cluster,
@@ -60,19 +61,59 @@ void update_relay_clusters() {
 }
 
 // Proactively push every relay's on/off state to the coordinator. Called on a
-// timer from app_task so the state self-heals even if the single on-change
-// report was lost in the mesh: the Telink stack does not emit a periodic
-// max-interval heartbeat for a discrete (boolean) attribute, so the Z2M-side
-// reporting config alone cannot recover a lost onOff report.
+// timer from app_task as the last line of defence: whatever went wrong with
+// the reports in between, the coordinator is back in sync within the interval.
 void relay_clusters_report_state(void) {
     for (int i = 0; i < 12; i++) {
         zigbee_relay_cluster *cluster = relay_cluster_by_endpoint[i];
         if (cluster != NULL && cluster->relay != NULL) {
-            hal_zigbee_send_report_attr(cluster->endpoint, ZCL_CLUSTER_ON_OFF,
-                                        ZCL_ATTR_ONOFF, ZCL_DATA_TYPE_BOOLEAN,
-                                        &cluster->relay->on, 1);
+            hal_zigbee_send_confirmed_report_to_coordinator(
+                cluster->endpoint, ZCL_CLUSTER_ON_OFF, ZCL_ATTR_ONOFF);
         }
     }
+}
+
+// How long after the last relay change the acknowledged report goes out.
+// Long enough that the stack's own immediate report is out of the way and a
+// burst of toggles collapses into one frame; short enough that nobody looks at
+// a wrong state in the meantime.
+#define RELAY_CONFIRM_DELAY_MS    1500
+
+// The stack reports a relay change once, unacknowledged, and marks the value
+// as reported the moment the frame leaves - so if that frame is lost, nothing
+// sends it again until the next max-interval report. The power readings from
+// the same device keep arriving, because they change every few seconds, and
+// the coordinator ends up showing a relay that is off while it reports load.
+// One acknowledged report after the change closes that gap: the stack retries
+// it until the coordinator has it.
+//
+// One task serves every relay, so a group command that switches four of them
+// at once takes one of the stack's few timer slots, not four.
+static hal_task_t relay_confirm_task;
+
+static void relay_clusters_confirm_state(void *arg) {
+    (void)arg;
+    for (int i = 0; i < 12; i++) {
+        zigbee_relay_cluster *cluster = relay_cluster_by_endpoint[i];
+        if (cluster != NULL && cluster->confirm_pending) {
+            cluster->confirm_pending = 0;
+            hal_zigbee_send_confirmed_report_to_coordinator(
+                cluster->endpoint, ZCL_CLUSTER_ON_OFF, ZCL_ATTR_ONOFF);
+        }
+    }
+}
+
+// Rescheduling restarts the delay, so a burst of changes is confirmed once,
+// with the state it ended in.
+static void relay_cluster_schedule_confirm(zigbee_relay_cluster *cluster) {
+    if (relay_confirm_task.handler == NULL) {
+        relay_confirm_task.handler = relay_clusters_confirm_state;
+        relay_confirm_task.arg     = NULL;
+        hal_tasks_init(&relay_confirm_task);
+    }
+    cluster->confirm_pending = 1;
+    hal_tasks_unschedule(&relay_confirm_task);
+    hal_tasks_schedule(&relay_confirm_task, RELAY_CONFIRM_DELAY_MS);
 }
 
 void relay_cluster_add_to_endpoint(zigbee_relay_cluster *cluster,
@@ -80,6 +121,7 @@ void relay_cluster_add_to_endpoint(zigbee_relay_cluster *cluster,
     relay_cluster_by_endpoint[endpoint->endpoint] = cluster;
     cluster->endpoint = endpoint->endpoint;
     relay_cluster_load_attrs_from_nv(cluster);
+    cluster->confirm_pending = 0;
 
     cluster->relay->callback_param = cluster;
     cluster->relay->on_change      = (relay_callback_t)relay_cluster_on_relay_change;
@@ -239,6 +281,7 @@ void relay_cluster_on_relay_change(zigbee_relay_cluster *cluster,
                                    uint8_t state) {
     hal_zigbee_notify_attribute_changed(cluster->endpoint, ZCL_CLUSTER_ON_OFF,
                                         ZCL_ATTR_ONOFF);
+    relay_cluster_schedule_confirm(cluster);
     if (cluster->startup_mode == ZCL_START_UP_ONOFF_SET_ONOFF_TOGGLE ||
         cluster->startup_mode == ZCL_START_UP_ONOFF_SET_ONOFF_TO_PREVIOUS) {
         relay_cluster_store_attrs_to_nv(cluster);

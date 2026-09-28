@@ -246,6 +246,25 @@ hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
     return HAL_ZIGBEE_OK;
 }
 
+hal_zigbee_status_t
+hal_zigbee_send_confirmed_report_to_coordinator(uint8_t endpoint,
+                                                uint16_t cluster_id,
+                                                uint16_t attr_id) {
+    if (network_status != HAL_ZIGBEE_NETWORK_JOINED) {
+        io_log("ZIGBEE", "Cannot send report - not joined to network");
+        return HAL_ZIGBEE_ERR_NOT_JOINED;
+    }
+
+    io_log("ZIGBEE",
+           "Sending confirmed attribute report to coordinator: ep=%d, "
+           "cluster=0x%04x, attr=0x%04x",
+           endpoint, cluster_id, attr_id);
+    io_evt("zcl_report ep=%u cluster=0x%04X attr=0x%04X dst=coordinator",
+           endpoint, cluster_id, attr_id);
+
+    return HAL_ZIGBEE_OK;
+}
+
 hal_zigbee_status_t hal_zigbee_send_announce(void) {
     io_log("ZIGBEE", "Sending Zigbee announce");
     io_evt("zdo_announce");

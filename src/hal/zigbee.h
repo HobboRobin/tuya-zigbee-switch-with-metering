@@ -183,6 +183,31 @@ hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
                             uint16_t attr_id, uint8_t zcl_type_id,
                             const void *value, uint8_t value_len);
 
+/**
+ * Report an attribute straight to the coordinator and have the delivery
+ * acknowledged, so the stack retries it until the coordinator has it.
+ *
+ * The stack's own attribute reports are fire-and-forget: one frame, no
+ * acknowledgement, and the stack remembers the value as reported the moment it
+ * hands the frame over. A report lost in the mesh is therefore not sent again
+ * until the next max-interval report, which for a relay can be hours away. A
+ * measurement that changes every few seconds hides a loss like that; a relay
+ * state does not - the coordinator keeps showing the old state while the power
+ * readings from the same device say otherwise.
+ *
+ * Use it for state the coordinator must not get wrong. The value is read from
+ * the stack's attribute table, so it is whatever the attribute holds now.
+ *
+ * @param endpoint Source endpoint
+ * @param cluster_id Cluster containing the attribute
+ * @param attr_id Attribute ID to report
+ * @return HAL_ZIGBEE_OK on success, error code otherwise
+ */
+hal_zigbee_status_t
+hal_zigbee_send_confirmed_report_to_coordinator(uint8_t endpoint,
+                                                uint16_t cluster_id,
+                                                uint16_t attr_id);
+
 /** Send Zigbee "announce" command to notify other devices of our presence
  * @return HAL_ZIGBEE_OK on success, error code otherwise
  */

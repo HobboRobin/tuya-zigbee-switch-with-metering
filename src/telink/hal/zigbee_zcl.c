@@ -345,6 +345,41 @@ hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
     return HAL_ZIGBEE_OK;
 }
 
+hal_zigbee_status_t
+hal_zigbee_send_confirmed_report_to_coordinator(uint8_t endpoint,
+                                                uint16_t cluster_id,
+                                                uint16_t attr_id) {
+    if (!zb_isDeviceJoinedNwk()) {
+        return HAL_ZIGBEE_ERR_NOT_JOINED;
+    }
+
+    zclAttrInfo_t *pAttrEntry = zcl_findAttribute(endpoint, cluster_id, attr_id);
+    if (!pAttrEntry) {
+        return HAL_ZIGBEE_ERR_BAD_ARG;
+    }
+
+    epInfo_t dstEpInfo;
+    TL_SETSTRUCTCONTENT(dstEpInfo, 0);
+
+    // The coordinator is short address 0 by definition, and its ZCL endpoint
+    // is 1 on every coordinator this firmware is likely to meet. Unicast is
+    // what makes the APS acknowledgement possible: the stack then retries the
+    // frame until the coordinator confirms it, instead of sending it once.
+    dstEpInfo.profileId         = HA_PROFILE_ID;
+    dstEpInfo.dstAddrMode       = APS_SHORT_DSTADDR_WITHEP;
+    dstEpInfo.dstAddr.shortAddr = 0x0000;
+    dstEpInfo.dstEp             = 1;
+    dstEpInfo.txOptions         = APS_TX_OPT_ACK_TX;
+
+    if (zcl_sendReportCmd(endpoint, &dstEpInfo, TRUE,
+                          ZCL_FRAME_SERVER_CLIENT_DIR, cluster_id,
+                          pAttrEntry->id, pAttrEntry->type,
+                          pAttrEntry->data) != ZCL_STA_SUCCESS) {
+        return HAL_ZIGBEE_ERR_SEND_FAILED;
+    }
+    return HAL_ZIGBEE_OK;
+}
+
 void hal_zigbee_register_on_attribute_change_callback(
     hal_attribute_change_callback_t callback) {
     attribute_change_callback = callback;

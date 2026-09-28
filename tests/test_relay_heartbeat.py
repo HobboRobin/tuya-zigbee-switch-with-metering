@@ -1,7 +1,8 @@
 """Firmware-side relay-state heartbeat: app_task re-pushes every relay's onOff
-state to the coordinator every 5 minutes, so a lost on-change report self-heals
-(the Telink stack emits no periodic max-interval report for a boolean attribute,
-so the Z2M reporting config alone cannot recover a lost onOff report)."""
+state to the coordinator every 5 minutes, so the coordinator re-syncs within
+that interval whatever happened to the reports in between (Z2M configures a
+65000 s max interval for onOff, so its own reporting config would take most of
+a day)."""
 
 import pytest
 
@@ -13,6 +14,7 @@ ZCL_ATTR_ONOFF = 0x0000
 ZCL_CMD_ONOFF_ON = 0x01
 RELAY_EP = 2  # SA0u -> switch EP1, RB0 -> relay EP2
 HEARTBEAT_MS = 5 * 60 * 1000
+CONFIRM_DELAY_MS = 1500  # RELAY_CONFIRM_DELAY_MS in relay_cluster.c
 
 
 @pytest.fixture
@@ -35,8 +37,11 @@ def test_relay_state_reported_on_heartbeat_interval(device: Device):
     # step_time only advances hal_millis() while time is frozen.
     device.freeze_time()
     device.set_network(1)
-    # Turn the relay on, then drop any reports emitted so far.
+    # Turn the relay on and let its acknowledged confirmation go out, then drop
+    # every report so far: only the heartbeat may produce the next one.
     device.call_zigbee_cmd(RELAY_EP, ZCL_CLUSTER_ON_OFF, ZCL_CMD_ONOFF_ON)
+    device.step_time(CONFIRM_DELAY_MS)
+    wait_for(lambda: len(_relay_reports(device)) >= 1, timeout=2.0)
     device.clear_events()
 
     # Before the interval elapses: no heartbeat yet.

@@ -241,6 +241,38 @@ $(BIN_FILE): $(ELF_FILE)
 	@mkdir -p $(dir $@)
 	@$(OBJCOPY) -O binary $< $@
 	@$(SIZE) $<
+	@$(MAKE) --no-print-directory retention-budget
+
+# The TLSR8258 can hold at most the lower 32K of its 64K SRAM across deep
+# sleep. Everything above 0x848000 comes back as garbage, and an end device
+# that loses part of the stack's state there wakes up with the radio on, no
+# idea that it is on a network, and nothing to send - which looks exactly like
+# a device that died after its first sleep. Nothing warns about it: the SDK's
+# own linker script carries the assert, commented out.
+RAM_START        := 0x840000
+RETENTION_END    := 0x848000
+
+.PHONY: retention-budget
+retention-budget: $(ELF_FILE)
+	@END_BSS=$$($(OBJDUMP) -t $(ELF_FILE) | awk '$$NF == "_end_bss_" { print $$1 }' | tail -1); \
+	if [ -z "$$END_BSS" ]; then \
+		echo "Retention budget: _end_bss_ not found in $(ELF_FILE), skipping check"; \
+		exit 0; \
+	fi; \
+	USED=$$(( 0x$$END_BSS - $(RAM_START) )); \
+	LIMIT=$$(( $(RETENTION_END) - $(RAM_START) )); \
+	echo "Retention budget: $$USED of $$LIMIT bytes (ends at 0x$$END_BSS)"; \
+	if [ "$$USED" -gt "$$LIMIT" ]; then \
+		echo "  Over by $$(( USED - LIMIT )) bytes. Largest objects in RAM:"; \
+		$(OBJDUMP) -t $(ELF_FILE) \
+		 | awk '$$4 == ".bss" || $$4 == ".data" { print strtonum("0x" $$5), $$4, $$NF }' \
+		 | sort -rn | head -20 | awk '{ printf "    %7d  %-6s %s\n", $$1, $$2, $$3 }'; \
+		if [ "$(DEVICE_TYPE)" = "end_device" ]; then \
+			echo "::warning::RAM above 0x848000 is lost on every deep sleep, so this end device does not wake up intact."; \
+		else \
+			echo "  Routers never deep sleep, so this does not affect them."; \
+		fi; \
+	fi
 
 # Compile Telink-specific C files
 $(BUILD_DIR)/telink/%.o: %.c

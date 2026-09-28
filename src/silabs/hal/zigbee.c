@@ -360,6 +360,37 @@ hal_zigbee_send_report_attr(uint8_t endpoint, uint16_t cluster_id,
     return (st == SL_STATUS_OK) ? HAL_ZIGBEE_OK : HAL_ZIGBEE_ERR_SEND_FAILED;
 }
 
+hal_zigbee_status_t
+hal_zigbee_send_confirmed_report_to_coordinator(uint8_t endpoint,
+                                                uint16_t cluster_id,
+                                                uint16_t attr_id) {
+    if (sl_zigbee_af_network_state() != SL_ZIGBEE_JOINED_NETWORK)
+        return HAL_ZIGBEE_ERR_NOT_JOINED;
+
+    hal_zigbee_attribute *attr = find_hal_attr(endpoint, cluster_id, attr_id);
+    if (!attr || attr->size > 8)
+        return HAL_ZIGBEE_ERR_BAD_ARG;
+
+    uint8_t buf[2 + 1 + 8]; /* attrId(2) + type(1) + value */
+    buf[0] = (uint8_t)(attr_id & 0xFF);
+    buf[1] = (uint8_t)(attr_id >> 8);
+    buf[2] = attr->data_type_id;
+    memmove(&buf[3], attr->value, attr->size);
+
+    sl_status_t st =
+        sl_zigbee_af_fill_command_global_server_to_client_report_attributes(
+            cluster_id, buf, 3 + attr->size);
+    if (st != SL_STATUS_OK)
+        return HAL_ZIGBEE_ERR_SEND_FAILED;
+
+    // Unicast to the coordinator (short address 0, ZCL endpoint 1): the
+    // framework sends unicasts with APS retries, so the report is repeated
+    // until the coordinator acknowledges it.
+    sl_zigbee_af_set_command_endpoints(endpoint, 1);
+    st = sl_zigbee_af_send_command_unicast(SL_ZIGBEE_OUTGOING_DIRECT, 0x0000);
+    return (st == SL_STATUS_OK) ? HAL_ZIGBEE_OK : HAL_ZIGBEE_ERR_SEND_FAILED;
+}
+
 hal_zigbee_status_t hal_zigbee_send_announce(void) {
     if (sl_zigbee_send_device_announcement() != SL_STATUS_OK) {
         return HAL_ZIGBEE_ERR_SEND_FAILED;

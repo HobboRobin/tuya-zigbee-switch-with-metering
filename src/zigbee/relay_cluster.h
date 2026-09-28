@@ -16,8 +16,9 @@ typedef struct {
     relay_t *            relay;
     led_t *              indicator_led;
     uint8_t              indicator_state;
-    uint8_t              led_brightness; // dimmable indicator: on-level 0..255
-    uint16_t             led_transition; // dimmable indicator: fade time in ms
+    uint8_t              led_brightness;  // dimmable indicator: on-level 0..255
+    uint16_t             led_transition;  // dimmable indicator: fade time in ms
+    uint8_t              confirm_pending; // acknowledged state report due
 } zigbee_relay_cluster;
 
 void relay_cluster_add_to_endpoint(zigbee_relay_cluster *cluster,
@@ -31,8 +32,8 @@ void relay_cluster_report(zigbee_relay_cluster *cluster);
 
 void update_relay_clusters();
 
-// Push every relay's current on/off state to the coordinator (firmware-side
-// heartbeat; see relay_cluster.c). Safe to call when not joined.
+// Push every relay's current on/off state to the coordinator, acknowledged
+// (firmware-side heartbeat; see relay_cluster.c). Safe to call when not joined.
 void relay_clusters_report_state(void);
 
 void relay_cluster_callback_attr_write_trampoline(uint8_t endpoint,

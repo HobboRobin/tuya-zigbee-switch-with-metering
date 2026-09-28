@@ -57,11 +57,17 @@ void app_init(void) {
 
 static bool boot_announce_sent = false;
 
-// Firmware-side relay-state heartbeat: the Telink stack sends no periodic
-// max-interval report for a boolean attribute, so a single lost onOff report
-// would leave Z2M showing the wrong state indefinitely (observed: relay on,
-// >500 W flowing, Z2M stuck "off"). Re-push every relay's state on this
-// interval so the coordinator re-syncs within it regardless of the mesh.
+// Firmware-side relay-state heartbeat. The stack's own onOff reports go out
+// unacknowledged, and the max interval Z2M configures for onOff is 65000 s, so
+// a single lost report left Z2M showing the wrong state for most of a day
+// (observed: relay on, >500 W flowing, Z2M stuck "off"). Every change is now
+// confirmed with an acknowledged report (relay_cluster.c); this re-pushes every
+// relay's state on top, so the coordinator re-syncs within the interval
+// whatever else went wrong.
+//
+// It relies on hal_millis() being a real millisecond clock. On Telink it used
+// to wrap every 268 s, which made this interval unreachable - the heartbeat
+// only ever fired because the wrap looked like a huge elapsed time.
 #define RELAY_HEARTBEAT_INTERVAL_MS    (5u * 60u * 1000u)
 
 void app_task() {
