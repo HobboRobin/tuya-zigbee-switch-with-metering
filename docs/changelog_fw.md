@@ -74,6 +74,20 @@ Please describe what you are working on, under ## Upcoming
 ### Bugs
 
 - **Fixed**
+  - **A relay could switch without Z2M noticing.** The stack reports a relay
+    change once, unacknowledged, and does not repeat it for hours, so one lost
+    frame left Z2M showing the old state while the power readings from the same
+    plug kept arriving. Every relay change is now confirmed 1.5 s later with a
+    report that goes straight to the coordinator and is retried until it is
+    acknowledged.
+  - **The Telink clock wrapped every 268 seconds.** `hal_millis()` was the
+    16 MHz system tick divided down, and that tick overflows after 268.4 s. The
+    5-minute relay heartbeat could never elapse honestly, overload protection
+    could end its grace period early at the wrap and never auto-reconnect when
+    the target time lay past it, and a button press across the wrap could count
+    as a long press. The clock now runs for 49.7 days before it wraps, like any
+    32-bit millisecond counter. Silabs had the same defect every 36.4 h and now
+    uses the 64-bit tick count.
   - **An overload trip was never announced.** The alarm attribute is only ever
     pushed by the device and nothing polls it, but no reporting was configured
     for it - so the relay switched off correctly and Z2M went on showing
