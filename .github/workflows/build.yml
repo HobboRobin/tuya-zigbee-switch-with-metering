@@ -56,25 +56,47 @@ jobs:
         path: .venv
         key: python-venv-${{ hashFiles('requirements.txt') }}
 
+    # www.silabs.com has taken to refusing downloads from GitHub's runners, and
+    # the Silabs tools only survive in the cache while they are used weekly. A
+    # release then used to die here, before building anything, although most
+    # boards are Telink and need nothing from Silabs. Now a failed Silabs
+    # install is reported and the build carries on without those boards; their
+    # previous firmware stays published (see "Clear out index files").
     - name: Install SDK and Toolchain
       run: |
-        make setup || (
-          echo "dumping log:" &&
-          cat /home/runner/work/tuya-zigbee-switch/tuya-zigbee-switch/silabs_tools/slc-cli/bin/slc-cli/configuration/*.log
-        )
+        make telink/tools/all setup_venv
+        if make silabs/tools/all; then
+          echo "SILABS_TOOLS=1" >> "$GITHUB_ENV"
+        else
+          echo "dumping log:"
+          cat silabs_tools/slc-cli/bin/slc-cli/configuration/*.log 2>/dev/null || true
+          # Do not let the cache keep a half-installed toolset.
+          rm -rf silabs_tools
+          echo "SILABS_TOOLS=0" >> "$GITHUB_ENV"
+          echo "::warning::Silicon Labs tools could not be installed. Silabs boards are skipped in this build and keep their previously published firmware."
+        fi
 
     - name: Clear out index files
       run: |
         source .venv/bin/activate
-        make tools/clean_z2m_index 
+        if [ "$SILABS_TOOLS" = "1" ]; then
+          make tools/clean_z2m_index
+        else
+          make tools/clean_z2m_index KEEP_MCU=EFR32
+        fi
 
     - name: Build for all boards
       run: |
         source .venv/bin/activate
-        yq -r 'to_entries | sort_by(.key)[] | "\(.key) \(.value.device_type) \(.value.build)"' device_db.yaml | while read ITER TYPE BUILD; do
+        yq -r 'to_entries | sort_by(.key)[] | "\(.key) \(.value.device_type) \(.value.build) \(.value.mcu)"' device_db.yaml | while read ITER TYPE BUILD MCU; do
 
           if [ "$BUILD" = "no" ]; then
             echo "Skipping $ITER as building this model is disabled in the db."
+            continue
+          fi
+
+          if [ "$SILABS_TOOLS" != "1" ] && [ "${MCU#EFR32}" != "$MCU" ]; then
+            echo "Skipping $ITER: no Silicon Labs tools in this build."
             continue
           fi
   
