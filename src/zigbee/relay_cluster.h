@@ -16,8 +16,8 @@ typedef struct {
     relay_t *            relay;
     led_t *              indicator_led;
     uint8_t              indicator_state;
-    uint8_t              led_brightness; // dimmable indicator: on-level 0..255
-    uint16_t             led_transition; // dimmable indicator: fade time in ms
+    uint8_t              led_brightness;  // dimmable indicator: on-level 0..255
+    uint16_t             led_transition;  // dimmable indicator: fade time in ms
     uint8_t              confirm_pending; // acknowledged state report due
 } zigbee_relay_cluster;
 
