@@ -519,48 +519,6 @@
   {
     "fileName": "tlc_switch-1.3.0-47097fdfc.zigbee",
     "fileVersion": 318779392,
-    "fileSize": 205042,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/b59f5e0745c407ca7114fe90ab9c791f4fd4fa75/bin/router/LIGHT_GLEDOPTO_GLC006P_CCT/tlc_switch-1.3.0-47097fdfc.zigbee",
-    "imageType": 47118,
-    "manufacturerCode": 4417,
-    "sha512": "47bc00af8f7fe92924b684b426cae012dc29da0297d371adaaf063ae2be85fe97d59b428a58b21ab1b7e2859722a84bffa4e9f90bf6f9ebbef6b57956ce4161f",
-    "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
-    "manufacturerName": [
-      "ERICSITY",
-      "gled"
-    ]
-  },
-  {
-    "fileName": "tlc_switch-1.3.0-47097fdfc-from_tuya.zigbee",
-    "fileVersion": 4294967295,
-    "fileSize": 205042,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/b59f5e0745c407ca7114fe90ab9c791f4fd4fa75/bin/router/LIGHT_GLEDOPTO_GLC006P_CCT/tlc_switch-1.3.0-47097fdfc-from_tuya.zigbee",
-    "imageType": 5145,
-    "manufacturerCode": 4687,
-    "sha512": "390f6b2329d8165019f148a3c74467b857403d13291a29185102205c244835fdc67c194330c4e89180c670a338524dee2fa587bb6547136ae17dc101147bb3b7",
-    "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
-    "manufacturerName": [
-      "ERICSITY",
-      "gled"
-    ]
-  },
-  {
-    "fileName": "tlc_switch-1.3.0-47097fdfc.zigbee",
-    "fileVersion": 318779392,
-    "fileSize": 205058,
-    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/b59f5e0745c407ca7114fe90ab9c791f4fd4fa75/bin/router/LIGHT_GLEDOPTO_GLC006P_DIM/tlc_switch-1.3.0-47097fdfc.zigbee",
-    "imageType": 47119,
-    "manufacturerCode": 4417,
-    "sha512": "e7e3094486d9e12633d3ce0fbbc46e1b835a57d3f0572aa4c7b521e8c1dfc3dc8ee886b2a57d51be84472dad588aaaf850caa418e734ce93157a2e19a9e47a21",
-    "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
-    "manufacturerName": [
-      "ERICSITY",
-      "gled"
-    ]
-  },
-  {
-    "fileName": "tlc_switch-1.3.0-47097fdfc.zigbee",
-    "fileVersion": 318779392,
     "fileSize": 205026,
     "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/b59f5e0745c407ca7114fe90ab9c791f4fd4fa75/bin/router/MODULE_AUBESS_TS0001/tlc_switch-1.3.0-47097fdfc.zigbee",
     "imageType": 43531,
@@ -5336,6 +5294,51 @@
       "_TZ3000_zmlunnhy",
       "Zemi-2-gang",
       "zmlunnhy"
+    ]
+  },
+  {
+    "fileName": "tlc_switch-1.3.0-47097fdfc.zigbee",
+    "fileVersion": 318779392,
+    "fileSize": 205042,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/b59f5e0745c407ca7114fe90ab9c791f4fd4fa75/bin/router/LIGHT_GLEDOPTO_GLC006P_CCT/tlc_switch-1.3.0-47097fdfc.zigbee",
+    "imageType": 47118,
+    "manufacturerCode": 4417,
+    "sha512": "47bc00af8f7fe92924b684b426cae012dc29da0297d371adaaf063ae2be85fe97d59b428a58b21ab1b7e2859722a84bffa4e9f90bf6f9ebbef6b57956ce4161f",
+    "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+    "manufacturerName": [
+      "ERICSITY",
+      "GLEDOPTO",
+      "gled"
+    ]
+  },
+  {
+    "fileName": "tlc_switch-1.3.0-47097fdfc-from_tuya.zigbee",
+    "fileVersion": 4294967295,
+    "fileSize": 205042,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/b59f5e0745c407ca7114fe90ab9c791f4fd4fa75/bin/router/LIGHT_GLEDOPTO_GLC006P_CCT/tlc_switch-1.3.0-47097fdfc-from_tuya.zigbee",
+    "imageType": 5145,
+    "manufacturerCode": 4687,
+    "sha512": "390f6b2329d8165019f148a3c74467b857403d13291a29185102205c244835fdc67c194330c4e89180c670a338524dee2fa587bb6547136ae17dc101147bb3b7",
+    "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+    "manufacturerName": [
+      "ERICSITY",
+      "GLEDOPTO",
+      "gled"
+    ]
+  },
+  {
+    "fileName": "tlc_switch-1.3.0-47097fdfc.zigbee",
+    "fileVersion": 318779392,
+    "fileSize": 205058,
+    "url": "https://github.com/HobboRobin/tuya-zigbee-switch-with-metering/raw/b59f5e0745c407ca7114fe90ab9c791f4fd4fa75/bin/router/LIGHT_GLEDOPTO_GLC006P_DIM/tlc_switch-1.3.0-47097fdfc.zigbee",
+    "imageType": 47119,
+    "manufacturerCode": 4417,
+    "sha512": "e7e3094486d9e12633d3ce0fbbc46e1b835a57d3f0572aa4c7b521e8c1dfc3dc8ee886b2a57d51be84472dad588aaaf850caa418e734ce93157a2e19a9e47a21",
+    "otaHeaderString": "Telink OTA Image\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+    "manufacturerName": [
+      "ERICSITY",
+      "GLEDOPTO",
+      "gled"
     ]
   }
 ]

@@ -42,7 +42,13 @@ Support new devices: [contribute/porting.md](/docs/contribute/porting.md)
 | 🚧 | 📦 | 💡 | ⚡️ | 📲 |  🏭  | Zb&nbsp;Manufacturer <br> Zb&nbsp;Model | Name <br> Z2M&nbsp;page&nbsp;🔗 | Store | Threads | Status |
 | -- | -- | -- | -- | -- | :--: | :-------------------------------------- | :------------------------------ | ----: | ------: | :----- |
 {% for device_key, device in devices %}
-  {% set manufacturer = "`" ~ (device.stock_manufacturer_name or "unknown") ~ "`" %}
+  {% if device.stock_manufacturer_name is none %}
+    {% set manufacturer = "`unknown`" %}
+  {% elif device.stock_manufacturer_name is string %}
+    {% set manufacturer = "`" ~ device.stock_manufacturer_name ~ "`" %}
+  {% else %}
+    {% set manufacturer = "`" ~ (device.stock_manufacturer_name | join("` `")) ~ "`" %}
+  {% endif %}
   {% set ns = namespace(model="") %}
   {% if device.stock_model_name is none %}
     {% set ns.model = "`unknown`" %}
