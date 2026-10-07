@@ -137,9 +137,16 @@
             },
             {
               "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
             }
           ],
-          "description": "Tuya manufacturer identifier"
+          "description": "Manufacturer name the stock firmware reports (e.g. _TZ3000_xxxxxxxx). A list when different stock firmware versions of the same hardware report different names."
         },
         "stock_converter_manufacturer": {
           "oneOf": [

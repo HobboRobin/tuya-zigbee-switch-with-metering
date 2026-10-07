@@ -135,8 +135,12 @@ if __name__ == "__main__":
     device = db.get(args.board)
     if device:
       
-        if device.get("stock_manufacturer_name"):
-            manufacturer_names.append(device["stock_manufacturer_name"])
+        # One name, or a list when stock firmware versions of the same hardware
+        # disagree (Gledopto's GL-C-006P says ERICSITY on 2.5, GLEDOPTO on 2.9).
+        stock_names = device.get("stock_manufacturer_name") or []
+        if isinstance(stock_names, str):
+            stock_names = [stock_names]
+        manufacturer_names.extend(stock_names)
         if device.get("old_manufacturer_names"):
             manufacturer_names.extend(device["old_manufacturer_names"])
         manufacturer_names.append(

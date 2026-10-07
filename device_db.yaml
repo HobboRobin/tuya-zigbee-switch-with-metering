@@ -322,7 +322,9 @@ LIGHT_GLEDOPTO_GLC006P_CCT:
   output: pwm
   device_type: router
   stock_model_name: GL-C-006P
-  stock_manufacturer_name: ERICSITY
+  stock_manufacturer_name:
+    - ERICSITY  # stock firmware 2.5 (2023)
+    - GLEDOPTO  # stock firmware 2.9 (2024), same model
   stock_converter_manufacturer: Gledopto
   stock_converter_model: GL-C-006P
   override_z2m_device: null
@@ -349,7 +351,9 @@ LIGHT_GLEDOPTO_GLC006P_DIM:
   output: pwm
   device_type: router
   stock_model_name: GL-C-006P
-  stock_manufacturer_name: ERICSITY
+  stock_manufacturer_name:
+    - ERICSITY  # stock firmware 2.5 (2023)
+    - GLEDOPTO  # stock firmware 2.9 (2024), same model
   stock_converter_manufacturer: Gledopto
   stock_converter_model: GL-C-006P
   override_z2m_device: null

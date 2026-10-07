@@ -20,6 +20,7 @@ reports once it already runs this firmware; it rides along in the index for
 recovery, and a device that reports it is past the point this check protects.
 """
 
+import json
 from collections import defaultdict
 from pathlib import Path
 
@@ -53,9 +54,10 @@ def migration_claims() -> dict[tuple, dict[str, tuple]]:
         config_str = device.get("config_str") or ""
         if code is None or image_type is None or not config_str:
             continue
-        stock_names = []
-        if device.get("stock_manufacturer_name"):
-            stock_names.append(device["stock_manufacturer_name"])
+        stock_names = device.get("stock_manufacturer_name") or []
+        if isinstance(stock_names, str):
+            stock_names = [stock_names]
+        stock_names = list(stock_names)
         stock_names.extend(device.get("old_manufacturer_names") or [])
         for claimed in stock_names:
             claims[(code, image_type, claimed)][name] = peripherals(config_str)
@@ -109,3 +111,32 @@ def test_every_board_is_reachable_by_some_name(migration_claims):
         and name not in reachable
     )
     assert not unreachable, unreachable
+
+
+def test_gledopto_controller_is_reachable_under_both_stock_names(migration_claims):
+    """Gledopto's GL-C-006P reports ERICSITY on stock firmware 2.5 and GLEDOPTO
+    on 2.9 - same hardware. With only the old name listed, a controller on the
+    newer stock firmware was never offered the migration image at all."""
+    def boards_for(stock_name: str) -> set[str]:
+        return {
+            board
+            for (_, _, name), boards in migration_claims.items()
+            if name == stock_name
+            for board in boards
+        }
+
+    assert "LIGHT_GLEDOPTO_GLC006P_CCT" in boards_for("ERICSITY")
+    assert "LIGHT_GLEDOPTO_GLC006P_CCT" in boards_for("GLEDOPTO")
+
+
+def test_published_index_offers_the_migration_to_both_names():
+    index = json.loads(
+        Path("zigbee2mqtt/ota/index_router.json").read_text()
+    )
+    migration = [
+        e for e in index
+        if "/LIGHT_GLEDOPTO_GLC006P_CCT/" in e["url"]
+        and e["fileName"].endswith("-from_tuya.zigbee")
+    ]
+    assert len(migration) == 1
+    assert {"ERICSITY", "GLEDOPTO"} <= set(migration[0]["manufacturerName"])
